@@ -1193,7 +1193,7 @@ const G = `
 }
 html,body{height:100%;background:var(--bg);color:var(--txt);font-family:var(--fh);-webkit-font-smoothing:antialiased;overflow-x:hidden}
 #root{min-height:100vh;display:flex;justify-content:center;background:var(--bg)}
-.app{width:100%;max-width:430px;min-height:100dvh;display:flex;flex-direction:column;background:var(--bg);position:relative;overflow:hidden}
+.app{width:100%;max-width:430px;min-height:100dvh;display:flex;flex-direction:column;background:var(--bg);position:relative;overflow-x:hidden;overflow-y:auto}
 .screen{flex:1;display:flex;flex-direction:column;animation:fadeUp .28s cubic-bezier(.22,1,.36,1)}
 
 /* ══════ HERO ══════ */
@@ -1898,9 +1898,13 @@ export default function App() {
   const [loggedIn, setLoggedIn] = useState(false);
   const [showTutorial, setShowTutorial] = useState(false);
   const [tutStep, setTutStep] = useState(0);
-  const [authMode, setAuthMode] = useState("main"); // main | email
+  const [authMode, setAuthMode] = useState("main"); // main | login | signup
   const [authEmail, setAuthEmail] = useState("");
   const [authPhone, setAuthPhone] = useState("");
+  const [authPassword, setAuthPassword] = useState("");
+  const [authNickname, setAuthNickname] = useState("");
+  const [authError, setAuthError] = useState("");
+  const [authLoading, setAuthLoading] = useState(false);
   const [wcMethod, setWcMethod] = useState(null); // selected wallet method
   const [wcAmount, setWcAmount] = useState(""); // deposit amount
 
@@ -2065,21 +2069,82 @@ export default function App() {
     }
   }, []);
   // In the artifact: demo login only (no real auth)
-  // In your deployed app: replace doLogin with real Supabase OAuth calls
+  // ── Restore session on app load ──────────────────────────────────────────
   useEffect(() => {
-    // In real app: restore session from Supabase here
-    // const { data: { session } } = await supabase.auth.getSession();
-    // if (session) { fetch profile, setLoggedIn(true) ... }
+    const saved = localStorage.getItem("cc_token");
+    if (saved) {
+      api("/auth/me").then(data => {
+        if (data?.player) {
+          setLoggedIn(true);
+          setNick(data.player.nickname);
+          setWallet(data.player.wallet / 100);
+          window.__CRICKET_TOKEN__ = saved;
+          setScreen("landing");
+        } else {
+          localStorage.removeItem("cc_token");
+        }
+      }).catch(() => localStorage.removeItem("cc_token"));
+    }
   }, []);
 
+  const doSignup = useCallback(async () => {
+    setAuthError("");
+    if (!authEmail || !authPassword || !authNickname) {
+      setAuthError("Please fill in all fields"); return;
+    }
+    if (authPassword.length < 6) {
+      setAuthError("Password must be at least 6 characters"); return;
+    }
+    setAuthLoading(true);
+    try {
+      const res = await fetch(`${API_BASE}/auth/signup`, {
+        method: "POST",
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify({ email: authEmail, password: authPassword, nickname: authNickname }),
+      });
+      const data = await res.json();
+      if (!res.ok) { setAuthError(data.error || "Signup failed"); return; }
+      // Auto login after signup
+      setAuthMode("login");
+      setAuthError("Account created! Please log in.");
+    } catch (e) {
+      setAuthError("Network error — please try again");
+    } finally { setAuthLoading(false); }
+  }, [authEmail, authPassword, authNickname]);
+
   const doLogin = useCallback(async (provider) => {
-    // Demo/artifact mode — instant login for testing
-    // In real app: replace with supabase.auth.signInWithOAuth({ provider })
-    setLoggedIn(true);
-    setNick(nick || "Player");
-    setScreen("landing");
-    setTimeout(() => setShowTutorial(true), 600);
-  }, [nick]);
+    if (provider === "guest") {
+      setLoggedIn(false);
+      setNick("Guest");
+      setScreen("landing");
+      setTimeout(() => setShowTutorial(true), 600);
+      return;
+    }
+    setAuthError("");
+    if (!authEmail || !authPassword) {
+      setAuthError("Please enter email and password"); return;
+    }
+    setAuthLoading(true);
+    try {
+      const res = await fetch(`${API_BASE}/auth/login`, {
+        method: "POST",
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify({ email: authEmail, password: authPassword }),
+      });
+      const data = await res.json();
+      if (!res.ok) { setAuthError(data.error || "Login failed"); return; }
+      // Save token for session restore
+      localStorage.setItem("cc_token", data.access_token);
+      window.__CRICKET_TOKEN__ = data.access_token;
+      setLoggedIn(true);
+      setNick(data.player.nickname);
+      setWallet(data.player.wallet / 100);
+      setScreen("landing");
+      setTimeout(() => setShowTutorial(true), 600);
+    } catch (e) {
+      setAuthError("Network error — please try again");
+    } finally { setAuthLoading(false); }
+  }, [authEmail, authPassword]);
 
   const TUT_STEPS = [
     { icon:"🏏", title:"Welcome to Cricket Clash!", body:"Answer cricket trivia to score runs. The more you know, the more you earn. Let's walk you through a match.", hl:"" },
@@ -2859,72 +2924,74 @@ export default function App() {
               <div className="auth-tagline">Skill · Strategy · Glory</div>
             </div>
             <div className="auth-body">
-              {authMode === "main" ? (
+              {/* ── TAB SWITCHER ── */}
+              <div style={{ display:"flex", background:"var(--s2)", borderRadius:12, padding:4, marginBottom:20 }}>
+                {["login","signup"].map(m => (
+                  <button key={m} onClick={() => { setAuthMode(m); setAuthError(""); }}
+                    style={{ flex:1, padding:"10px 0", borderRadius:9, border:"none", fontFamily:"var(--fm)", fontSize:13, fontWeight:700, cursor:"pointer",
+                      background: authMode===m ? "var(--bg)" : "transparent",
+                      color: authMode===m ? "var(--amber)" : "var(--sub)",
+                      boxShadow: authMode===m ? "0 1px 4px rgba(0,0,0,.12)" : "none",
+                      transition:"all .2s" }}>
+                    {m === "login" ? "Log In" : "Sign Up"}
+                  </button>
+                ))}
+              </div>
+
+              {/* ── ERROR ── */}
+              {authError && (
+                <div style={{ background: authError.includes("created") ? "rgba(21,128,61,.1)" : "rgba(220,38,38,.08)", border:`1px solid ${authError.includes("created") ? "rgba(21,128,61,.2)" : "rgba(220,38,38,.2)"}`, borderRadius:10, padding:"10px 14px", fontSize:12, color: authError.includes("created") ? "var(--green)" : "var(--red)", marginBottom:12 }}>
+                  {authError}
+                </div>
+              )}
+
+              {/* ── SIGNUP FORM ── */}
+              {authMode === "signup" && (
                 <>
-                  <div className="auth-head">Sign in to play</div>
-                  <div className="auth-sub">Join 2.4M cricket fans competing for real prizes</div>
-
-                  <button className="soc-btn" onClick={() => doLogin("google")}>
-                    <div className="soc-logo" style={{background:"#fff",border:"1px solid #e5e7eb"}}>
-                      <svg width="18" height="18" viewBox="0 0 24 24"><path fill="#4285F4" d="M22.56 12.25c0-.78-.07-1.53-.2-2.25H12v4.26h5.92c-.26 1.37-1.04 2.53-2.21 3.31v2.77h3.57c2.08-1.92 3.28-4.74 3.28-8.09z"/><path fill="#34A853" d="M12 23c2.97 0 5.46-.98 7.28-2.66l-3.57-2.77c-.98.66-2.23 1.06-3.71 1.06-2.86 0-5.29-1.93-6.16-4.53H2.18v2.84C3.99 20.53 7.7 23 12 23z"/><path fill="#FBBC05" d="M5.84 14.09c-.22-.66-.35-1.36-.35-2.09s.13-1.43.35-2.09V7.07H2.18C1.43 8.55 1 10.22 1 12s.43 3.45 1.18 4.93l2.85-2.22.81-.62z"/><path fill="#EA4335" d="M12 5.38c1.62 0 3.06.56 4.21 1.64l3.15-3.15C17.45 2.09 14.97 1 12 1 7.7 1 3.99 3.47 2.18 7.07l3.66 2.84c.87-2.6 3.3-4.53 6.16-4.53z"/></svg>
-                    </div>
-                    <span className="soc-logo" style={{background:"transparent",border:"none",fontSize:0,width:0}} />
-                    Continue with Google
-                    <span className="soc-arrow">›</span>
+                  <div className="inp-label">Your nickname</div>
+                  <input className="inp" placeholder="e.g. CricketKing_IND" value={authNickname}
+                    onChange={e => setAuthNickname(e.target.value)} maxLength={20} />
+                  <div className="inp-label" style={{marginTop:10}}>Email address</div>
+                  <input className="inp" type="email" placeholder="you@email.com" value={authEmail}
+                    onChange={e => setAuthEmail(e.target.value)} />
+                  <div className="inp-label" style={{marginTop:10}}>Password</div>
+                  <input className="inp" type="password" placeholder="Min 6 characters" value={authPassword}
+                    onChange={e => setAuthPassword(e.target.value)} />
+                  <button className="btn btn-amber" style={{width:"100%", marginTop:16}}
+                    onClick={doSignup} disabled={authLoading}>
+                    {authLoading ? "Creating account…" : "Create Account 🏏"}
                   </button>
-
-                  <button className="soc-btn" onClick={() => doLogin("apple")}>
-                    <div className="soc-logo" style={{background:"#000"}}>
-                      <svg width="16" height="18" viewBox="0 0 814 1000" fill="white"><path d="M788.1 340.9c-5.8 4.5-108.2 62.2-108.2 190.5 0 148.4 130.3 200.9 134.2 202.2-.6 3.2-20.7 71.9-68.7 141.9-42.8 61.6-87.5 123.1-155.5 123.1s-85.5-39.5-164-39.5c-76 0-103.7 40.8-165.9 40.8s-105-43.4-150.3-109.2C74 452.8 55 258.4 152.1 151.7c49.1-54.9 121.6-85.4 192.9-85.4 68.7 0 119 42.1 168.7 42.1 47.1 0 107.4-46 186.5-46 29.5 0 108.2 2.6 167.4 94.7zm-126.3-112.7c-20.1 23.7-50.9 43.4-79.6 43.4-3.8 0-7.7-.5-11.5-1.1 0-37.1 21.2-73 44.5-96.7 23.7-24.3 57.8-42.8 88.6-44.5 3.2 36.5-10.9 72.4-42 98.9z"/></svg>
-                    </div>
-                    Continue with Apple
-                    <span className="soc-arrow">›</span>
-                  </button>
-
-                  <button className="soc-btn" onClick={() => doLogin("facebook")}>
-                    <div className="soc-logo" style={{background:"#1877F2"}}>
-                      <svg width="18" height="18" viewBox="0 0 24 24" fill="white"><path d="M24 12.073c0-6.627-5.373-12-12-12s-12 5.373-12 12c0 5.99 4.388 10.954 10.125 11.854v-8.385H7.078v-3.47h3.047V9.43c0-3.007 1.792-4.669 4.533-4.669 1.312 0 2.686.235 2.686.235v2.953H15.83c-1.491 0-1.956.925-1.956 1.874v2.25h3.328l-.532 3.47h-2.796v8.385C19.612 23.027 24 18.062 24 12.073z"/></svg>
-                    </div>
-                    Continue with Facebook
-                    <span className="soc-arrow">›</span>
-                  </button>
-
-                  <div className="auth-divider">
-                    <div className="auth-div-line" />
-                    <span className="auth-div-text">OR</span>
-                    <div className="auth-div-line" />
-                  </div>
-
-                  <button className="soc-btn" onClick={() => setAuthMode("email")}>
-                    <div className="soc-logo" style={{background:"var(--s2)"}}>📧</div>
-                    Continue with Email or Phone
-                    <span className="soc-arrow">›</span>
-                  </button>
-
-                  <button className="guest-lnk" onClick={() => doLogin("guest")}>
-                    Play as Guest (limited features)
-                  </button>
-
-                  <div className="auth-legal">
-                    By continuing you agree to our{" "}
-                    <a onClick={() => { setScreen("legal"); setLegalTab("terms"); }}>Terms & Conditions</a>
-                    {" "}and{" "}
-                    <a onClick={() => { setScreen("legal"); setLegalTab("privacy"); }}>Privacy Policy</a>.
-                    {" "}Must be 18+ to play for money.
-                  </div>
-                </>
-              ) : (
-                <>
-                  <button className="back-btn" onClick={() => setAuthMode("main")}>←</button>
-                  <div className="auth-head">Email or Phone</div>
-                  <input className="inp" type="email" placeholder="Email address" value={authEmail} onChange={e => setAuthEmail(e.target.value)} />
-                  <input className="inp" type="tel" placeholder="Phone number (+91...)" value={authPhone} onChange={e => setAuthPhone(e.target.value)} />
-                  <button className="btn btn-amber" onClick={() => doLogin("email")} style={{marginTop:4}}>
-                    Send OTP →
-                  </button>
-                  <button className="guest-lnk" onClick={() => setAuthMode("main")}>← Back to sign-in options</button>
                 </>
               )}
+
+              {/* ── LOGIN FORM ── */}
+              {authMode === "login" && (
+                <>
+                  <div className="inp-label">Email address</div>
+                  <input className="inp" type="email" placeholder="you@email.com" value={authEmail}
+                    onChange={e => setAuthEmail(e.target.value)} />
+                  <div className="inp-label" style={{marginTop:10}}>Password</div>
+                  <input className="inp" type="password" placeholder="Your password" value={authPassword}
+                    onChange={e => setAuthPassword(e.target.value)} />
+                  <button className="btn btn-amber" style={{width:"100%", marginTop:16}}
+                    onClick={() => doLogin("email")} disabled={authLoading}>
+                    {authLoading ? "Logging in…" : "Log In →"}
+                  </button>
+                </>
+              )}
+
+              {/* ── GUEST ── */}
+              <button className="guest-lnk" style={{marginTop:16}} onClick={() => doLogin("guest")}>
+                Play as Guest (no account needed)
+              </button>
+
+              <div className="auth-legal" style={{marginTop:12}}>
+                By continuing you agree to our{" "}
+                <a onClick={() => { setScreen("legal"); setLegalTab("terms"); }}>Terms</a>
+                {" "}and{" "}
+                <a onClick={() => { setScreen("legal"); setLegalTab("privacy"); }}>Privacy Policy</a>.
+                {" "}Must be 18+ to play for money.
+              </div>
             </div>
           </div>
         )}
