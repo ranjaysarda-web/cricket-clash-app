@@ -37,42 +37,42 @@ async function api(path, options = {}) {
 const CONDITIONS = [
   { id:"swing",  icon:"🌦", name:"Overcast & Swing",        desc:"Duke ball swinging both ways. Pace & seam questions.",    theme:"#0369a1", bg:"#f0f9ff", cat:"The Ashes",
     isNight:false, stadium:"Lord's Cricket Ground", venue:"London, England",
-    img:"https://images.unsplash.com/photo-1540747913346-19e32dc3e97e?w=900&q=80",
+    img:"https://upload.wikimedia.org/wikipedia/commons/thumb/9/9d/Lords_Cricket_Ground_-_panoramio.jpg/1280px-Lords_Cricket_Ground_-_panoramio.jpg",
     sky:"linear-gradient(180deg,#4a5568 0%,#718096 40%,#a0aec0 100%)",
     atmosphere:"Overcast | Humid 82% | 16°C", wind:"SW 18 km/h", weatherIcon:"🌦",
     broadcastTag:"LIVE · DAY MATCH", broadcastColor:"#0369a1",
     pitchColor:"#8B7355", pitchDesc:"Soft, Green", overlay:"rgba(7,89,133,.55)" },
   { id:"dry",    icon:"☀️", name:"Dry Pitch, Spin Day",     desc:"Crumbling surface. Spin bowling questions dominate.",     theme:"#92400e", bg:"#fffbeb", cat:"Test Cricket",
     isNight:false, stadium:"MA Chidambaram Stadium", venue:"Chennai, India",
-    img:"https://images.unsplash.com/photo-1531415074968-036ba1b575da?w=900&q=80",
+    img:"https://upload.wikimedia.org/wikipedia/commons/thumb/3/3d/MA_Chidambaram_Stadium%2C_Chennai.jpg/1280px-MA_Chidambaram_Stadium%2C_Chennai.jpg",
     sky:"linear-gradient(180deg,#F59E0B 0%,#FBBF24 30%,#FDE68A 100%)",
     atmosphere:"Sunny | Humidity 68% | 34°C", wind:"NE 8 km/h", weatherIcon:"☀️",
     broadcastTag:"LIVE · DAY MATCH", broadcastColor:"#b45309",
     pitchColor:"#C4A96A", pitchDesc:"Hard, Dry, Dusty", overlay:"rgba(120,53,15,.55)" },
   { id:"flat",   icon:"🏟", name:"Flat Track Belter",       desc:"Six-hitting bonanza. Batting records & T20 questions.",   theme:"#166534", bg:"#f0fdf4", cat:"T20 Cricket",
     isNight:true,  stadium:"Narendra Modi Stadium", venue:"Ahmedabad, India",
-    img:"https://images.unsplash.com/photo-1593341646782-e0b495cff86d?w=900&q=80",
+    img:"https://upload.wikimedia.org/wikipedia/commons/thumb/7/7a/Sardar_Patel_Stadium_Motera.jpg/1280px-Sardar_Patel_Stadium_Motera.jpg",
     sky:"linear-gradient(180deg,#0a0a1a 0%,#1a1a4a 50%,#2d3a6b 100%)",
     atmosphere:"Clear Night | 29°C | Dew: Heavy", wind:"NW 12 km/h", weatherIcon:"🌙",
     broadcastTag:"LIVE · NIGHT MATCH", broadcastColor:"#22d3ee",
     pitchColor:"#A8956B", pitchDesc:"Flat, True Bounce", overlay:"rgba(0,0,30,.65)" },
   { id:"seam",   icon:"🌬", name:"Green Top, Early Seam",   desc:"Seam movement galore. Classic fast bowling questions.",   theme:"#5b21b6", bg:"#faf5ff", cat:"Player Records",
-    isNight:false, stadium:"WACA Ground", venue:"Perth, Australia",
-    img:"https://images.unsplash.com/photo-1548729218-7f0e9e22c6a5?w=900&q=80",
+    isNight:false, stadium:"MCG", venue:"Melbourne, Australia",
+    img:"https://upload.wikimedia.org/wikipedia/commons/thumb/3/3a/MCG_under_lights.jpg/1280px-MCG_under_lights.jpg",
     sky:"linear-gradient(180deg,#1e3a5f 0%,#2d6a9f 50%,#87ceeb 100%)",
     atmosphere:"Partly Cloudy | 22°C | Moisture: High", wind:"WSW 24 km/h", weatherIcon:"🌬",
     broadcastTag:"LIVE · DAY MATCH", broadcastColor:"#7c3aed",
     pitchColor:"#6B8C42", pitchDesc:"Lush, Grassy Cover", overlay:"rgba(55,20,120,.5)" },
   { id:"dew",    icon:"🌙", name:"Night Match, Heavy Dew",  desc:"Dew factor advantage. ODI & T20 batting questions.",      theme:"#1e40af", bg:"#eff6ff", cat:"ODI Cricket",
     isNight:true,  stadium:"Wankhede Stadium", venue:"Mumbai, India",
-    img:"https://images.unsplash.com/photo-1562077981-4d7eafd44932?w=900&q=80",
+    img:"https://upload.wikimedia.org/wikipedia/commons/thumb/e/e8/Wankhede_Stadium_-_panoramio_%281%29.jpg/1280px-Wankhede_Stadium_-_panoramio_%281%29.jpg",
     sky:"linear-gradient(180deg,#020617 0%,#0f172a 40%,#1e3a5f 100%)",
     atmosphere:"Clear Night | 27°C | Dew: Heavy", wind:"Sea breeze 14 km/h", weatherIcon:"🌙",
     broadcastTag:"LIVE · NIGHT MATCH", broadcastColor:"#60a5fa",
     pitchColor:"#4A7C59", pitchDesc:"Damp, Dew-affected", overlay:"rgba(0,10,40,.72)" },
   { id:"dusty",  icon:"🏜", name:"Sub-Continent Dust Bowl", desc:"Reverse swing & spin. ICC tournament history questions.", theme:"#b45309", bg:"#fefce8", cat:"ICC Tournaments",
-    isNight:false, stadium:"Gaddafi Stadium", venue:"Lahore, Pakistan",
-    img:"https://images.unsplash.com/photo-1589487391730-58f20eb2c308?w=900&q=80",
+    isNight:false, stadium:"Eden Gardens", venue:"Kolkata, India",
+    img:"https://upload.wikimedia.org/wikipedia/commons/thumb/9/9b/Eden_Gardens_during_the_day.jpg/1280px-Eden_Gardens_during_the_day.jpg",
     sky:"linear-gradient(180deg,#92400e 0%,#b45309 40%,#d97706 100%)",
     atmosphere:"Hazy | Dusty | 38°C", wind:"Hot wind 22 km/h", weatherIcon:"🏜",
     broadcastTag:"LIVE · DAY MATCH", broadcastColor:"#f59e0b",
@@ -199,10 +199,10 @@ const OPPS = [
 
 const ENTRY_FEES = [
   { label:"Free",  entry:0,    prize:0,    icon:"🏏", tag:"Practice" },
-  { label:"$0.50", entry:0.50, prize:0.90, icon:"🌟", tag:"Starter"  },
-  { label:"$1",    entry:1.00, prize:1.80, icon:"🔥", tag:"Popular"  },
-  { label:"$2",    entry:2.00, prize:3.60, icon:"💎", tag:"Pro"      },
-  { label:"$5",    entry:5.00, prize:9.00, icon:"👑", tag:"Elite"    },
+  { label:"₹5",   entry:0.06, prize:0.108,icon:"🌟", tag:"Starter"  },
+  { label:"₹10",  entry:0.12, prize:0.216,icon:"🔥", tag:"Popular"  },
+  { label:"₹25",  entry:0.30, prize:0.540,icon:"💎", tag:"Pro"      },
+  { label:"₹50",  entry:0.60, prize:1.080,icon:"👑", tag:"Elite"    },
 ];
 
 // ─── INLINE SVG PLAYER CARDS (no external images needed) ──────────────────────
@@ -1191,10 +1191,11 @@ const G = `
   --sh-green:0 6px 24px rgba(22,101,52,.18);
   --sh-red:0 6px 24px rgba(190,18,60,.18);
 }
-html,body{height:100%;background:var(--bg);color:var(--txt);font-family:var(--fh);-webkit-font-smoothing:antialiased;overflow-x:hidden;font-size:16px}
+html,body,#root{height:100%;width:100%;margin:0;padding:0;}
+html,body{background:var(--bg);color:var(--txt);font-family:var(--fh);-webkit-font-smoothing:antialiased;overflow-x:hidden;font-size:16px}
 #root{min-height:100vh;display:flex;justify-content:center;background:var(--bg)}
-.app{width:100%;max-width:430px;min-height:100dvh;display:flex;flex-direction:column;background:var(--bg);position:relative;overflow-x:hidden;overflow-y:auto}
-.screen{flex:1;display:flex;flex-direction:column;animation:fadeUp .28s cubic-bezier(.22,1,.36,1)}
+.app{width:100%;max-width:480px;min-height:100dvh;height:100%;display:flex;flex-direction:column;background:var(--bg);position:relative;overflow-x:hidden;overflow-y:auto;margin:0 auto}
+.screen{flex:1;display:flex;flex-direction:column;animation:fadeUp .28s cubic-bezier(.22,1,.36,1);min-height:0}
 
 /* ══════ HERO ══════ */
 .hero{position:relative;height:440px;overflow:hidden;background:#1c1917}
@@ -1218,7 +1219,7 @@ html,body{height:100%;background:var(--bg);color:var(--txt);font-family:var(--fh
 .feat-desc{font-size:12px;color:var(--sub);line-height:1.4}
 
 /* ══════ BUTTONS ══════ */
-.btn{position:relative;border:none;border-radius:var(--r2);font-family:var(--fh);font-size:15px;font-weight:700;letter-spacing:.2px;cursor:pointer;padding:15px 22px;display:flex;align-items:center;justify-content:center;gap:8px;overflow:hidden;transition:transform .12s,box-shadow .18s,opacity .14s;-webkit-tap-highlight-color:transparent}
+.btn{position:relative;border:none;border-radius:var(--r2);font-family:var(--fh);font-size:17px;font-weight:700;letter-spacing:.2px;cursor:pointer;padding:17px 22px;display:flex;align-items:center;justify-content:center;gap:8px;overflow:hidden;transition:transform .12s,box-shadow .18s,opacity .14s;-webkit-tap-highlight-color:transparent}
 .btn::after{content:'';position:absolute;top:0;left:-100%;width:35%;height:100%;background:linear-gradient(90deg,transparent,rgba(255,255,255,.22),transparent);transition:left .4s}
 .btn:hover::after{left:150%}
 .btn:active{transform:scale(.963)}
@@ -1240,10 +1241,10 @@ html,body{height:100%;background:var(--bg);color:var(--txt);font-family:var(--fh
 .hdr-title{font-family:var(--fd);font-size:24px;font-weight:700;letter-spacing:-.3px}
 .hdr-r{margin-left:auto;display:flex;gap:6px;align-items:center}
 .mono-tag{font-family:var(--fm);font-size:9px;font-weight:600;letter-spacing:1.5px;text-transform:uppercase;border-radius:999px;padding:4px 11px;display:inline-flex;align-items:center;gap:4px}
-.slbl{font-family:var(--fm);font-size:9px;font-weight:600;letter-spacing:2.5px;text-transform:uppercase;color:var(--sub)}
+.slbl{font-family:var(--fm);font-size:11px;font-weight:600;letter-spacing:2.5px;text-transform:uppercase;color:var(--sub)}
 
 /* ══════ SETUP ══════ */
-.setup-scroll{flex:1;overflow-y:auto;padding:16px 18px 28px;display:flex;flex-direction:column;gap:18px}
+.setup-scroll{flex:1;overflow-y:auto;padding:16px 18px 100px;display:flex;flex-direction:column;gap:18px;-webkit-overflow-scrolling:touch}
 .field-g{display:flex;flex-direction:column;gap:8px}
 .inp{background:var(--s0);border:1.5px solid var(--rim2);border-radius:var(--r1);padding:13px 16px;font-family:var(--fh);font-size:15px;font-weight:500;color:var(--txt);outline:none;transition:all .2s;width:100%;box-shadow:var(--sh-xs)}
 .inp:focus{border-color:var(--amber);background:#fff;box-shadow:0 0 0 3px rgba(180,83,9,.08)}
@@ -1257,8 +1258,8 @@ html,body{height:100%;background:var(--bg);color:var(--txt);font-family:var(--fh
 .fee-row{background:var(--s0);border:1.5px solid var(--rim);border-radius:var(--r2);padding:13px 15px;cursor:pointer;transition:all .2s;display:flex;align-items:center;gap:12px;box-shadow:var(--sh-xs)}
 .fee-icon{font-size:20px;flex-shrink:0}
 .fee-info{flex:1}
-.fee-label{font-family:var(--fd);font-size:16px;font-weight:700}
-.fee-prize{font-size:10px;color:var(--sub);margin-top:2px}
+.fee-label{font-family:var(--fd);font-size:18px;font-weight:700}
+.fee-prize{font-size:13px;color:var(--sub);margin-top:2px}
 .fee-tag{font-family:var(--fm);font-size:9px;font-weight:600;letter-spacing:1.5px;text-transform:uppercase;border-radius:999px;padding:3px 9px}
 .fee-row:hover{border-color:rgba(180,83,9,.3)}
 .fee-row.on{border-color:var(--amber);background:var(--amberBg)}
@@ -1296,7 +1297,7 @@ html,body{height:100%;background:var(--bg);color:var(--txt);font-family:var(--fh
 .choice-desc{font-size:11px;color:var(--sub);text-align:center;line-height:1.45}
 
 /* ══════ CONDITIONS — BROADCAST STYLE ══════ */
-.cond-screen{flex:1;display:flex;flex-direction:column;overflow:hidden;position:relative;background:#000}
+.cond-screen{flex:1;display:flex;flex-direction:column;overflow-y:auto;position:relative;background:#000;-webkit-overflow-scrolling:touch}
 .cond-stadium-bg{position:absolute;inset:0;background-size:cover;background-position:center top;z-index:0;transition:opacity .5s}
 .cond-overlay{position:absolute;inset:0;z-index:1}
 .cond-vignette{position:absolute;inset:0;z-index:2;background:radial-gradient(ellipse at 50% 30%,transparent 30%,rgba(0,0,0,.7) 100%)}
@@ -1464,7 +1465,7 @@ html,body{height:100%;background:var(--bg);color:var(--txt);font-family:var(--fh
 
 /* Question */
 .q-area{padding:6px 16px;flex:1;display:flex;flex-direction:column;gap:8px;min-height:0;overflow-y:auto}
-.q-card{background:var(--s0);border:1px solid var(--rim2);border-radius:var(--r2);padding:15px;font-size:14px;font-weight:500;line-height:1.6;color:var(--txt);position:relative;overflow:hidden;flex-shrink:0;box-shadow:var(--sh-sm);border-top:3px solid var(--qColor,var(--amber2))}
+.q-card{background:var(--s0);border:1px solid var(--rim2);border-radius:var(--r2);padding:16px;font-size:16px;font-weight:500;line-height:1.6;color:var(--txt);position:relative;overflow:hidden;flex-shrink:0;box-shadow:var(--sh-sm);border-top:3px solid var(--qColor,var(--amber2))}
 .q-card-top{height:3px;border-radius:3px 3px 0 0;position:absolute;top:0;left:0;right:0}
 .q-badge{font-family:var(--fm);font-size:8px;font-weight:700;letter-spacing:1.5px;text-transform:uppercase;color:var(--qColor,var(--amber));background:var(--qColorBg,var(--amberBg));padding:3px 9px;border-radius:6px;display:inline-block;margin-bottom:8px;border:1px solid var(--qColorBorder,rgba(180,83,9,.2))}
 
@@ -1486,7 +1487,7 @@ html,body{height:100%;background:var(--bg);color:var(--txt);font-family:var(--fh
 
 /* Options */
 .opts{display:grid;grid-template-columns:1fr 1fr;gap:8px;flex:1;min-height:0}
-.opt{background:var(--s0);border:1.5px solid var(--rim2);border-radius:var(--r2);padding:13px 12px;font-family:var(--fh);font-size:13px;font-weight:500;color:var(--txt);cursor:pointer;transition:all .18s;display:flex;align-items:flex-start;gap:8px;text-align:left;line-height:1.35;position:relative;overflow:hidden;box-shadow:var(--sh-sm)}
+.opt{background:var(--s0);border:1.5px solid var(--rim2);border-radius:var(--r2);padding:15px 14px;font-family:var(--fh);font-size:15px;font-weight:500;color:var(--txt);cursor:pointer;transition:all .18s;display:flex;align-items:flex-start;gap:8px;text-align:left;line-height:1.4;position:relative;overflow:hidden;box-shadow:var(--sh-sm)}
 .opt-ltr{width:26px;height:26px;min-width:26px;border-radius:8px;background:var(--s2);display:flex;align-items:center;justify-content:center;font-family:var(--fm);font-size:9px;font-weight:700;color:var(--sub);border:1.5px solid var(--dim);transition:all .18s;flex-shrink:0;margin-top:1px}
 .opt:hover:not(:disabled){border-color:rgba(180,83,9,.4);background:var(--amberBg);transform:translateY(-1px);box-shadow:var(--sh)}
 .opt:hover:not(:disabled) .opt-ltr{background:var(--amber);color:#fff;border-color:var(--amber)}
@@ -1525,7 +1526,7 @@ html,body{height:100%;background:var(--bg);color:var(--txt);font-family:var(--fh
 .result-btns{width:100%;display:flex;flex-direction:column;gap:8px;animation:fadeUp .4s .75s both}
 
 /* ══════ PROFILE ══════ */
-.profile-screen{flex:1;display:flex;flex-direction:column;overflow-y:auto}
+.profile-screen{flex:1;display:flex;flex-direction:column;overflow-y:auto;-webkit-overflow-scrolling:touch}
 .career-banner{padding:22px 18px 18px;position:relative;overflow:hidden}
 .pb{padding:0 18px 32px;display:flex;flex-direction:column;gap:13px;margin-top:13px}
 .skill-row{background:var(--s0);border:1px solid var(--rim);border-radius:var(--r2);padding:13px;display:flex;align-items:center;gap:12px;box-shadow:var(--sh-xs)}
@@ -1639,13 +1640,13 @@ html,body{height:100%;background:var(--bg);color:var(--txt);font-family:var(--fh
 .wallet-body{padding:16px;display:flex;flex-direction:column;gap:13px;overflow-y:auto}
 .txn-row{display:flex;align-items:center;gap:11px;background:var(--s0);border:1px solid var(--rim);border-radius:var(--r1);padding:12px 13px;box-shadow:var(--sh-xs)}
 .txn-icon{width:36px;height:36px;border-radius:10px;display:flex;align-items:center;justify-content:center;font-size:16px;flex-shrink:0}
-.txn-name{font-size:13px;font-weight:600}
+.txn-name{font-size:15px;font-weight:600}
 .txn-time{font-family:var(--fm);font-size:10px;color:var(--sub);margin-top:2px}
 .txn-amt{font-family:var(--fm);font-size:14px;font-weight:600;flex-shrink:0}
 
 /* ══════ NAV ══════ */
 .nav{display:flex;border-top:1px solid var(--rim);background:rgba(249,246,241,.97);backdrop-filter:blur(20px);-webkit-backdrop-filter:blur(20px)}
-.nav-btn{flex:1;background:none;border:none;color:var(--sub);font-family:var(--fm);font-size:9px;font-weight:700;letter-spacing:.5px;text-transform:uppercase;padding:11px 0 9px;cursor:pointer;display:flex;flex-direction:column;align-items:center;gap:4px;transition:color .15s;border-top:2px solid transparent}
+.nav-btn{flex:1;background:none;border:none;color:var(--sub);font-family:var(--fm);font-size:11px;font-weight:700;letter-spacing:.5px;text-transform:uppercase;padding:12px 0 10px;cursor:pointer;display:flex;flex-direction:column;align-items:center;gap:4px;transition:color .15s;border-top:2px solid transparent}
 .nav-btn.on{color:var(--amber2);border-top-color:var(--amberViv);text-shadow:0 0 12px rgba(245,158,11,.25)}
 .nav-icon{font-size:18px;line-height:1}
 
@@ -3608,7 +3609,7 @@ export default function App() {
                       <span className="fee-icon">{f.icon}</span>
                       <div className="fee-info">
                         <div className="fee-label">{f.label} Entry</div>
-                        <div className="fee-prize">{f.entry > 0 ? `Win $${f.prize.toFixed(2)} · Platform fee $${(f.entry * 0.2).toFixed(2)}` : "Free practice — no prize"}</div>
+                        <div className="fee-prize">{f.entry > 0 ? `Win ₹${Math.round(f.prize*83)} · Platform fee ₹${Math.round(f.entry*83*0.2)}` : "Free practice — no prize"}</div>
                       </div>
                       <div className="fee-tag" style={{ background: f.entry === 0 ? "var(--s2)" : "var(--amberBg)", color: f.entry === 0 ? "var(--sub)" : "var(--amber)", border: `1px solid ${f.entry === 0 ? "var(--rim)" : "rgba(180,83,9,.2)"}` }}>{f.tag}</div>
                     </div>
@@ -3616,6 +3617,7 @@ export default function App() {
                 </div>
               </div>
               <div className="spacer" />
+              <div style={{ position:"sticky", bottom:0, background:"var(--bg)", paddingTop:12, paddingBottom:16, marginTop:8, display:"flex", flexDirection:"column", gap:10 }}>
               <button className="btn btn-amber" onClick={startGame} disabled={!nick.trim() || !country}>
                 Find Opponent & Toss 🪙
               </button>
@@ -3623,8 +3625,9 @@ export default function App() {
                 onClick={createFriendChallenge}
                 disabled={!nick.trim()}
                 style={{ width:"100%", padding:"13px 0", borderRadius:"var(--r2)", background:"transparent", border:"2px solid var(--green2)", color:"var(--green2)", fontFamily:"var(--fm)", fontSize:13, fontWeight:700, cursor: nick.trim() ? "pointer":"not-allowed", opacity: nick.trim() ? 1 : 0.4, display:"flex", alignItems:"center", justifyContent:"center", gap:8 }}>
-                🎯 Challenge a Friend
+                🎯 Challenge via WhatsApp
               </button>
+              </div>
             </div>
           </div>
         )}
@@ -4895,17 +4898,17 @@ export default function App() {
               </div>
 
               <div className="slbl">Recent transactions</div>
-              {[
-                { icon: "🏆", name: "Match Win vs SixMachine", time: "2h ago", amt: "+$0.80", color: "var(--green)" },
-                { icon: "🎯", name: "Entry fee vs GullyKing",  time: "2h ago", amt: "-$1.00", color: "var(--red)"   },
-                { icon: "💳", name: "Deposit",                 time: "Yesterday", amt: "+$10.00", color: "var(--blue)" },
-              ].map((t, i) => (
-                <div key={i} className="txn-row">
-                  <div className="txn-icon" style={{ background: "var(--s2)" }}>{t.icon}</div>
-                  <div className="txn-info"><div className="txn-name">{t.name}</div><div className="txn-time">{t.time}</div></div>
-                  <div className="txn-amt" style={{ color: t.color }}>{t.amt}</div>
+              {wallet === 0 && !loggedIn ? (
+                <div style={{ textAlign:"center", padding:"28px 16px", color:"var(--sub)", fontSize:14 }}>
+                  <div style={{ fontSize:36, marginBottom:10 }}>📋</div>
+                  No transactions yet. Add funds to start playing for real money!
                 </div>
-              ))}
+              ) : (
+                <div style={{ textAlign:"center", padding:"28px 16px", color:"var(--sub)", fontSize:14 }}>
+                  <div style={{ fontSize:36, marginBottom:10 }}>📋</div>
+                  No transactions yet. Play a match to see your history here.
+                </div>
+              )}
             </div>
           </div>
         )}
