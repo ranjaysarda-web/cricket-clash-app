@@ -37,42 +37,48 @@ async function api(path, options = {}) {
 const CONDITIONS = [
   { id:"swing",  icon:"🌦", name:"Overcast & Swing",        desc:"Duke ball swinging both ways. Pace & seam questions.",    theme:"#0369a1", bg:"#f0f9ff", cat:"The Ashes",
     isNight:false, stadium:"Lord's Cricket Ground", venue:"London, England",
-    img:"https://upload.wikimedia.org/wikipedia/commons/thumb/9/9d/Lords_Cricket_Ground_-_panoramio.jpg/1280px-Lords_Cricket_Ground_-_panoramio.jpg",
+    img:null,
+    stadiumGrad:"linear-gradient(180deg,#2d4a2d 0%,#3d6b3d 35%,#4a7a4a 55%,#5a8a5a 70%,#8B7355 80%,#6b5a3a 100%)",
     sky:"linear-gradient(180deg,#4a5568 0%,#718096 40%,#a0aec0 100%)",
     atmosphere:"Overcast | Humid 82% | 16°C", wind:"SW 18 km/h", weatherIcon:"🌦",
     broadcastTag:"LIVE · DAY MATCH", broadcastColor:"#0369a1",
     pitchColor:"#8B7355", pitchDesc:"Soft, Green", overlay:"rgba(7,89,133,.55)" },
   { id:"dry",    icon:"☀️", name:"Dry Pitch, Spin Day",     desc:"Crumbling surface. Spin bowling questions dominate.",     theme:"#92400e", bg:"#fffbeb", cat:"Test Cricket",
     isNight:false, stadium:"MA Chidambaram Stadium", venue:"Chennai, India",
-    img:"https://upload.wikimedia.org/wikipedia/commons/thumb/3/3d/MA_Chidambaram_Stadium%2C_Chennai.jpg/1280px-MA_Chidambaram_Stadium%2C_Chennai.jpg",
+    img:null,
+    stadiumGrad:"linear-gradient(180deg,#3a5a1a 0%,#4a7a2a 35%,#6a8a3a 55%,#8a9a4a 70%,#C4A96A 80%,#a08040 100%)",
     sky:"linear-gradient(180deg,#F59E0B 0%,#FBBF24 30%,#FDE68A 100%)",
     atmosphere:"Sunny | Humidity 68% | 34°C", wind:"NE 8 km/h", weatherIcon:"☀️",
     broadcastTag:"LIVE · DAY MATCH", broadcastColor:"#b45309",
     pitchColor:"#C4A96A", pitchDesc:"Hard, Dry, Dusty", overlay:"rgba(120,53,15,.55)" },
   { id:"flat",   icon:"🏟", name:"Flat Track Belter",       desc:"Six-hitting bonanza. Batting records & T20 questions.",   theme:"#166534", bg:"#f0fdf4", cat:"T20 Cricket",
     isNight:true,  stadium:"Narendra Modi Stadium", venue:"Ahmedabad, India",
-    img:"https://upload.wikimedia.org/wikipedia/commons/thumb/7/7a/Sardar_Patel_Stadium_Motera.jpg/1280px-Sardar_Patel_Stadium_Motera.jpg",
+    img:null,
+    stadiumGrad:"linear-gradient(180deg,#0a1a0a 0%,#1a3a1a 35%,#2a5a2a 55%,#3a6a3a 70%,#A8956B 80%,#7a6040 100%)",
     sky:"linear-gradient(180deg,#0a0a1a 0%,#1a1a4a 50%,#2d3a6b 100%)",
     atmosphere:"Clear Night | 29°C | Dew: Heavy", wind:"NW 12 km/h", weatherIcon:"🌙",
     broadcastTag:"LIVE · NIGHT MATCH", broadcastColor:"#22d3ee",
     pitchColor:"#A8956B", pitchDesc:"Flat, True Bounce", overlay:"rgba(0,0,30,.65)" },
   { id:"seam",   icon:"🌬", name:"Green Top, Early Seam",   desc:"Seam movement galore. Classic fast bowling questions.",   theme:"#5b21b6", bg:"#faf5ff", cat:"Player Records",
     isNight:false, stadium:"MCG", venue:"Melbourne, Australia",
-    img:"https://upload.wikimedia.org/wikipedia/commons/thumb/3/3a/MCG_under_lights.jpg/1280px-MCG_under_lights.jpg",
+    img:null,
+    stadiumGrad:"linear-gradient(180deg,#1a3a1a 0%,#2a5a2a 35%,#3a7a3a 55%,#5a9a5a 70%,#6B8C42 80%,#4a6a2a 100%)",
     sky:"linear-gradient(180deg,#1e3a5f 0%,#2d6a9f 50%,#87ceeb 100%)",
     atmosphere:"Partly Cloudy | 22°C | Moisture: High", wind:"WSW 24 km/h", weatherIcon:"🌬",
     broadcastTag:"LIVE · DAY MATCH", broadcastColor:"#7c3aed",
     pitchColor:"#6B8C42", pitchDesc:"Lush, Grassy Cover", overlay:"rgba(55,20,120,.5)" },
   { id:"dew",    icon:"🌙", name:"Night Match, Heavy Dew",  desc:"Dew factor advantage. ODI & T20 batting questions.",      theme:"#1e40af", bg:"#eff6ff", cat:"ODI Cricket",
     isNight:true,  stadium:"Wankhede Stadium", venue:"Mumbai, India",
-    img:"https://upload.wikimedia.org/wikipedia/commons/thumb/e/e8/Wankhede_Stadium_-_panoramio_%281%29.jpg/1280px-Wankhede_Stadium_-_panoramio_%281%29.jpg",
+    img:null,
+    stadiumGrad:"linear-gradient(180deg,#051a05 0%,#0a2a0a 35%,#1a4a1a 55%,#2a5a2a 70%,#4A7C59 80%,#2a4a3a 100%)",
     sky:"linear-gradient(180deg,#020617 0%,#0f172a 40%,#1e3a5f 100%)",
     atmosphere:"Clear Night | 27°C | Dew: Heavy", wind:"Sea breeze 14 km/h", weatherIcon:"🌙",
     broadcastTag:"LIVE · NIGHT MATCH", broadcastColor:"#60a5fa",
     pitchColor:"#4A7C59", pitchDesc:"Damp, Dew-affected", overlay:"rgba(0,10,40,.72)" },
   { id:"dusty",  icon:"🏜", name:"Sub-Continent Dust Bowl", desc:"Reverse swing & spin. ICC tournament history questions.", theme:"#b45309", bg:"#fefce8", cat:"ICC Tournaments",
     isNight:false, stadium:"Eden Gardens", venue:"Kolkata, India",
-    img:"https://upload.wikimedia.org/wikipedia/commons/thumb/9/9b/Eden_Gardens_during_the_day.jpg/1280px-Eden_Gardens_during_the_day.jpg",
+    img:null,
+    stadiumGrad:"linear-gradient(180deg,#2a1a05 0%,#4a2a0a 35%,#6a4a1a 55%,#8a6a2a 70%,#B8956A 80%,#8a6040 100%)",
     sky:"linear-gradient(180deg,#92400e 0%,#b45309 40%,#d97706 100%)",
     atmosphere:"Hazy | Dusty | 38°C", wind:"Hot wind 22 km/h", weatherIcon:"🏜",
     broadcastTag:"LIVE · DAY MATCH", broadcastColor:"#f59e0b",
@@ -1123,6 +1129,88 @@ function useAudio(on) {
       else if (t === "coin") { [440, 550, 660, 880, 1100].forEach((f, i) => { const o = c.createOscillator(), g = c.createGain(); o.connect(g); g.connect(c.destination); o.frequency.value = f; g.gain.setValueAtTime(.06, c.currentTime + i * .07); g.gain.exponentialRampToValueAtTime(.001, c.currentTime + i * .07 + .15); o.start(c.currentTime + i * .07); o.stop(c.currentTime + i * .07 + .17); }); }
       else if (t === "win") { [523, 659, 784, 1047].forEach((f, i) => { const o = c.createOscillator(), g = c.createGain(); o.connect(g); g.connect(c.destination); o.frequency.value = f; g.gain.setValueAtTime(.07, c.currentTime + i * .12); g.gain.exponentialRampToValueAtTime(.001, c.currentTime + i * .12 + .22); o.start(c.currentTime + i * .12); o.stop(c.currentTime + i * .12 + .25); }); }
       else if (t === "between") { [330, 440, 330].forEach((f, i) => { const o = c.createOscillator(), g = c.createGain(); o.connect(g); g.connect(c.destination); o.frequency.value = f; g.gain.setValueAtTime(.035, c.currentTime + i * .3); g.gain.exponentialRampToValueAtTime(.001, c.currentTime + i * .3 + .25); o.start(c.currentTime + i * .3); o.stop(c.currentTime + i * .3 + .28); }); }
+      else if (t === "crowd_cheer") {
+        // Simulated crowd roar — noise burst that rises then fades
+        const bufSize = c.sampleRate * 1.8;
+        const buf = c.createBuffer(1, bufSize, c.sampleRate);
+        const data = buf.getChannelData(0);
+        for (let i = 0; i < bufSize; i++) data[i] = (Math.random() * 2 - 1) * Math.sin(i / bufSize * Math.PI);
+        const src = c.createBufferSource();
+        src.buffer = buf;
+        const g = c.createGain();
+        const f = c.createBiquadFilter();
+        f.type = "bandpass"; f.frequency.value = 1200; f.Q.value = 0.5;
+        src.connect(f); f.connect(g); g.connect(c.destination);
+        g.gain.setValueAtTime(0, c.currentTime);
+        g.gain.linearRampToValueAtTime(0.35, c.currentTime + 0.15);
+        g.gain.linearRampToValueAtTime(0.28, c.currentTime + 0.8);
+        g.gain.exponentialRampToValueAtTime(0.001, c.currentTime + 1.8);
+        src.start(); src.stop(c.currentTime + 1.8);
+      }
+      else if (t === "crowd_clap") {
+        // Short clap burst
+        for (let k = 0; k < 4; k++) {
+          const when = c.currentTime + k * 0.28;
+          const bufSize = Math.floor(c.sampleRate * 0.08);
+          const buf = c.createBuffer(1, bufSize, c.sampleRate);
+          const data = buf.getChannelData(0);
+          for (let i = 0; i < bufSize; i++) data[i] = (Math.random() * 2 - 1) * Math.exp(-i / (bufSize * 0.3));
+          const src = c.createBufferSource(); src.buffer = buf;
+          const g = c.createGain(); g.gain.value = 0.2;
+          const f = c.createBiquadFilter(); f.type = "highpass"; f.frequency.value = 1000;
+          src.connect(f); f.connect(g); g.connect(c.destination);
+          src.start(when); src.stop(when + 0.1);
+        }
+      }
+      else if (t === "suspense") {
+        // Tense rising drone for Super Over
+        const freqs = [80, 100, 120, 150, 190];
+        freqs.forEach((f, i) => {
+          const o = c.createOscillator(), g = c.createGain();
+          o.type = "sawtooth"; o.connect(g); g.connect(c.destination);
+          o.frequency.setValueAtTime(f, c.currentTime);
+          o.frequency.linearRampToValueAtTime(f * 1.5, c.currentTime + 2.5);
+          g.gain.setValueAtTime(0, c.currentTime + i * 0.1);
+          g.gain.linearRampToValueAtTime(0.04, c.currentTime + i * 0.1 + 0.3);
+          g.gain.linearRampToValueAtTime(0.04, c.currentTime + 2.2);
+          g.gain.exponentialRampToValueAtTime(0.001, c.currentTime + 2.6);
+          o.start(c.currentTime + i * 0.1);
+          o.stop(c.currentTime + 2.7);
+        });
+        // Ticking heartbeat
+        [0.5, 1.0, 1.5, 2.0].forEach(when => {
+          const o = c.createOscillator(), g = c.createGain();
+          o.frequency.value = 60; o.connect(g); g.connect(c.destination);
+          g.gain.setValueAtTime(0.08, c.currentTime + when);
+          g.gain.exponentialRampToValueAtTime(0.001, c.currentTime + when + 0.15);
+          o.start(c.currentTime + when); o.stop(c.currentTime + when + 0.18);
+        });
+      }
+      else if (t === "crowd_win") {
+        // Big win — sustained crowd + fanfare
+        const bufSize = c.sampleRate * 3;
+        const buf = c.createBuffer(1, bufSize, c.sampleRate);
+        const data = buf.getChannelData(0);
+        for (let i = 0; i < bufSize; i++) data[i] = (Math.random() * 2 - 1) * Math.min(1, i / (c.sampleRate * 0.3));
+        const src = c.createBufferSource(); src.buffer = buf;
+        const g = c.createGain();
+        const f = c.createBiquadFilter(); f.type = "bandpass"; f.frequency.value = 1500; f.Q.value = 0.4;
+        src.connect(f); f.connect(g); g.connect(c.destination);
+        g.gain.setValueAtTime(0.4, c.currentTime);
+        g.gain.linearRampToValueAtTime(0.5, c.currentTime + 0.5);
+        g.gain.linearRampToValueAtTime(0.3, c.currentTime + 2.5);
+        g.gain.exponentialRampToValueAtTime(0.001, c.currentTime + 3);
+        src.start(); src.stop(c.currentTime + 3);
+        // Fanfare notes
+        [523, 659, 784, 1047, 1319].forEach((fr, i) => {
+          const o = c.createOscillator(), og = c.createGain();
+          o.connect(og); og.connect(c.destination);
+          o.frequency.value = fr;
+          og.gain.setValueAtTime(0.09, c.currentTime + i * 0.1);
+          og.gain.exponentialRampToValueAtTime(0.001, c.currentTime + i * 0.1 + 0.4);
+          o.start(c.currentTime + i * 0.1); o.stop(c.currentTime + i * 0.1 + 0.42);
+        });
+      }
     } catch {}
   }, [on]);
 }
@@ -1195,7 +1283,7 @@ html,body,#root{height:100%;width:100%;margin:0;padding:0;}
 html,body{background:var(--bg);color:var(--txt);font-family:var(--fh);-webkit-font-smoothing:antialiased;overflow-x:hidden;font-size:16px}
 #root{min-height:100vh;display:flex;justify-content:center;background:var(--bg)}
 .app{width:100%;max-width:480px;min-height:100dvh;height:100%;display:flex;flex-direction:column;background:var(--bg);position:relative;overflow-x:hidden;overflow-y:auto;margin:0 auto}
-.screen{flex:1;display:flex;flex-direction:column;animation:fadeUp .28s cubic-bezier(.22,1,.36,1);min-height:0}
+.screen{flex:1;display:flex;flex-direction:column;animation:fadeUp .28s cubic-bezier(.22,1,.36,1);min-height:0;overflow-y:auto;-webkit-overflow-scrolling:touch}
 
 /* ══════ HERO ══════ */
 .hero{position:relative;height:440px;overflow:hidden;background:#1c1917}
@@ -1802,8 +1890,8 @@ function WatchingScreen({ opp, feed, finalScore, label, target, isPvp }) {
     return () => clearInterval(t);
   }, []);
 
-  // Ball reveal speed: PvP = 3s (human pace), Bot = 800ms (simulated)
-  const ballInterval = isPvp ? 3000 : 800;
+  // Ball reveal speed: PvP = 3s (human pace), Bot = 2s (still feels live)
+  const ballInterval = isPvp ? 3000 : 2000;
 
   useEffect(() => {
     if (!feed || feed.length === 0) return;
@@ -2424,7 +2512,7 @@ export default function App() {
     setOppScore(score);
     setOppLiveFeed(feed);
     setScreen("watching");
-    // After showing the live feed, switch to player's chase
+    // After showing the live feed, switch to player's chase (15s minimum)
     setTimeout(() => {
       setInnings(2);
       setQi(0); setTLeft(15); setSel(null); setRev(false); setDone([]);
@@ -2433,7 +2521,7 @@ export default function App() {
       setFrozen(false); setFreeHit(false); setHidden([]);
       setScreen("match");
       qStartRef.current = Date.now();
-    }, 5000);
+    }, 15000);
   }, [opp]);
 
   // ── TIMER ─────────────────────────────────────────────────────────────────────
@@ -2573,6 +2661,7 @@ export default function App() {
     setSoSel(null); setSoRev(false); setSoTLeft(15); setSoTimes([]);
     setInSuperOver(true);
     setSoPhase("intro");
+    snd("suspense");
     // Auto-advance past intro
     setTimeout(() => {
       setSoPhase("batting");
@@ -2710,6 +2799,8 @@ export default function App() {
       if (runs === 6) setBadges(b => { const n = new Set(b); n.add("first_six"); return n; });
       setMyScore(s => s + runs);
       snd("ok");
+      if (runs === 6) snd("crowd_cheer");
+      else if (runs === 4) snd("crowd_clap");
       const ns = cStreak + 1; setCStreak(ns);
       if (ns > maxStreak) setMaxStreak(ns);
       setDone(p => [...p, "ok"]);
@@ -2888,6 +2979,7 @@ export default function App() {
           setTotalEarnings(e => parseFloat((e + (entryFee.prize - entryFee.entry)).toFixed(2)));
         }
         snd("win");
+        snd("crowd_win");
         // Earn CricCoins on win
         setCricCoins(c => c + (entryFee.entry > 0 ? 15 : 5));
       } else {
@@ -3730,11 +3822,50 @@ export default function App() {
 
           return (
             <div className="cond-screen">
-              {/* ── Stadium background image ── */}
-              <div className="cond-stadium-bg" style={{
-                backgroundImage: `url(${condition.img})`,
-                filter: isNight ? "brightness(.55) saturate(.7)" : "brightness(.75) saturate(.85)",
-              }} />
+              {/* ── Stadium background — CSS drawn cricket ground ── */}
+              <div className="cond-stadium-bg" style={{ background: condition.stadiumGrad }}>
+                {/* Oval boundary */}
+                <svg viewBox="0 0 400 280" style={{ position:"absolute", inset:0, width:"100%", height:"100%", opacity: isNight ? 0.7 : 0.85 }} preserveAspectRatio="xMidYMid slice">
+                  {/* Sky */}
+                  <rect width="400" height="280" fill="transparent"/>
+                  {/* Outfield grass */}
+                  <ellipse cx="200" cy="200" rx="190" ry="140" fill={isNight ? "#1a3a1a" : "#2d5a1a"} opacity="0.9"/>
+                  {/* Inner circle */}
+                  <ellipse cx="200" cy="200" rx="120" ry="85" fill={isNight ? "#1f4a1f" : "#3a6e22"} opacity="0.9"/>
+                  {/* Pitch strip */}
+                  <rect x="185" y="130" width="30" height="130" rx="3" fill={condition.pitchColor} opacity="0.95"/>
+                  {/* Crease lines */}
+                  <rect x="180" y="155" width="40" height="3" fill="#fff" opacity="0.7"/>
+                  <rect x="180" y="232" width="40" height="3" fill="#fff" opacity="0.7"/>
+                  {/* Stumps - batting end */}
+                  <rect x="193" y="148" width="3" height="12" fill="#d4a843"/>
+                  <rect x="199" y="148" width="3" height="12" fill="#d4a843"/>
+                  <rect x="205" y="148" width="3" height="12" fill="#d4a843"/>
+                  {/* Stumps - bowling end */}
+                  <rect x="193" y="233" width="3" height="12" fill="#d4a843"/>
+                  <rect x="199" y="233" width="3" height="12" fill="#d4a843"/>
+                  <rect x="205" y="233" width="3" height="12" fill="#d4a843"/>
+                  {/* Boundary rope */}
+                  <ellipse cx="200" cy="200" rx="185" ry="135" fill="none" stroke="#fff" strokeWidth="2" strokeDasharray="6,8" opacity="0.5"/>
+                  {/* Stadium stands (simplified arcs) */}
+                  <path d="M15,200 Q200,20 385,200" fill="none" stroke={isNight ? "#2a3a4a" : "#4a5a3a"} strokeWidth="18" opacity="0.8"/>
+                  {/* Floodlight towers for night */}
+                  {isNight && <>
+                    <rect x="25" y="40" width="8" height="60" fill="#334" opacity="0.9"/>
+                    <circle cx="29" cy="38" r="10" fill="#fffde0" opacity="0.9"/>
+                    <rect x="367" y="40" width="8" height="60" fill="#334" opacity="0.9"/>
+                    <circle cx="371" cy="38" r="10" fill="#fffde0" opacity="0.9"/>
+                    <rect x="25" y="180" width="8" height="60" fill="#334" opacity="0.7"/>
+                    <circle cx="29" cy="178" r="8" fill="#fffde0" opacity="0.7"/>
+                    <rect x="367" y="180" width="8" height="60" fill="#334" opacity="0.7"/>
+                    <circle cx="371" cy="178" r="8" fill="#fffde0" opacity="0.7"/>
+                  </>}
+                  {/* Scoreboard */}
+                  <rect x="160" y="22" width="80" height="32" rx="4" fill="#1a1a2a" opacity="0.85"/>
+                  <text x="200" y="36" textAnchor="middle" fill="#fbbf24" fontSize="8" fontFamily="monospace">CRICKET CLASH</text>
+                  <text x="200" y="48" textAnchor="middle" fill="#fff" fontSize="9" fontFamily="monospace">{condition.stadium.substring(0,16)}</text>
+                </svg>
+              </div>
 
               {/* ── Sky gradient overlay ── */}
               <div className="cond-overlay" style={{ background: condition.overlay }} />
@@ -3769,6 +3900,7 @@ export default function App() {
 
                 {/* ── TOP: Broadcast bar ── */}
                 <div className="broadcast-bar">
+                  <button onClick={() => setScreen("toss")} style={{ background:"rgba(255,255,255,.12)", border:"1px solid rgba(255,255,255,.2)", color:"#fff", borderRadius:8, padding:"4px 10px", fontSize:16, cursor:"pointer", fontWeight:700, lineHeight:1 }}>←</button>
                   <div className="broadcast-live" style={{ color: bc }}>
                     <div className="live-dot" style={{ background: bc }} />
                     {condition.broadcastTag}
