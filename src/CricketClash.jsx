@@ -1191,7 +1191,7 @@ const G = `
   --sh-green:0 6px 24px rgba(22,101,52,.18);
   --sh-red:0 6px 24px rgba(190,18,60,.18);
 }
-html,body{height:100%;background:var(--bg);color:var(--txt);font-family:var(--fh);-webkit-font-smoothing:antialiased;overflow-x:hidden}
+html,body{height:100%;background:var(--bg);color:var(--txt);font-family:var(--fh);-webkit-font-smoothing:antialiased;overflow-x:hidden;font-size:16px}
 #root{min-height:100vh;display:flex;justify-content:center;background:var(--bg)}
 .app{width:100%;max-width:430px;min-height:100dvh;display:flex;flex-direction:column;background:var(--bg);position:relative;overflow-x:hidden;overflow-y:auto}
 .screen{flex:1;display:flex;flex-direction:column;animation:fadeUp .28s cubic-bezier(.22,1,.36,1)}
@@ -1213,9 +1213,9 @@ html,body{height:100%;background:var(--bg);color:var(--txt);font-family:var(--fh
 .land-features{display:grid;grid-template-columns:1fr 1fr;gap:8px}
 .feat-card{background:var(--s0);border:1px solid var(--rim);border-radius:var(--r2);padding:14px;display:flex;flex-direction:column;gap:5px;box-shadow:var(--sh-sm);animation:fadeUp .4s both;transition:transform .18s,box-shadow .18s}
 .feat-card:hover{transform:translateY(-2px);box-shadow:var(--sh-lg)}
-.feat-icon{font-size:22px}
-.feat-name{font-size:12px;font-weight:700}
-.feat-desc{font-size:10px;color:var(--sub);line-height:1.4}
+.feat-icon{font-size:26px}
+.feat-name{font-size:14px;font-weight:700}
+.feat-desc{font-size:12px;color:var(--sub);line-height:1.4}
 
 /* ══════ BUTTONS ══════ */
 .btn{position:relative;border:none;border-radius:var(--r2);font-family:var(--fh);font-size:15px;font-weight:700;letter-spacing:.2px;cursor:pointer;padding:15px 22px;display:flex;align-items:center;justify-content:center;gap:8px;overflow:hidden;transition:transform .12s,box-shadow .18s,opacity .14s;-webkit-tap-highlight-color:transparent}
@@ -1611,7 +1611,7 @@ html,body{height:100%;background:var(--bg);color:var(--txt);font-family:var(--fh
 .store-card-label{font-size:14px;font-weight:700}
 .store-card-desc{font-size:11px;color:var(--sub);margin-top:2px}
 .store-btn{font-family:var(--fm);font-size:11px;font-weight:700;border-radius:999px;padding:6px 14px;border:none;cursor:pointer;flex-shrink:0}
-.coin-bar{display:flex;align-items:center;gap:7px;background:rgba(217,119,6,.08);border:1px solid rgba(217,119,6,.2);border-radius:999px;padding:6px 14px;font-family:var(--fd);font-size:15px;font-weight:700;color:var(--amber)}
+.coin-bar{display:flex;align-items:center;gap:7px;background:rgba(217,119,6,.08);border:1px solid rgba(217,119,6,.2);border-radius:999px;padding:6px 14px;font-family:var(--fd);font-size:15px;font-weight:700;color:var(--amber);cursor:pointer;}
 
 /* ══════ LEADERBOARD ══════ */
 .lb-screen{display:flex;flex-direction:column;flex:1}
@@ -1898,7 +1898,7 @@ export default function App() {
   const [loggedIn, setLoggedIn] = useState(false);
   const [showTutorial, setShowTutorial] = useState(false);
   const [tutStep, setTutStep] = useState(0);
-  const [authMode, setAuthMode] = useState("main"); // main | login | signup
+  const [authMode, setAuthMode] = useState("login"); // login | signup
   const [authEmail, setAuthEmail] = useState("");
   const [authPhone, setAuthPhone] = useState("");
   const [authPassword, setAuthPassword] = useState("");
@@ -1911,8 +1911,8 @@ export default function App() {
   // Profile
   const [nick, setNick] = useState("");
   const [country, setCountry] = useState(null);
-  const [totalXp, setTotalXp] = useState(280);
-  const [skillXp, setSkillXp] = useState({ batting:40, bowling:25, ipl:60, history:30, womens:10 });
+  const [totalXp, setTotalXp] = useState(0);
+  const [skillXp, setSkillXp] = useState({ batting:0, bowling:0, ipl:0, history:0, womens:0 });
   const [wins, setWins] = useState(0);
   const [played, setPlayed] = useState(0);
   const [totalEarnings, setTotalEarnings] = useState(0);
@@ -2106,7 +2106,7 @@ export default function App() {
       if (!res.ok) { setAuthError(data.error || "Signup failed"); return; }
       // Auto login after signup
       setAuthMode("login");
-      setAuthError("Account created! Please log in.");
+      setAuthError("✅ Account created! Please log in.");
     } catch (e) {
       setAuthError("Network error — please try again");
     } finally { setAuthLoading(false); }
@@ -2117,7 +2117,10 @@ export default function App() {
       setLoggedIn(false);
       setNick("Guest");
       setScreen("landing");
-      setTimeout(() => setShowTutorial(true), 600);
+      const hasSeenTutorial = localStorage.getItem("cc_tutorial_done");
+      if (!hasSeenTutorial) {
+        setTimeout(() => setShowTutorial(true), 600);
+      }
       return;
     }
     setAuthError("");
@@ -2140,7 +2143,10 @@ export default function App() {
       setNick(data.player.nickname);
       setWallet(data.player.wallet / 100);
       setScreen("landing");
-      setTimeout(() => setShowTutorial(true), 600);
+      const hasSeenTutorial = localStorage.getItem("cc_tutorial_done");
+      if (!hasSeenTutorial) {
+        setTimeout(() => setShowTutorial(true), 600);
+      }
     } catch (e) {
       setAuthError("Network error — please try again");
     } finally { setAuthLoading(false); }
@@ -2246,11 +2252,35 @@ export default function App() {
         return;
       }
 
-      // Waiting — poll every 2s for up to 30s, then server auto-falls back to bot
+      // Waiting — poll every 2s for up to 30s, then fall back to bot
       setQueueId(result.queue_id);
       const startWait = Date.now();
       queuePollRef.current = setInterval(async () => {
-        setQueueWaitMs(Date.now() - startWait);
+        const elapsed = Date.now() - startWait;
+        setQueueWaitMs(elapsed);
+
+        // 30s timeout — give up and start bot match
+        if (elapsed >= 30000) {
+          clearQueue();
+          const cond = rnd(CONDITIONS);
+          const o    = rnd(OPPS);
+          setCondition(cond); setOpp(o);
+          setMyScore(0); setOppScore(0); setWickets(0);
+          setQi(0); setDone([]); setTLeft(15);
+          setSel(null); setRev(false); setCStreak(0); setMaxStreak(0);
+          setPuFF(true); setPuTF(true); setPuFH(true);
+          setFrozen(false); setFreeHit(false); setHidden([]);
+          setOppLiveFeed([]); setXpEarned(0); setResponseTimes([]);
+          setShowBetween(false); setBetweenData(null);
+          setTossState("idle"); setTossWinner(null); setBatFirst(null);
+          setMatchType("bot"); setMatchId(null); setLoading(false);
+          setInSuperOver(false); setSoPhase("intro"); setSuperOverWinner(null);
+          fetchInBackground(cond);
+          setScreen("toss");
+          showToast("No opponent found — playing vs AI 🤖");
+          return;
+        }
+
         try {
           const poll = await api(`/matches/queue/status?entry_key=${entryKey}`);
           if (poll.status === "matched") {
@@ -3016,12 +3046,12 @@ export default function App() {
                 )}
               </div>
               <div className="tut-btns">
-                <button className="tut-skip" onClick={() => { setShowTutorial(false); setTutStep(0); }}>
+                <button className="tut-skip" onClick={() => { setShowTutorial(false); setTutStep(0); localStorage.setItem("cc_tutorial_done","1"); }}>
                   Skip
                 </button>
                 <button className="tut-next" onClick={() => {
                   if (tutStep < TUT_STEPS.length - 1) setTutStep(s => s + 1);
-                  else { setShowTutorial(false); setTutStep(0); }
+                  else { setShowTutorial(false); setTutStep(0); localStorage.setItem("cc_tutorial_done","1"); }
                 }}>
                   {tutStep < TUT_STEPS.length - 1 ? "Next →" : "Let's Play! 🏏"}
                 </button>
@@ -4489,7 +4519,7 @@ export default function App() {
             {/* ── Header with CricCoins ── */}
             <div style={{ display:"flex", alignItems:"center", justifyContent:"space-between", padding:"14px 18px 0", flexShrink:0 }}>
               <div style={{ fontFamily:"var(--fd)", fontSize:20, fontWeight:800 }}>My Career</div>
-              <div className="coin-bar">🪙 {cricCoins}</div>
+              <div className="coin-bar" onClick={() => setScreen("store")}>🪙 {cricCoins}</div>
             </div>
 
             {/* ── Player Card Hero ── */}
