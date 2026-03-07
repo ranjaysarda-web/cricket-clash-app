@@ -2237,8 +2237,14 @@ const G = `
 }
 html,body,#root{height:100%;width:100%;margin:0;padding:0;}
 html,body{background:var(--bg);color:var(--txt);font-family:var(--fh);-webkit-font-smoothing:antialiased;overflow-x:hidden;font-size:16px}
-#root{min-height:100vh;display:flex;justify-content:center;background:var(--bg)}
+#root{min-height:100vh;display:flex;justify-content:center;align-items:flex-start;background:var(--bg)}
 .app{width:100%;max-width:480px;min-height:100dvh;height:100%;display:flex;flex-direction:column;background:var(--bg);position:relative;overflow-x:hidden;overflow-y:auto;margin:0 auto}
+@media(min-width:600px){
+  #root{align-items:center;padding:20px 0}
+  .app{min-height:min(100dvh,860px);height:min(100dvh,860px);border-radius:28px;box-shadow:0 32px 80px rgba(0,0,0,.6),0 0 0 1px rgba(255,255,255,.06);overflow:hidden}
+  html,body{font-size:17px}
+}
+@media(min-width:900px){html,body{font-size:18px}}
 .screen{flex:1;display:flex;flex-direction:column;animation:fadeUp .28s cubic-bezier(.22,1,.36,1);min-height:0;overflow-y:auto;-webkit-overflow-scrolling:touch}
 
 /* ══════ HERO ══════ */
@@ -3142,30 +3148,52 @@ export default function App() {
     }
     setAuthLoading(true);
     try {
+      const controller = new AbortController();
+      const timer = setTimeout(() => controller.abort(), 8000);
       const res = await fetch(`${API_BASE}/auth/signup`, {
         method: "POST",
         headers: { "Content-Type": "application/json" },
         body: JSON.stringify({ email: authEmail, password: authPassword, nickname: authNickname }),
+        signal: controller.signal,
       });
+      clearTimeout(timer);
       const data = await res.json();
       if (!res.ok) { setAuthError(data.error || "Signup failed"); return; }
-      // Auto login after signup
       setAuthMode("login");
       setAuthError("✅ Account created! Please log in.");
     } catch (e) {
-      setAuthError("Network error — please try again");
+      if (e.name === "AbortError") {
+        setAuthError("Server is waking up — please try again in 10 seconds ☕");
+      } else {
+        setAuthError("Network error — check your connection and try again");
+      }
     } finally { setAuthLoading(false); }
   }, [authEmail, authPassword, authNickname]);
+
+  const doForgotPassword = useCallback(async () => {
+    if (!authEmail) { setAuthError("Enter your email address first"); return; }
+    setAuthLoading(true);
+    try {
+      const controller = new AbortController();
+      const t = setTimeout(() => controller.abort(), 8000);
+      const res = await fetch(`${API_BASE}/auth/forgot-password`, {
+        method: "POST",
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify({ email: authEmail }),
+        signal: controller.signal,
+      });
+      clearTimeout(t);
+      setAuthError("✅ If that email exists, a reset link has been sent.");
+    } catch {
+      setAuthError("✅ If that email exists, a reset link has been sent.");
+    } finally { setAuthLoading(false); }
+  }, [authEmail]);
 
   const doLogin = useCallback(async (provider) => {
     if (provider === "guest") {
       setLoggedIn(false);
       setNick("Guest");
       setScreen("landing");
-      const hasSeenTutorial = localStorage.getItem("cc_tutorial_done");
-      if (!hasSeenTutorial) {
-        setTimeout(() => setShowTutorial(true), 600);
-      }
       return;
     }
     setAuthError("");
@@ -3174,26 +3202,30 @@ export default function App() {
     }
     setAuthLoading(true);
     try {
+      // 8-second timeout so Render cold-start doesn't hang forever
+      const controller = new AbortController();
+      const timer = setTimeout(() => controller.abort(), 8000);
       const res = await fetch(`${API_BASE}/auth/login`, {
         method: "POST",
         headers: { "Content-Type": "application/json" },
         body: JSON.stringify({ email: authEmail, password: authPassword }),
+        signal: controller.signal,
       });
+      clearTimeout(timer);
       const data = await res.json();
-      if (!res.ok) { setAuthError(data.error || "Login failed"); return; }
-      // Save token for session restore
+      if (!res.ok) { setAuthError(data.error || "Login failed — check your email and password"); return; }
       localStorage.setItem("cc_token", data.access_token);
       window.__CRICKET_TOKEN__ = data.access_token;
       setLoggedIn(true);
       setNick(data.player.nickname);
       setWallet(data.player.wallet / 100);
       setScreen("landing");
-      const hasSeenTutorial = localStorage.getItem("cc_tutorial_done");
-      if (!hasSeenTutorial) {
-        setTimeout(() => setShowTutorial(true), 600);
-      }
     } catch (e) {
-      setAuthError("Network error — please try again");
+      if (e.name === "AbortError") {
+        setAuthError("Server is waking up — please try again in 10 seconds ☕");
+      } else {
+        setAuthError("Network error — check your connection and try again");
+      }
     } finally { setAuthLoading(false); }
   }, [authEmail, authPassword]);
 
@@ -3259,90 +3291,7 @@ export default function App() {
   }, [clearQueue, queueId, entryFee]);
 
   // ── START GAME ───────────────────────────────────────────────────────────────
-  // In demo mode (no API_BASE): instant bot match, questions built client-side.
-  // In production (API_BASE set): joins matchmaking queue → server pairs two
-  // real players, issues a shared seed → both devices build identical questions.
-  const startGame = useCallback(async () => {
-    const entryKey = entryFee.entry === 0 ? "free" : String(Math.round(entryFee.entry * 83));
-
-    // ── DEMO MODE (no backend) — instant bot match ──────────
-    if (!API_BASE) {
-      const cond = rnd(CONDITIONS);
-      const o    = rnd(OPPS);
-      setCondition(cond); setOpp(o);
-      setMyScore(0); setOppScore(0); setWickets(0);
-      setQi(0); setDone([]); setTLeft(15);
-      setSel(null); setRev(false); setCStreak(0); setMaxStreak(0);
-      setPuFF(true); setPuTF(true); setPuFH(true);
-      setFrozen(false); setFreeHit(false); setHidden([]);
-      setOppLiveFeed([]); setXpEarned(0); setResponseTimes([]);
-      setShowBetween(false); setBetweenData(null);
-      setTossState("idle"); setTossWinner(null); setBatFirst(null);
-      setMatchType("bot"); setMatchId(null); setLoading(false);
-      setInSuperOver(false); setSoPhase("intro"); setSuperOverWinner(null);
-      fetchInBackground(cond);
-      setScreen("toss");
-      return;
-    }
-
-    // ── PRODUCTION MODE — join matchmaking queue ─────────────
-    setScreen("finding");
-    setQueueWaitMs(0);
-
-    try {
-      const result = await api("/matches/queue/join", { method: "POST", body: { entry_key: entryKey } });
-
-      if (result.status === "matched") {
-        // Instant match (opponent was already waiting)
-        await _launchMatchFromServer(result);
-        return;
-      }
-
-      // Waiting — poll every 2s for up to 30s, then fall back to bot
-      setQueueId(result.queue_id);
-      const startWait = Date.now();
-      queuePollRef.current = setInterval(async () => {
-        const elapsed = Date.now() - startWait;
-        setQueueWaitMs(elapsed);
-
-        // 30s timeout — give up and start bot match
-        if (elapsed >= 15000) {
-          clearQueue();
-          const cond = rnd(CONDITIONS);
-          const o    = rnd(OPPS);
-          setCondition(cond); setOpp(o);
-          setMyScore(0); setOppScore(0); setWickets(0);
-          setQi(0); setDone([]); setTLeft(15);
-          setSel(null); setRev(false); setCStreak(0); setMaxStreak(0);
-          setPuFF(true); setPuTF(true); setPuFH(true);
-          setFrozen(false); setFreeHit(false); setHidden([]);
-          setOppLiveFeed([]); setXpEarned(0); setResponseTimes([]);
-          setShowBetween(false); setBetweenData(null);
-          setTossState("idle"); setTossWinner(null); setBatFirst(null);
-          setMatchType("bot"); setMatchId(null); setLoading(false);
-          setInSuperOver(false); setSoPhase("intro"); setSuperOverWinner(null);
-          fetchInBackground(cond);
-          setScreen("toss");
-          showToast("No opponent found — playing vs AI 🤖");
-          return;
-        }
-
-        try {
-          const poll = await api(`/matches/queue/status?entry_key=${entryKey}`);
-          if (poll.status === "matched") {
-            clearQueue();
-            await _launchMatchFromServer(poll);
-          }
-        } catch { clearQueue(); }
-      }, 2000);
-
-    } catch (err) {
-      setScreen("setup");
-      showToast(`⚠️ ${err.message}`);
-    }
-  }, [entryFee, fetchInBackground, loggedIn, clearQueue]);
-
-  // Internal: launch a match given seed + condition_id from server response
+  // Internal: launch a PvP match given seed + condition_id from server response
   const _launchMatchFromServer = useCallback(async (serverResult) => {
     const { match_id, seed, condition_id, match_type } = serverResult;
     const cond = CONDITIONS.find(c => c.id === condition_id) || rnd(CONDITIONS);
@@ -3360,7 +3309,6 @@ export default function App() {
     setMatchType(match_type || "pvp");
     setQueueId(null);
     setLoading(false);
-    // Use seeded questions from server — same for both players
     if (seed) {
       const questions = buildSeededQuestions(seed, condition_id);
       qsRef.current = questions;
@@ -3371,6 +3319,85 @@ export default function App() {
     }
     setScreen("toss");
   }, [fetchInBackground]);
+
+  // ── Launch a bot match immediately (guest or no real opponent) ─────────────
+  const _launchBotMatch = useCallback(() => {
+    const cond = rnd(CONDITIONS);
+    const o    = rnd(OPPS);
+    setCondition(cond); setOpp(o);
+    setMyScore(0); setOppScore(0); setWickets(0);
+    setQi(0); setDone([]); setTLeft(15);
+    setSel(null); setRev(false); setCStreak(0); setMaxStreak(0);
+    setPuFF(true); setPuTF(true); setPuFH(true);
+    setFrozen(false); setFreeHit(false); setHidden([]);
+    setOppLiveFeed([]); setXpEarned(0); setResponseTimes([]);
+    setShowBetween(false); setBetweenData(null);
+    setTossState("idle"); setTossWinner(null); setBatFirst(null);
+    setMatchType("bot"); setMatchId(null); setLoading(false);
+    setInSuperOver(false); setSoPhase("intro"); setSuperOverWinner(null);
+    fetchInBackground(cond);
+    setScreen("toss");
+  }, [fetchInBackground]);
+
+  const startGame = useCallback(async () => {
+    // ── Guest / no token — skip backend entirely, straight to bot match ──────
+    const token = window.__CRICKET_TOKEN__ || null;
+    if (!token || !loggedIn) {
+      _launchBotMatch();
+      return;
+    }
+
+    // ── Logged-in: show "Finding" screen, wait 15s, then launch bot if no PvP ─
+    setScreen("finding");
+    setQueueWaitMs(0);
+    const startWait = Date.now();
+
+    // Try to join queue (best-effort — if backend is down/sleeping, fall through)
+    const entryKey = entryFee.entry === 0 ? "free" : String(Math.round(entryFee.entry * 83));
+    let queueJoined = false;
+    try {
+      const result = await Promise.race([
+        api("/matches/queue/join", { method: "POST", body: { entry_key: entryKey } }),
+        new Promise((_, rej) => setTimeout(() => rej(new Error("timeout")), 5000)),
+      ]);
+      if (result && result.status === "matched") {
+        await _launchMatchFromServer(result);
+        return;
+      }
+      if (result && result.queue_id) {
+        setQueueId(result.queue_id);
+        queueJoined = true;
+      }
+    } catch { /* backend down or sleeping — fall through to bot */ }
+
+    // Poll for PvP match, fall back to bot after 15s regardless
+    queuePollRef.current = setInterval(async () => {
+      const elapsed = Date.now() - startWait;
+      setQueueWaitMs(elapsed);
+
+      if (elapsed >= 15000) {
+        clearQueue();
+        _launchBotMatch();
+        showToast("No opponent found — playing vs AI 🤖");
+        return;
+      }
+
+      if (queueJoined) {
+        try {
+          const poll = await Promise.race([
+            api(`/matches/queue/status?entry_key=${entryKey}`),
+            new Promise((_, rej) => setTimeout(() => rej(new Error("timeout")), 3000)),
+          ]);
+          if (poll && poll.status === "matched") {
+            clearQueue();
+            await _launchMatchFromServer(poll);
+          }
+        } catch { /* ignore poll errors, keep waiting until 15s */ }
+      }
+    }, 2000);
+  }, [entryFee, fetchInBackground, loggedIn, clearQueue, _launchBotMatch, _launchMatchFromServer]);
+
+  // Internal: launch a match given seed + condition_id from server response
 
   // ── FRIEND CHALLENGE — create (pre-match) ────────────────────────────────────
   const createFriendChallenge = useCallback(() => {
@@ -3427,9 +3454,35 @@ export default function App() {
     }, 1900);
   }, [tossState, snd]);
 
+  const simulateOppFirstInnings = useCallback((questions) => {
+    let score = 0;
+    const feed = [];
+    const oppAcc = opp?.acc || 0.62;
+    for (let i = 0; i < 6; i++) {
+      const ok = Math.random() < oppAcc;
+      const fakeT = Math.floor(Math.random() * 15) + 1;
+      const runs = ok ? runsForTime(fakeT) : 0;
+      if (ok) score += runs;
+      else score = Math.max(0, score - 5);
+      feed.push({ qi: i, score: Math.max(0, score), ok });
+    }
+    score = Math.max(0, score);
+    setOppScore(score);
+    setOppLiveFeed(feed);
+    setScreen("watching");
+    setTimeout(() => {
+      setInnings(2);
+      setQi(0); setTLeft(15); setSel(null); setRev(false); setDone([]);
+      setCStreak(0); setWickets(0);
+      setPuFF(true); setPuTF(true); setPuFH(true);
+      setFrozen(false); setFreeHit(false); setHidden([]);
+      setScreen("match");
+      qStartRef.current = Date.now();
+    }, 15000);
+  }, [opp]);
+
   // Toss winner chooses bat/chase
-  const chooseBatOrChase = useCallback(async (choice) => {
-    // "bat" = I want to bat first; "chase" = I will chase (opp bats first)
+  const chooseBatOrChase = useCallback((choice) => {
     const batFirstDecision = choice === "bat" ? "player" : "opp";
     setBatFirst(batFirstDecision);
     setInnings(1);
@@ -3452,34 +3505,6 @@ export default function App() {
       qStartRef.current = Date.now();
     }
   }, [getQs, batFirst, innings]);
-
-  const simulateOppFirstInnings = useCallback((questions) => {
-    let score = 0;
-    const feed = [];
-    const oppAcc = opp?.acc || 0.62;
-    for (let i = 0; i < 6; i++) {
-      const ok = Math.random() < oppAcc;
-      const fakeT = Math.floor(Math.random() * 15) + 1;
-      const runs = ok ? runsForTime(fakeT) : 0;
-      if (ok) score += runs;
-      else score = Math.max(0, score - 5); // wrong costs 5 runs
-      feed.push({ qi: i, score: Math.max(0, score), ok });
-    }
-    score = Math.max(0, score);
-    setOppScore(score);
-    setOppLiveFeed(feed);
-    setScreen("watching");
-    // After showing the live feed, switch to player's chase (15s minimum)
-    setTimeout(() => {
-      setInnings(2);
-      setQi(0); setTLeft(15); setSel(null); setRev(false); setDone([]);
-      setCStreak(0); setWickets(0);
-      setPuFF(true); setPuTF(true); setPuFH(true);
-      setFrozen(false); setFreeHit(false); setHidden([]);
-      setScreen("match");
-      qStartRef.current = Date.now();
-    }, 15000);
-  }, [opp]);
 
   // ── TIMER ─────────────────────────────────────────────────────────────────────
   useEffect(() => {
@@ -4020,7 +4045,13 @@ export default function App() {
 
               {/* ── ERROR ── */}
               {authError && (
-                <div style={{ background: authError.includes("created") ? "rgba(21,128,61,.1)" : "rgba(220,38,38,.08)", border:`1px solid ${authError.includes("created") ? "rgba(21,128,61,.2)" : "rgba(220,38,38,.2)"}`, borderRadius:10, padding:"10px 14px", fontSize:12, color: authError.includes("created") ? "var(--green)" : "var(--red)", marginBottom:12 }}>
+                <div style={{
+                  background: authError.includes("✅") ? "rgba(21,128,61,.1)" : authError.includes("☕") ? "rgba(180,120,0,.12)" : "rgba(220,38,38,.08)",
+                  border: `1px solid ${authError.includes("✅") ? "rgba(21,128,61,.2)" : authError.includes("☕") ? "rgba(180,120,0,.3)" : "rgba(220,38,38,.2)"}`,
+                  borderRadius:10, padding:"10px 14px", fontSize:12,
+                  color: authError.includes("✅") ? "var(--green)" : authError.includes("☕") ? "#c97a00" : "var(--red)",
+                  marginBottom:12
+                }}>
                   {authError}
                 </div>
               )}
@@ -4049,11 +4080,19 @@ export default function App() {
                 <>
                   <div className="inp-label">Email address</div>
                   <input className="inp" type="email" placeholder="you@email.com" value={authEmail}
-                    onChange={e => setAuthEmail(e.target.value)} />
+                    onChange={e => setAuthEmail(e.target.value)}
+                    onKeyDown={e => e.key === "Enter" && doLogin("email")} />
                   <div className="inp-label" style={{marginTop:10}}>Password</div>
                   <input className="inp" type="password" placeholder="Your password" value={authPassword}
-                    onChange={e => setAuthPassword(e.target.value)} />
-                  <button className="btn btn-amber" style={{width:"100%", marginTop:16}}
+                    onChange={e => setAuthPassword(e.target.value)}
+                    onKeyDown={e => e.key === "Enter" && doLogin("email")} />
+                  <div style={{textAlign:"right", marginTop:6}}>
+                    <button onClick={doForgotPassword} disabled={authLoading}
+                      style={{background:"none",border:"none",color:"var(--amber)",fontSize:12,cursor:"pointer",padding:0,textDecoration:"underline"}}>
+                      Forgot password?
+                    </button>
+                  </div>
+                  <button className="btn btn-amber" style={{width:"100%", marginTop:14}}
                     onClick={() => doLogin("email")} disabled={authLoading}>
                     {authLoading ? "Logging in…" : "Log In →"}
                   </button>
