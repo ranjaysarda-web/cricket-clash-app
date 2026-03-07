@@ -3463,14 +3463,20 @@ export default function App() {
       if (queuePollRef.current) { clearInterval(queuePollRef.current); queuePollRef.current = null; }
 
       // Poll for PvP match, fall back to bot after 10s regardless
+      let botLaunched = false;
       queuePollRef.current = setInterval(async () => {
         const elapsed = Date.now() - startWait;
         setQueueWaitMs(elapsed);
 
         if (elapsed >= 10000) {
-          clearQ();
-          try { launchBot(); } catch(e) { showToast("⚠️ Error starting match. Please try again."); setScreen("setup"); }
+          if (botLaunched) return;
+          botLaunched = true;
+          clearInterval(queuePollRef.current);
+          queuePollRef.current = null;
           showToast("No opponent found — playing vs AI 🤖");
+          setTimeout(() => {
+            try { launchBot(); } catch(e) { console.error("launchBot error:", e); setScreen("setup"); }
+          }, 800);
           return;
         }
 
@@ -3481,7 +3487,8 @@ export default function App() {
               new Promise((_, rej) => setTimeout(() => rej(new Error("timeout")), 3000)),
             ]);
             if (poll && poll.status === "matched") {
-              clearQ();
+              clearInterval(queuePollRef.current);
+              queuePollRef.current = null;
               await launchPvP(poll);
             }
           } catch { /* ignore poll errors, keep waiting until 10s */ }
