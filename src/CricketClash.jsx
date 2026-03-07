@@ -3347,6 +3347,7 @@ export default function App() {
   const [queueId, setQueueId] = useState(null);
   const [queueWaitMs, setQueueWaitMs] = useState(0);
   const queuePollRef = useRef(null);
+  const botTimerRef = useRef(null);
 
   const clearQueue = useCallback(() => {
     if (queuePollRef.current) { clearInterval(queuePollRef.current); queuePollRef.current = null; }
@@ -3355,6 +3356,7 @@ export default function App() {
   // Cancel matchmaking (user taps back from finding screen)
   const cancelQueue = useCallback(async () => {
     clearQueue();
+    if (botTimerRef.current) { clearTimeout(botTimerRef.current); botTimerRef.current = null; }
     if (API_BASE && queueId) {
       const entryKey = entryFee.entry === 0 ? "free" : String(entryFee.entry);
       try { await api(`/matches/queue/leave?entry_key=${entryKey}`, { method: "DELETE" }); } catch {}
@@ -3413,24 +3415,25 @@ export default function App() {
   }, [fetchInBackground]);
 
   const startGame = useCallback(() => {
-    // Clear any previous matchmaking
+    // Clear any lingering timers from previous attempt
     if (queuePollRef.current) { clearInterval(queuePollRef.current); queuePollRef.current = null; }
+    if (botTimerRef.current) { clearTimeout(botTimerRef.current); botTimerRef.current = null; }
 
     // Show finding screen immediately
     setScreen("finding");
     setQueueWaitMs(0);
-
-    // Animate the wait counter
     const startWait = Date.now();
-    const ticker = setInterval(() => {
+
+    // Animate dots
+    queuePollRef.current = setInterval(() => {
       setQueueWaitMs(Date.now() - startWait);
     }, 500);
 
-    // After 10 seconds, always launch bot — no exceptions
-    const botTimer = setTimeout(() => {
-      clearInterval(ticker);
+    // The actual bot launch — plain function, no closure tricks
+    const launchAI = () => {
+      if (queuePollRef.current) { clearInterval(queuePollRef.current); queuePollRef.current = null; }
+      if (botTimerRef.current) { clearTimeout(botTimerRef.current); botTimerRef.current = null; }
       showToast("No opponent found — playing vs AI 🤖");
-      // Use direct state setters — no function call that can fail
       const cond = CONDITIONS[Math.floor(Math.random() * CONDITIONS.length)];
       const o    = OPPS[Math.floor(Math.random() * OPPS.length)];
       setCondition(cond);
@@ -3447,33 +3450,34 @@ export default function App() {
       setInSuperOver(false); setSoPhase("intro"); setSuperOverWinner(null);
       qsReadyRef.current = Promise.resolve(buildQuestionSet(null, cond));
       setScreen("toss");
-    }, 10000);
+    };
 
-    // Guest — no backend call needed, bot will launch after 10s
+    // Always fire bot after 10s — stored in ref so it survives re-renders
+    botTimerRef.current = setTimeout(launchAI, 10000);
+
+    // Logged-in only — try backend for real opponent, cancel bot if found
     const token = window.__CRICKET_TOKEN__ || null;
-    if (!token || !loggedIn) return;
+    if (!token || !loggedIn) return; // guest: bot fires at 10s, done
 
-    // Logged-in — try to find real opponent in parallel
     const entryKey = entryFee.entry === 0 ? "free" : String(entryFee.entry);
     api("/matches/queue/join", { method: "POST", body: { entry_key: entryKey } })
       .then(result => {
         if (!result) return;
         if (result.status === "matched") {
-          clearTimeout(botTimer);
-          clearInterval(ticker);
+          clearTimeout(botTimerRef.current); botTimerRef.current = null;
+          if (queuePollRef.current) { clearInterval(queuePollRef.current); queuePollRef.current = null; }
           _launchMatchFromServer(result);
           return;
         }
         if (result.queue_id) {
           setQueueId(result.queue_id);
-          // Poll for match
           const poll = setInterval(() => {
             api(`/matches/queue/status?entry_key=${entryKey}`)
               .then(p => {
                 if (p && p.status === "matched") {
                   clearInterval(poll);
-                  clearTimeout(botTimer);
-                  clearInterval(ticker);
+                  clearTimeout(botTimerRef.current); botTimerRef.current = null;
+                  if (queuePollRef.current) { clearInterval(queuePollRef.current); queuePollRef.current = null; }
                   _launchMatchFromServer(p);
                 }
               })
@@ -3481,7 +3485,7 @@ export default function App() {
           }, 2000);
         }
       })
-      .catch(() => { /* bot will launch at 10s anyway */ });
+      .catch(() => { /* bot fires at 10s anyway */ });
   }, [entryFee, loggedIn, _launchMatchFromServer]);
 
   // Internal: launch a match given seed + condition_id from server response
