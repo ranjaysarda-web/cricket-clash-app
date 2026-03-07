@@ -3412,93 +3412,77 @@ export default function App() {
     setScreen("toss");
   }, [fetchInBackground]);
 
-  const startGame = useCallback(async () => {
-    try {
-      // ── Guest / no token — show finding briefly then bot match ──────────────
-      const token = window.__CRICKET_TOKEN__ || null;
-      if (!token || !loggedIn) {
-        setScreen("finding");
-        setQueueWaitMs(0);
-        // Short delay so user sees the finding screen, then launch bot
-        setTimeout(() => {
-          try { _launchBotMatch(); } catch(e) { showToast("⚠️ Error starting match. Please try again."); setScreen("setup"); }
-        }, 1500);
-        return;
-      }
+  const startGame = useCallback(() => {
+    // Clear any previous matchmaking
+    if (queuePollRef.current) { clearInterval(queuePollRef.current); queuePollRef.current = null; }
 
-      // ── Logged-in: show "Finding" screen, wait for PvP or fall back to bot ─
-      setScreen("finding");
-      setQueueWaitMs(0);
-      const startWait = Date.now();
+    // Show finding screen immediately
+    setScreen("finding");
+    setQueueWaitMs(0);
 
-      // Capture stable refs to avoid stale closures inside setInterval
-      const launchBot = _launchBotMatch;
-      const clearQ    = clearQueue;
-      const launchPvP = _launchMatchFromServer;
+    // Animate the wait counter
+    const startWait = Date.now();
+    const ticker = setInterval(() => {
+      setQueueWaitMs(Date.now() - startWait);
+    }, 500);
 
-      // Try to join queue (best-effort — if backend is down/sleeping, fall through)
-      const entryKey = entryFee.entry === 0 ? "free" : String(entryFee.entry);
-      let queueJoined = false;
-      let matched = false;
-      try {
-        const result = await Promise.race([
-          api("/matches/queue/join", { method: "POST", body: { entry_key: entryKey } }),
-          new Promise((_, rej) => setTimeout(() => rej(new Error("timeout")), 5000)),
-        ]);
-        if (result && result.status === "matched") {
-          matched = true;
-          await launchPvP(result);
+    // After 10 seconds, always launch bot — no exceptions
+    const botTimer = setTimeout(() => {
+      clearInterval(ticker);
+      showToast("No opponent found — playing vs AI 🤖");
+      // Use direct state setters — no function call that can fail
+      const cond = CONDITIONS[Math.floor(Math.random() * CONDITIONS.length)];
+      const o    = OPPS[Math.floor(Math.random() * OPPS.length)];
+      setCondition(cond);
+      setOpp(o);
+      setMyScore(0); setOppScore(0); setWickets(0);
+      setQi(0); setDone([]); setTLeft(15);
+      setSel(null); setRev(false); setCStreak(0); setMaxStreak(0);
+      setPuFF(true); setPuTF(true); setPuFH(true);
+      setFrozen(false); setFreeHit(false); setHidden([]);
+      setOppLiveFeed([]); setXpEarned(0); setResponseTimes([]);
+      setShowBetween(false); setBetweenData(null);
+      setTossState("idle"); setTossWinner(null); setBatFirst(null);
+      setMatchType("bot"); setMatchId(null); setLoading(false);
+      setInSuperOver(false); setSoPhase("intro"); setSuperOverWinner(null);
+      qsReadyRef.current = Promise.resolve(buildQuestionSet(null, cond));
+      setScreen("toss");
+    }, 10000);
+
+    // Guest — no backend call needed, bot will launch after 10s
+    const token = window.__CRICKET_TOKEN__ || null;
+    if (!token || !loggedIn) return;
+
+    // Logged-in — try to find real opponent in parallel
+    const entryKey = entryFee.entry === 0 ? "free" : String(entryFee.entry);
+    api("/matches/queue/join", { method: "POST", body: { entry_key: entryKey } })
+      .then(result => {
+        if (!result) return;
+        if (result.status === "matched") {
+          clearTimeout(botTimer);
+          clearInterval(ticker);
+          _launchMatchFromServer(result);
           return;
         }
-        if (result && result.queue_id) {
+        if (result.queue_id) {
           setQueueId(result.queue_id);
-          queueJoined = true;
+          // Poll for match
+          const poll = setInterval(() => {
+            api(`/matches/queue/status?entry_key=${entryKey}`)
+              .then(p => {
+                if (p && p.status === "matched") {
+                  clearInterval(poll);
+                  clearTimeout(botTimer);
+                  clearInterval(ticker);
+                  _launchMatchFromServer(p);
+                }
+              })
+              .catch(() => {});
+          }, 2000);
         }
-      } catch { /* backend down or sleeping — fall through to bot */ }
-
-      if (matched) return;
-
-      // Safety: if queue join failed, launch bot after 10s max
-      // Clear any previous poll
-      if (queuePollRef.current) { clearInterval(queuePollRef.current); queuePollRef.current = null; }
-
-      // Poll for PvP match, fall back to bot after 10s regardless
-      let botLaunched = false;
-      queuePollRef.current = setInterval(async () => {
-        const elapsed = Date.now() - startWait;
-        setQueueWaitMs(elapsed);
-
-        if (elapsed >= 10000) {
-          if (botLaunched) return;
-          botLaunched = true;
-          clearInterval(queuePollRef.current);
-          queuePollRef.current = null;
-          showToast("No opponent found — playing vs AI 🤖");
-          setTimeout(() => {
-            try { launchBot(); } catch(e) { console.error("launchBot error:", e); setScreen("setup"); }
-          }, 800);
-          return;
-        }
-
-        if (queueJoined) {
-          try {
-            const poll = await Promise.race([
-              api(`/matches/queue/status?entry_key=${entryKey}`),
-              new Promise((_, rej) => setTimeout(() => rej(new Error("timeout")), 3000)),
-            ]);
-            if (poll && poll.status === "matched") {
-              clearInterval(queuePollRef.current);
-              queuePollRef.current = null;
-              await launchPvP(poll);
-            }
-          } catch { /* ignore poll errors, keep waiting until 10s */ }
-        }
-      }, 1000);
-    } catch(err) {
-      showToast("⚠️ Something went wrong. Please try again.");
-      setScreen("setup");
-    }
-  }, [entryFee, loggedIn, clearQueue, _launchBotMatch, _launchMatchFromServer]);
+      })
+      .catch(() => { /* bot will launch at 10s anyway */ });
+  }, [entryFee, loggedIn, _launchMatchFromServer]);
 
   // Internal: launch a match given seed + condition_id from server response
 
