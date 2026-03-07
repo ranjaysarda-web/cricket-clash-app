@@ -3223,7 +3223,8 @@ export default function App() {
   // Questions are built in background during toss
   const qsReadyRef = useRef(null); // stores promise
   const fetchInBackground = useCallback((cond) => {
-    qsReadyRef.current = fetchQuestions(cond).then(aiQs => buildQuestionSet(aiQs, cond));
+    // Skip remote API call (CORS fails in browser) — resolve immediately from local bank
+    qsReadyRef.current = Promise.resolve(buildQuestionSet(null, cond));
   }, []);
 
   const getQs = useCallback(async () => {
@@ -3437,11 +3438,11 @@ export default function App() {
 
   // ── START INNINGS ─────────────────────────────────────────────────────────────
   const startInnings = useCallback(async () => {
-    setLoading(true);
-    const questions = await getQs();
+    // Build questions synchronously from local bank — never await remote API
+    // (fetchQuestions hits Anthropic directly from browser which fails CORS)
+    const questions = buildQuestionSet(null, condition || CONDITIONS[0]);
     qsRef.current = questions;
     setQs(questions);
-    setLoading(false);
     // If opp bats first, simulate their innings instantly, show live feed, then player chases
     const currentBatFirst = batFirst;
     if (currentBatFirst === "opp" && innings === 1) {
@@ -4788,7 +4789,7 @@ export default function App() {
                 {condition.stadiumImg && (
                   <img src={condition.stadiumImg} alt={condition.stadium}
                     style={{ position:"absolute", inset:0, width:"100%", height:"100%", objectFit:"cover",
-                      filter: isNight ? "brightness(.55) saturate(.7)" : "brightness(.8) saturate(.9)" }} />
+                      filter: isNight ? "brightness(.6)" : "brightness(.95)" }} />
                 )}
                 {/* Oval boundary SVG overlay (only for CSS fallback) */}
                 {!condition.stadiumImg && (
@@ -4929,19 +4930,12 @@ export default function App() {
                     Questions from <span style={{ color: bc, fontWeight:700 }}>{condition.cat}</span> · Your skill will grow this match
                   </div>
 
-                  {/* CTA */}
-                  {loading ? (
-                    <div style={{ display:"flex", alignItems:"center", gap:10 }}>
-                      <div className="spinner" />
-                      <div style={{ color:"rgba(255,255,255,.4)", fontSize:12 }}>Preparing the pitch…</div>
-                    </div>
-                  ) : (
-                    <button
-                      onClick={startInnings}
-                      style={{ width:"100%", background:bc, color:"#fff", border:"none", borderRadius:14, padding:"15px 0", fontFamily:"var(--fd)", fontSize:17, fontWeight:800, cursor:"pointer", boxShadow:`0 4px 20px ${bc}55`, letterSpacing:.3 }}>
-                      {batFirst === "player" ? "🏏  Start Batting" : "▶  Watch Opponent Bat"}
-                    </button>
-                  )}
+                  {/* CTA — always show button immediately, questions built instantly from local bank */}
+                  <button
+                    onClick={startInnings}
+                    style={{ width:"100%", background:bc, color:"#fff", border:"none", borderRadius:14, padding:"15px 0", fontFamily:"var(--fd)", fontSize:17, fontWeight:800, cursor:"pointer", boxShadow:`0 4px 20px ${bc}55`, letterSpacing:.3 }}>
+                    {batFirst === "player" ? "🏏  Start Batting" : "▶  Watch Opponent Bat"}
+                  </button>
                 </div>
               </div>
             </div>
