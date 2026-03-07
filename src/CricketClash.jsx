@@ -3043,14 +3043,12 @@ export default function App() {
   const [commStyle] = useState("shastri"); // kept for commentary text selection
   const [sfxOn, setSfxOn] = useState(true); // sound effects (beeps) only
   const [condition, setCondition] = useState(null);
-  useEffect(() => { conditionRef.current = condition; }, [condition]);
   const [opp, setOpp] = useState(null);
 
   // Toss
   const [tossState, setTossState] = useState("idle"); // idle | spinning | result
   const [tossWinner, setTossWinner] = useState(null); // "player" | "opp"
   const [batFirst, setBatFirst] = useState(null); // "player" | "opp"
-  useEffect(() => { batFirstRef.current = batFirst; }, [batFirst]);
 
   // Scores (always: p1 = first batter, p2 = chaser)
   // myScore = human player always, oppScore = AI opponent always
@@ -3059,7 +3057,6 @@ export default function App() {
 
   // Match state
   const [innings, setInnings] = useState(1); // 1 or 2
-  useEffect(() => { inningsRef.current = innings; }, [innings]);
   const [qs, setQs] = useState([]);
   const [qi, setQi] = useState(0);
   const [wickets, setWickets] = useState(0);
@@ -3136,9 +3133,6 @@ export default function App() {
   const betweenRef = useRef();
   const cleanRef = useRef(false);
   const qsRef = useRef([]); // keep qs accessible in callbacks
-  const conditionRef = useRef(CONDITIONS[0]); // always-current condition
-  const batFirstRef = useRef(null);           // always-current batFirst
-  const inningsRef = useRef(1);               // always-current innings
   const snd = useAudio(sfxOn);
 
   // ── AUTH / LOGIN ──────────────────────────────────────────────────────────────
@@ -3628,11 +3622,9 @@ export default function App() {
   }, []);
 
   // ── START INNINGS ─────────────────────────────────────────────────────────────
-  const startInnings = useCallback(() => {
-    // Use refs so we always get current values — no stale closure issues
-    const cond = conditionRef.current || CONDITIONS[0];
-    const currentBatFirst = batFirstRef.current;
-    const currentInnings = inningsRef.current;
+  // Called directly with current state values to avoid stale closure issues
+  const startInnings = useCallback((currentBatFirst, currentInnings, currentCondition) => {
+    const cond = currentCondition || CONDITIONS[0];
 
     // Reuse questions if already built, otherwise build now
     let questions = qsRef.current;
@@ -5116,7 +5108,7 @@ export default function App() {
 
                   {/* CTA — always visible, part of pinned bottom panel */}
                   <button
-                    onClick={startInnings}
+                    onClick={() => startInnings(batFirst, innings, condition)}
                     style={{ width:"100%", background:bc, color:"#fff", border:"none", borderRadius:12, padding:"14px 0", fontFamily:"var(--fd)", fontSize:17, fontWeight:800, cursor:"pointer", boxShadow:`0 4px 20px ${bc}88`, letterSpacing:.3, flexShrink:0 }}>
                     {batFirst === "player" ? "🏏  Start Batting" : "▶  Watch Opponent Bat"}
                   </button>
