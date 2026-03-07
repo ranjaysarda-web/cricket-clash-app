@@ -3453,7 +3453,27 @@ export default function App() {
     };
 
     // Always fire bot after 10s — stored in ref so it survives re-renders
-    botTimerRef.current = setTimeout(launchAI, 10000);
+    botTimerRef.current = setTimeout(() => {
+      try { launchAI(); } catch(err) {
+        console.error("launchAI failed:", err);
+        // Nuclear fallback — just go to toss with minimal state
+        if (queuePollRef.current) { clearInterval(queuePollRef.current); queuePollRef.current = null; }
+        showToast("No opponent found — playing vs AI 🤖");
+        setCondition(CONDITIONS[0]);
+        setOpp(OPPS[0]);
+        setMyScore(0); setOppScore(0); setWickets(0);
+        setQi(0); setDone([]); setTLeft(15);
+        setSel(null); setRev(false); setCStreak(0); setMaxStreak(0);
+        setPuFF(true); setPuTF(true); setPuFH(true);
+        setFrozen(false); setFreeHit(false); setHidden([]);
+        setOppLiveFeed([]); setXpEarned(0); setResponseTimes([]);
+        setShowBetween(false); setBetweenData(null);
+        setTossState("idle"); setTossWinner(null); setBatFirst(null);
+        setMatchType("bot"); setMatchId(null); setLoading(false);
+        setInSuperOver(false); setSoPhase("intro"); setSuperOverWinner(null);
+        setScreen("toss");
+      }
+    }, 10000);
 
     // Logged-in only — try backend for real opponent, cancel bot if found
     const token = window.__CRICKET_TOKEN__ || null;
@@ -3501,44 +3521,47 @@ export default function App() {
   }, [nick, goTo]);
 
   // Start a seeded-question match (used by both sides of a friend challenge)
-  const startFriendMatch = useCallback(async (fc) => {
-    try {
-      const seed = fc.seed;
-      const cond = CONDITIONS.find(c => c.id === fc.conditionId) || CONDITIONS[2];
-      const o    = rnd(OPPS);
-      setCondition(cond);
-      setOpp(o);
-      setMyScore(0); setOppScore(0); setWickets(0);
-      setQi(0); setDone([]); setTLeft(15);
-      setSel(null); setRev(false); setCStreak(0); setMaxStreak(0);
-      setPuFF(true); setPuTF(true); setPuFH(true);
-      setFrozen(false); setFreeHit(false); setHidden([]);
-      setOppLiveFeed([]); setXpEarned(0); setResponseTimes([]);
-      setShowBetween(false); setBetweenData(null);
-      setFcMyScore(null);
-      // Build seeded questions immediately
-      const questions = buildSeededQuestions(seed, fc.conditionId);
-      if (!questions || questions.length === 0) { showToast("⚠️ Could not load questions. Try again."); return; }
-      qsRef.current = questions;
-      setQs(questions);
-      // Simulate opponent too
-      const totalAcc = o.acc;
-      const feed = questions.map((q, i) => ({ qi: i, score: Math.random() < totalAcc ? 6 : 0, ok: Math.random() < totalAcc }));
-      const simScore = feed.reduce((s, f) => s + f.score, 0);
-      setOppScore(simScore);
-      setOppLiveFeed(feed);
-      setBatFirst("player");
-      setInnings(1);
-      setTossState("idle"); setTossWinner(null);
-      setLoading(false);
-      setScreen("match");
-      qStartRef.current = Date.now();
-    } catch (err) {
-      showToast("⚠️ Something went wrong. Please try again.");
-      console.error("startFriendMatch error:", err);
-    }
-  }, []);
+  const startFriendMatch = useCallback((fc) => {
+    const cond = CONDITIONS.find(c => c.id === fc.conditionId) || CONDITIONS[0];
+    const o    = OPPS[Math.floor(Math.random() * OPPS.length)];
+    const seed = fc.seed || Date.now();
 
+    setCondition(cond);
+    setOpp(o);
+    setMyScore(0); setOppScore(0); setWickets(0);
+    setQi(0); setDone([]); setTLeft(15);
+    setSel(null); setRev(false); setCStreak(0); setMaxStreak(0);
+    setPuFF(true); setPuTF(true); setPuFH(true);
+    setFrozen(false); setFreeHit(false); setHidden([]);
+    setOppLiveFeed([]); setXpEarned(0); setResponseTimes([]);
+    setShowBetween(false); setBetweenData(null);
+    setFcMyScore(null);
+    setBatFirst("player");
+    setInnings(1);
+    setMatchType("bot");
+    setMatchId(null);
+    setLoading(false);
+    setInSuperOver(false); setSoPhase("intro"); setSuperOverWinner(null);
+    setTossState("idle"); setTossWinner(null);
+
+    // Build questions with safe fallback
+    let questions;
+    try { questions = buildSeededQuestions(seed, cond.id); } catch(e) { questions = null; }
+    if (!questions || questions.length === 0) questions = ALL_QUESTIONS.slice(0, 6);
+
+    qsRef.current = questions;
+    setQs(questions);
+    qsReadyRef.current = Promise.resolve(questions);
+
+    // Simulate opponent score
+    const oppAcc = o.acc || 0.6;
+    const feed = questions.map((q, i) => ({ qi: i, score: Math.random() < oppAcc ? 6 : 0, ok: Math.random() < oppAcc }));
+    setOppScore(feed.filter(f => f.ok).length * 6);
+    setOppLiveFeed(feed);
+
+    qStartRef.current = Date.now();
+    setScreen("match");
+  }, []);
   // ── TOSS ──────────────────────────────────────────────────────────────────────
   const doToss = useCallback(() => {
     if (tossState !== "idle") return;
