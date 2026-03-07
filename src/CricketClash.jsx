@@ -204,11 +204,12 @@ const OPPS = [
 ];
 
 const ENTRY_FEES = [
-  { label:"Free",  entry:0,    prize:0,    icon:"🏏", tag:"Practice" },
-  { label:"₹5",   entry:0.06, prize:0.108,icon:"🌟", tag:"Starter"  },
-  { label:"₹10",  entry:0.12, prize:0.216,icon:"🔥", tag:"Popular"  },
-  { label:"₹25",  entry:0.30, prize:0.540,icon:"💎", tag:"Pro"      },
-  { label:"₹50",  entry:0.60, prize:1.080,icon:"👑", tag:"Elite"    },
+  { label:"Free",   entry:0,    prize:0,    icon:"🏏", tag:"Practice" },
+  { label:"₹10",   entry:10,   prize:18,   icon:"🌟", tag:"Starter"  },
+  { label:"₹50",   entry:50,   prize:90,   icon:"🔥", tag:"Popular"  },
+  { label:"₹100",  entry:100,  prize:180,  icon:"💎", tag:"Pro"      },
+  { label:"₹500",  entry:500,  prize:900,  icon:"👑", tag:"Elite"    },
+  { label:"₹1000", entry:1000, prize:1800, icon:"🔱", tag:"Legend"   },
 ];
 
 // ─── INLINE SVG PLAYER CARDS (no external images needed) ──────────────────────
@@ -2943,6 +2944,47 @@ function WatchingScreen({ opp, feed, finalScore, label, target, isPvp }) {
 export default function App() {
   // Navigation
   const [screen, setScreen] = useState("auth");  // Start at auth screen
+  const screenHistoryRef = useRef(["auth"]);
+
+  // goTo: navigate forward (pushes to history stack)
+  const goTo = useCallback((newScreen) => {
+    screenHistoryRef.current = [...screenHistoryRef.current, newScreen];
+    window.history.pushState({ screen: newScreen }, "", "");
+    setScreen(newScreen);
+  }, []);
+
+  // goBack: navigate backward (pops history stack)
+  const goBack = useCallback((fallback = "landing") => {
+    const hist = screenHistoryRef.current;
+    if (hist.length > 1) {
+      const prev = hist[hist.length - 2];
+      screenHistoryRef.current = hist.slice(0, -1);
+      setScreen(prev);
+    } else {
+      setScreen(fallback);
+    }
+  }, []);
+
+  // Android hardware back button via browser popstate
+  useEffect(() => {
+    // Push an initial state so popstate fires on first back
+    window.history.replaceState({ screen: "auth" }, "", "");
+    const handlePop = () => {
+      const hist = screenHistoryRef.current;
+      if (hist.length > 1) {
+        const prev = hist[hist.length - 2];
+        screenHistoryRef.current = hist.slice(0, -1);
+        setScreen(prev);
+        // Re-push so next back also fires popstate
+        window.history.pushState({ screen: prev }, "", "");
+      } else {
+        // At root — push state again so user doesn't exit app
+        window.history.pushState({ screen: hist[0] || "auth" }, "", "");
+      }
+    };
+    window.addEventListener("popstate", handlePop);
+    return () => window.removeEventListener("popstate", handlePop);
+  }, []);
   const [navTab, setNavTab] = useState("play");
   const [lbTab, setLbTab] = useState("skill");
   const [legalTab, setLegalTab] = useState("terms");
@@ -2961,7 +3003,7 @@ export default function App() {
 
   // Profile
   const [nick, setNick] = useState("");
-  const [country, setCountry] = useState(null);
+  const [country, setCountry] = useState({ code:"IN", flag:"🇮🇳", name:"India" });
   const [totalXp, setTotalXp] = useState(0);
   const [skillXp, setSkillXp] = useState({ batting:0, bowling:0, ipl:0, history:0, womens:0 });
   const [wins, setWins] = useState(0);
@@ -2982,7 +3024,7 @@ export default function App() {
   const [extraPowerUps, setExtraPowerUps] = useState({ timeout:0, ff:0, pp:0 });
   const [storeCat, setStoreCat] = useState("coins");
   const [showAvatarScreen, setShowAvatarScreen] = useState(false);
-  const [wallet, setWallet] = useState(20.00);
+  const [wallet, setWallet] = useState(0);
   const [lStreak, setLStreak] = useState(0);
 
   // Match config
@@ -3201,19 +3243,43 @@ export default function App() {
       setAuthError("Please enter email and password"); return;
     }
     setAuthLoading(true);
-    try {
-      // 8-second timeout so Render cold-start doesn't hang forever
+
+    const attemptLogin = async (timeoutMs) => {
       const controller = new AbortController();
-      const timer = setTimeout(() => controller.abort(), 8000);
-      const res = await fetch(`${API_BASE}/auth/login`, {
-        method: "POST",
-        headers: { "Content-Type": "application/json" },
-        body: JSON.stringify({ email: authEmail, password: authPassword }),
-        signal: controller.signal,
-      });
-      clearTimeout(timer);
+      const timer = setTimeout(() => controller.abort(), timeoutMs);
+      try {
+        const res = await fetch(`${API_BASE}/auth/login`, {
+          method: "POST",
+          headers: { "Content-Type": "application/json" },
+          body: JSON.stringify({ email: authEmail, password: authPassword }),
+          signal: controller.signal,
+        });
+        clearTimeout(timer);
+        return res;
+      } catch(e) { clearTimeout(timer); throw e; }
+    };
+
+    try {
+      let res;
+      try {
+        res = await attemptLogin(8000);
+      } catch(e) {
+        // Cold start / network blip - show warm message and auto-retry
+        setAuthError("Server is waking up - retrying automatically... (30s)");
+        await new Promise(r => setTimeout(r, 3000));
+        try {
+          res = await attemptLogin(25000);
+        } catch(e2) {
+          if (e2.name === "AbortError") {
+            setAuthError("Server is still starting up. Please try again in 15 seconds.");
+          } else {
+            setAuthError("Network error - check your connection and try again");
+          }
+          return;
+        }
+      }
       const data = await res.json();
-      if (!res.ok) { setAuthError(data.error || "Login failed — check your email and password"); return; }
+      if (!res.ok) { setAuthError(data.error || "Login failed - check your email and password"); return; }
       localStorage.setItem("cc_token", data.access_token);
       window.__CRICKET_TOKEN__ = data.access_token;
       setLoggedIn(true);
@@ -3221,11 +3287,7 @@ export default function App() {
       setWallet(data.player.wallet / 100);
       setScreen("landing");
     } catch (e) {
-      if (e.name === "AbortError") {
-        setAuthError("Server is waking up — please try again in 10 seconds ☕");
-      } else {
-        setAuthError("Network error — check your connection and try again");
-      }
+      setAuthError("Network error - check your connection and try again");
     } finally { setAuthLoading(false); }
   }, [authEmail, authPassword]);
 
@@ -3283,7 +3345,7 @@ export default function App() {
   const cancelQueue = useCallback(async () => {
     clearQueue();
     if (API_BASE && queueId) {
-      const entryKey = entryFee.entry === 0 ? "free" : String(Math.round(entryFee.entry * 83));
+      const entryKey = entryFee.entry === 0 ? "free" : String(entryFee.entry);
       try { await api(`/matches/queue/leave?entry_key=${entryKey}`, { method: "DELETE" }); } catch {}
     }
     setQueueId(null);
@@ -3340,62 +3402,85 @@ export default function App() {
   }, [fetchInBackground]);
 
   const startGame = useCallback(async () => {
-    // ── Guest / no token — skip backend entirely, straight to bot match ──────
-    const token = window.__CRICKET_TOKEN__ || null;
-    if (!token || !loggedIn) {
-      _launchBotMatch();
-      return;
-    }
-
-    // ── Logged-in: show "Finding" screen, wait 15s, then launch bot if no PvP ─
-    setScreen("finding");
-    setQueueWaitMs(0);
-    const startWait = Date.now();
-
-    // Try to join queue (best-effort — if backend is down/sleeping, fall through)
-    const entryKey = entryFee.entry === 0 ? "free" : String(Math.round(entryFee.entry * 83));
-    let queueJoined = false;
     try {
-      const result = await Promise.race([
-        api("/matches/queue/join", { method: "POST", body: { entry_key: entryKey } }),
-        new Promise((_, rej) => setTimeout(() => rej(new Error("timeout")), 5000)),
-      ]);
-      if (result && result.status === "matched") {
-        await _launchMatchFromServer(result);
-        return;
-      }
-      if (result && result.queue_id) {
-        setQueueId(result.queue_id);
-        queueJoined = true;
-      }
-    } catch { /* backend down or sleeping — fall through to bot */ }
-
-    // Poll for PvP match, fall back to bot after 15s regardless
-    queuePollRef.current = setInterval(async () => {
-      const elapsed = Date.now() - startWait;
-      setQueueWaitMs(elapsed);
-
-      if (elapsed >= 15000) {
-        clearQueue();
-        _launchBotMatch();
-        showToast("No opponent found — playing vs AI 🤖");
+      // ── Guest / no token — show finding briefly then bot match ──────────────
+      const token = window.__CRICKET_TOKEN__ || null;
+      if (!token || !loggedIn) {
+        setScreen("finding");
+        setQueueWaitMs(0);
+        // Short delay so user sees the finding screen, then launch bot
+        setTimeout(() => {
+          try { _launchBotMatch(); } catch(e) { showToast("⚠️ Error starting match. Please try again."); setScreen("setup"); }
+        }, 1500);
         return;
       }
 
-      if (queueJoined) {
-        try {
-          const poll = await Promise.race([
-            api(`/matches/queue/status?entry_key=${entryKey}`),
-            new Promise((_, rej) => setTimeout(() => rej(new Error("timeout")), 3000)),
-          ]);
-          if (poll && poll.status === "matched") {
-            clearQueue();
-            await _launchMatchFromServer(poll);
-          }
-        } catch { /* ignore poll errors, keep waiting until 15s */ }
-      }
-    }, 2000);
-  }, [entryFee, fetchInBackground, loggedIn, clearQueue, _launchBotMatch, _launchMatchFromServer]);
+      // ── Logged-in: show "Finding" screen, wait for PvP or fall back to bot ─
+      setScreen("finding");
+      setQueueWaitMs(0);
+      const startWait = Date.now();
+
+      // Capture stable refs to avoid stale closures inside setInterval
+      const launchBot = _launchBotMatch;
+      const clearQ    = clearQueue;
+      const launchPvP = _launchMatchFromServer;
+
+      // Try to join queue (best-effort — if backend is down/sleeping, fall through)
+      const entryKey = entryFee.entry === 0 ? "free" : String(entryFee.entry);
+      let queueJoined = false;
+      let matched = false;
+      try {
+        const result = await Promise.race([
+          api("/matches/queue/join", { method: "POST", body: { entry_key: entryKey } }),
+          new Promise((_, rej) => setTimeout(() => rej(new Error("timeout")), 5000)),
+        ]);
+        if (result && result.status === "matched") {
+          matched = true;
+          await launchPvP(result);
+          return;
+        }
+        if (result && result.queue_id) {
+          setQueueId(result.queue_id);
+          queueJoined = true;
+        }
+      } catch { /* backend down or sleeping — fall through to bot */ }
+
+      if (matched) return;
+
+      // Safety: if queue join failed, launch bot after 10s max
+      // Clear any previous poll
+      if (queuePollRef.current) { clearInterval(queuePollRef.current); queuePollRef.current = null; }
+
+      // Poll for PvP match, fall back to bot after 10s regardless
+      queuePollRef.current = setInterval(async () => {
+        const elapsed = Date.now() - startWait;
+        setQueueWaitMs(elapsed);
+
+        if (elapsed >= 10000) {
+          clearQ();
+          try { launchBot(); } catch(e) { showToast("⚠️ Error starting match. Please try again."); setScreen("setup"); }
+          showToast("No opponent found — playing vs AI 🤖");
+          return;
+        }
+
+        if (queueJoined) {
+          try {
+            const poll = await Promise.race([
+              api(`/matches/queue/status?entry_key=${entryKey}`),
+              new Promise((_, rej) => setTimeout(() => rej(new Error("timeout")), 3000)),
+            ]);
+            if (poll && poll.status === "matched") {
+              clearQ();
+              await launchPvP(poll);
+            }
+          } catch { /* ignore poll errors, keep waiting until 10s */ }
+        }
+      }, 1000);
+    } catch(err) {
+      showToast("⚠️ Something went wrong. Please try again.");
+      setScreen("setup");
+    }
+  }, [entryFee, loggedIn, clearQueue, _launchBotMatch, _launchMatchFromServer]);
 
   // Internal: launch a match given seed + condition_id from server response
 
@@ -3406,40 +3491,46 @@ export default function App() {
     const cond      = CONDITIONS[condIdx];
     setFriendChallenge({ mode: "creating", seed, conditionId: cond.id, challengerNick: nick || "Someone", challengerScore: null });
     setCondition(cond);
-    setScreen("fc_create");
-  }, [nick]);
+    goTo("fc_create");
+  }, [nick, goTo]);
 
   // Start a seeded-question match (used by both sides of a friend challenge)
   const startFriendMatch = useCallback(async (fc) => {
-    const seed = fc.seed;
-    const cond = CONDITIONS.find(c => c.id === fc.conditionId) || CONDITIONS[2];
-    const o    = rnd(OPPS);
-    setCondition(cond);
-    setOpp(o);
-    setMyScore(0); setOppScore(0); setWickets(0);
-    setQi(0); setDone([]); setTLeft(15);
-    setSel(null); setRev(false); setCStreak(0); setMaxStreak(0);
-    setPuFF(true); setPuTF(true); setPuFH(true);
-    setFrozen(false); setFreeHit(false); setHidden([]);
-    setOppLiveFeed([]); setXpEarned(0); setResponseTimes([]);
-    setShowBetween(false); setBetweenData(null);
-    setFcMyScore(null);
-    // Build seeded questions immediately
-    const questions = buildSeededQuestions(seed, fc.conditionId);
-    qsRef.current = questions;
-    setQs(questions);
-    // Simulate opponent too
-    const totalAcc = o.acc;
-    const feed = questions.map((q, i) => ({ qi: i, score: Math.random() < totalAcc ? 6 : 0, ok: Math.random() < totalAcc }));
-    const simScore = feed.reduce((s, f) => s + f.score, 0);
-    setOppScore(simScore);
-    setOppLiveFeed(feed);
-    setBatFirst("player");
-    setInnings(1);
-    setTossState("idle"); setTossWinner(null);
-    setLoading(false);
-    setScreen("match");
-    qStartRef.current = Date.now();
+    try {
+      const seed = fc.seed;
+      const cond = CONDITIONS.find(c => c.id === fc.conditionId) || CONDITIONS[2];
+      const o    = rnd(OPPS);
+      setCondition(cond);
+      setOpp(o);
+      setMyScore(0); setOppScore(0); setWickets(0);
+      setQi(0); setDone([]); setTLeft(15);
+      setSel(null); setRev(false); setCStreak(0); setMaxStreak(0);
+      setPuFF(true); setPuTF(true); setPuFH(true);
+      setFrozen(false); setFreeHit(false); setHidden([]);
+      setOppLiveFeed([]); setXpEarned(0); setResponseTimes([]);
+      setShowBetween(false); setBetweenData(null);
+      setFcMyScore(null);
+      // Build seeded questions immediately
+      const questions = buildSeededQuestions(seed, fc.conditionId);
+      if (!questions || questions.length === 0) { showToast("⚠️ Could not load questions. Try again."); return; }
+      qsRef.current = questions;
+      setQs(questions);
+      // Simulate opponent too
+      const totalAcc = o.acc;
+      const feed = questions.map((q, i) => ({ qi: i, score: Math.random() < totalAcc ? 6 : 0, ok: Math.random() < totalAcc }));
+      const simScore = feed.reduce((s, f) => s + f.score, 0);
+      setOppScore(simScore);
+      setOppLiveFeed(feed);
+      setBatFirst("player");
+      setInnings(1);
+      setTossState("idle"); setTossWinner(null);
+      setLoading(false);
+      setScreen("match");
+      qStartRef.current = Date.now();
+    } catch (err) {
+      showToast("⚠️ Something went wrong. Please try again.");
+      console.error("startFriendMatch error:", err);
+    }
   }, []);
 
   // ── TOSS ──────────────────────────────────────────────────────────────────────
@@ -3616,7 +3707,7 @@ export default function App() {
           // Refresh wallet balance from backend
           const walletData = await api("/wallet");
           if (walletData?.wallet?.balance !== undefined) {
-            setWallet(walletData.wallet.balance / 83); // convert INR → USD display
+            setWallet(walletData.wallet.balance); // INR paise → keep as INR
           }
         } catch (err) {
           console.error("Match finalization error:", err);
@@ -3957,8 +4048,8 @@ export default function App() {
       if (won) {
         setWins(v => v + 1);
         if (entryFee.entry > 0) {
-          setWallet(w => parseFloat((w + entryFee.prize).toFixed(2)));
-          setTotalEarnings(e => parseFloat((e + (entryFee.prize - entryFee.entry)).toFixed(2)));
+          setWallet(w => w + entryFee.prize);
+          setTotalEarnings(e => e + (entryFee.prize - entryFee.entry));
         }
         snd("win");
         snd("crowd_win");
@@ -4094,7 +4185,7 @@ export default function App() {
                   </div>
                   <button className="btn btn-amber" style={{width:"100%", marginTop:14}}
                     onClick={() => doLogin("email")} disabled={authLoading}>
-                    {authLoading ? "Logging in…" : "Log In →"}
+                    {authLoading ? (authError.includes("waking") || authError.includes("retrying") ? "Waking server up… ☕" : "Logging in…") : "Log In →"}
                   </button>
                 </>
               )}
@@ -4106,9 +4197,9 @@ export default function App() {
 
               <div className="auth-legal" style={{marginTop:12}}>
                 By continuing you agree to our{" "}
-                <a onClick={() => { setScreen("legal"); setLegalTab("terms"); }}>Terms</a>
+                <a onClick={() => { goTo("legal"); setLegalTab("terms"); }}>Terms</a>
                 {" "}and{" "}
-                <a onClick={() => { setScreen("legal"); setLegalTab("privacy"); }}>Privacy Policy</a>.
+                <a onClick={() => { goTo("legal"); setLegalTab("privacy"); }}>Privacy Policy</a>.
                 {" "}Must be 18+ to play for money.
               </div>
             </div>
@@ -4152,11 +4243,11 @@ export default function App() {
         {/* ══════ RULES ══════ */}
         {screen === "rules" && (
           <div className="screen rules-screen">
-            <div className="rules-hero-band">
-              <div style={{position:"relative"}}>
-                <button className="back-btn" style={{background:"rgba(255,255,255,.1)",border:"1px solid rgba(255,255,255,.15)",color:"#fff",marginBottom:14}} onClick={() => setScreen("landing")}>←</button>
-                <div style={{fontFamily:"var(--fd)",fontSize:28,fontWeight:800,color:"#fff",letterSpacing:"-.3px"}}>How to Play</div>
-                <div style={{fontFamily:"var(--fm)",fontSize:10,color:"rgba(255,255,255,.45)",letterSpacing:2,textTransform:"uppercase",marginTop:4}}>Cricket Clash · Match Rules</div>
+            <div style={{ position: "sticky", top: 0, zIndex: 10, background: "#1c1917", padding: "10px 16px", display: "flex", alignItems: "center", gap: 12, borderBottom: "1px solid rgba(255,255,255,.08)" }}>
+              <button className="back-btn" style={{ background: "rgba(255,255,255,.12)", border: "1px solid rgba(255,255,255,.2)", color: "#fff", flexShrink: 0 }} onClick={() => goBack()}>←</button>
+              <div>
+                <div style={{ fontFamily: "var(--fd)", fontSize: 18, fontWeight: 800, color: "#fff", letterSpacing: "-.3px" }}>How to Play</div>
+                <div style={{ fontFamily: "var(--fm)", fontSize: 9, color: "rgba(255,255,255,.4)", letterSpacing: 2, textTransform: "uppercase" }}>Cricket Clash · Match Rules</div>
               </div>
             </div>
             <div className="rules-body">
@@ -4228,7 +4319,7 @@ export default function App() {
                 </div>
               </div>
 
-              <button className="btn btn-amber" onClick={() => setScreen("landing")}>
+              <button className="btn btn-amber" onClick={() => goTo("setup")}>
                 🏏 Start Playing
               </button>
             </div>
@@ -4239,7 +4330,7 @@ export default function App() {
         {screen === "legal" && (
           <div className="screen legal-screen">
             <div className="hdr" style={{flexShrink:0}}>
-              <button className="back-btn" onClick={() => setScreen(loggedIn ? "landing" : "auth")}>←</button>
+              <button className="back-btn" onClick={() => goBack()}>←</button>
               <div className="hdr-title">Legal</div>
             </div>
             <div className="legal-tabs">
@@ -4331,9 +4422,9 @@ export default function App() {
         {screen === "wallet-connect" && (
           <div className="screen wc-screen">
             <div className="wc-balance-band">
-              <button className="back-btn" style={{background:"rgba(255,255,255,.1)",border:"1px solid rgba(255,255,255,.15)",color:"#fff",marginBottom:14}} onClick={() => setScreen("wallet")}>←</button>
+              <button className="back-btn" style={{background:"rgba(255,255,255,.1)",border:"1px solid rgba(255,255,255,.15)",color:"#fff",marginBottom:14}} onClick={() => goBack()}>←</button>
               <div className="wc-bal-label">Wallet Balance</div>
-              <div className="wc-bal-amount"><span>$</span>{wallet.toFixed(2)}</div>
+              <div className="wc-bal-amount"><span>₹</span>{wallet.toFixed(0)}</div>
             </div>
 
             <div className="kyc-strip" style={{background:loggedIn?"rgba(21,128,61,.1)":"rgba(220,38,38,.08)",border:`1px solid ${loggedIn?"rgba(21,128,61,.2)":"rgba(220,38,38,.2)"}`}}>
@@ -4395,7 +4486,7 @@ export default function App() {
                 disabled={!wcMethod || !wcAmount}
                 onClick={() => {
                   const amt = parseFloat(String(wcAmount).replace("₹","")) || 0;
-                  if (amt >= 1) { setWallet(w => parseFloat((w + amt/83).toFixed(2))); }
+                  if (amt >= 1) { setWallet(w => parseFloat((w + amt).toFixed(0))); }
                   showToast(`✅ ₹${wcAmount} added via ${wcMethod}!`);
                   setScreen("wallet");
                 }}>
@@ -4438,15 +4529,15 @@ export default function App() {
                   </div>
                 ))}
               </div>
-              <button className="btn btn-amber" onClick={() => setScreen("setup")}>Play a Match</button>
-              <button className="btn btn-outline" onClick={() => setScreen("wallet")}>💰 Wallet — ${wallet.toFixed(2)}</button>
+              <button className="btn btn-amber" onClick={() => goTo("setup")}>Play a Match</button>
+              <button className="btn btn-outline" onClick={() => goTo("wallet")}>💰 Wallet — ₹{wallet.toFixed(0)}</button>
               <div style={{ display: "flex", gap: 8 }}>
-                <button className="btn btn-outline btn-sm" style={{ flex: 1 }} onClick={() => { setNavTab("leaderboard"); setScreen("leaderboard"); }}>🏆 Leaderboard</button>
-                <button className="btn btn-outline btn-sm" style={{ flex: 1 }} onClick={() => { setNavTab("profile"); setScreen("profile"); }}>👤 {nick || "Career"}</button>
+                <button className="btn btn-outline btn-sm" style={{ flex: 1 }} onClick={() => { setNavTab("leaderboard"); goTo("leaderboard"); }}>🏆 Leaderboard</button>
+                <button className="btn btn-outline btn-sm" style={{ flex: 1 }} onClick={() => { setNavTab("profile"); goTo("profile"); }}>👤 {nick || "Career"}</button>
               </div>
               <div style={{ display: "flex", gap: 8 }}>
-                <button className="btn btn-outline btn-sm" style={{ flex: 1 }} onClick={() => setScreen("rules")}>📋 How to Play</button>
-                <button className="btn btn-outline btn-sm" style={{ flex: 1 }} onClick={() => { setLegalTab("terms"); setScreen("legal"); }}>⚖️ Legal</button>
+                <button className="btn btn-outline btn-sm" style={{ flex: 1 }} onClick={() => goTo("rules")}>📋 How to Play</button>
+                <button className="btn btn-outline btn-sm" style={{ flex: 1 }} onClick={() => { setLegalTab("terms"); goTo("legal"); }}>⚖️ Legal</button>
                 <button className="btn btn-outline btn-sm" style={{ flex: 1 }} onClick={() => { setShowTutorial(true); setTutStep(0); }}>🎓 Tutorial</button>
               </div>
             </div>
@@ -4464,9 +4555,9 @@ export default function App() {
                 Finding Opponent…
               </div>
               <div style={{ fontSize:13, color:"rgba(255,255,255,.45)" }}>
-                {queueWaitMs < 10000
+                {queueWaitMs < 5000
                   ? "Searching for a real player near your level"
-                  : queueWaitMs < 25000
+                  : queueWaitMs < 9000
                   ? "Almost there — pairing you now"
                   : "Starting AI match now…"}
               </div>
@@ -4487,12 +4578,12 @@ export default function App() {
             <div style={{ background:"rgba(255,255,255,.06)", border:"1px solid rgba(255,255,255,.1)", borderRadius:"var(--r2)", padding:"10px 20px", textAlign:"center" }}>
               <div style={{ fontSize:11, color:"rgba(255,255,255,.4)", textTransform:"uppercase", letterSpacing:1, marginBottom:2 }}>Entry</div>
               <div style={{ fontFamily:"var(--fd)", fontSize:16, fontWeight:700, color:"var(--amberViv)" }}>
-                {entryFee.entry === 0 ? "Free Practice" : `₹${Math.round(entryFee.entry * 83)} → Win ₹${Math.round(entryFee.prize * 83)}`}
+                {entryFee.entry === 0 ? "Free Practice" : `₹${entryFee.entry} → Win ₹${entryFee.prize}`}
               </div>
             </div>
 
             <div style={{ fontSize:11, color:"rgba(255,255,255,.25)", textAlign:"center", maxWidth:240 }}>
-              If no opponent is found within 15 seconds, you'll be matched with an AI opponent automatically
+              If no opponent is found within 10 seconds, you'll be matched with an AI opponent automatically
             </div>
 
             <button
@@ -4514,7 +4605,7 @@ export default function App() {
           return (
             <div className="screen" style={{ background:"linear-gradient(160deg,#1a2e1a,#1c1917 50%,#1a1a2e)" }}>
               <div className="hdr" style={{ background:"transparent", borderBottom:"1px solid rgba(255,255,255,.08)" }}>
-                <button className="back-btn" style={{ color:"rgba(255,255,255,.6)" }} onClick={() => setScreen("setup")}>←</button>
+                <button className="back-btn" style={{ background:"rgba(255,255,255,.12)", border:"1px solid rgba(255,255,255,.2)", color:"#fff" }} onClick={() => goBack()}>←</button>
                 <div className="hdr-title" style={{ color:"#fff" }}>Challenge a Friend</div>
                 <div className="hdr-r" />
               </div>
@@ -4605,7 +4696,7 @@ export default function App() {
           return (
             <div className="screen" style={{ background:"linear-gradient(160deg,#1a2e1a,#1c1917 50%,#1a1a2e)" }}>
               <div className="hdr" style={{ background:"transparent", borderBottom:"1px solid rgba(255,255,255,.08)" }}>
-                <button className="back-btn" style={{ color:"rgba(255,255,255,.6)" }} onClick={() => setScreen("landing")}>←</button>
+                <button className="back-btn" style={{ color:"rgba(255,255,255,.6)" }} onClick={() => goBack()}>←</button>
                 <div className="hdr-title" style={{ color:"#fff" }}>Challenge Received! 🏏</div>
                 <div className="hdr-r" />
               </div>
@@ -4666,7 +4757,7 @@ export default function App() {
         {screen === "setup" && (
           <div className="screen">
             <div className="hdr">
-              <button className="back-btn" onClick={() => setScreen("landing")}>←</button>
+              <button className="back-btn" onClick={() => goBack()}>←</button>
               <div className="hdr-title">New Match</div>
               <div className="hdr-r">
                 <div className="mono-tag" style={{ background: "rgba(180,83,9,.08)", border: "1px solid rgba(180,83,9,.2)", color: "var(--amber)" }}>{career.badge}</div>
@@ -4698,7 +4789,7 @@ export default function App() {
                       <span className="fee-icon">{f.icon}</span>
                       <div className="fee-info">
                         <div className="fee-label">{f.label} Entry</div>
-                        <div className="fee-prize">{f.entry > 0 ? `Win ₹${Math.round(f.prize*83)} · Platform fee ₹${Math.round(f.entry*83*0.2)}` : "Free practice — no prize"}</div>
+                        <div className="fee-prize">{f.entry > 0 ? `Win ₹${f.prize} · Platform fee ₹${Math.round(f.entry*0.2)}` : "Free practice — no prize"}</div>
                       </div>
                       <div className="fee-tag" style={{ background: f.entry === 0 ? "var(--s2)" : "var(--amberBg)", color: f.entry === 0 ? "var(--sub)" : "var(--amber)", border: `1px solid ${f.entry === 0 ? "var(--rim)" : "rgba(180,83,9,.2)"}` }}>{f.tag}</div>
                     </div>
@@ -4726,7 +4817,7 @@ export default function App() {
           <div className="screen toss-screen">
             {/* Back button */}
             <div style={{ position:"absolute", top:12, left:12, zIndex:10 }}>
-              <button className="back-btn" onClick={() => setScreen("setup")}>←</button>
+              <button className="back-btn" onClick={() => goBack()}>←</button>
             </div>
             {/* PvP vs Bot badge */}
             <div style={{ display:"flex", justifyContent:"center", marginBottom:4 }}>
@@ -4907,7 +4998,7 @@ export default function App() {
 
                 {/* ── TOP: Broadcast bar ── */}
                 <div className="broadcast-bar">
-                  <button onClick={() => setScreen("toss")} style={{ background:"rgba(255,255,255,.12)", border:"1px solid rgba(255,255,255,.2)", color:"#fff", borderRadius:8, padding:"4px 10px", fontSize:16, cursor:"pointer", fontWeight:700, lineHeight:1 }}>←</button>
+                  <button onClick={() => goBack()} style={{ background:"rgba(255,255,255,.12)", border:"1px solid rgba(255,255,255,.2)", color:"#fff", borderRadius:8, padding:"4px 10px", fontSize:16, cursor:"pointer", fontWeight:700, lineHeight:1 }}>←</button>
                   <div className="broadcast-live" style={{ color: bc }}>
                     <div className="live-dot" style={{ background: bc }} />
                     {condition.broadcastTag}
@@ -5491,15 +5582,15 @@ export default function App() {
                     {isTie ? "Entry Refunded ⚡" : won ? "Prize Won 🏆" : "Entry Fee"}
                   </div>
                   <div style={{ fontFamily: "var(--fd)", fontSize: 36, fontWeight: 800, color: isTie ? "#22d3ee" : won ? "var(--green)" : "var(--red)", letterSpacing: -1, lineHeight: 1 }}>
-                    {isTie ? `$${entryFee.entry.toFixed(2)}` : won ? `+$${(entryFee.prize - entryFee.entry).toFixed(2)}` : `-$${entryFee.entry.toFixed(2)}`}
+                    {isTie ? `₹${entryFee.entry}` : won ? `+₹${entryFee.prize - entryFee.entry}` : `-₹${entryFee.entry}`}
                   </div>
                   <div style={{ fontFamily: "var(--fm)", fontSize: 10, color: "var(--sub)", marginTop: 4 }}>
-                    {isTie ? "Dead heat — your entry fee is returned" : won ? `Prize pool $${entryFee.prize.toFixed(2)} · Platform fee $${(entryFee.entry * 0.2).toFixed(2)}` : "Better luck next match!"}
+                    {isTie ? "Dead heat — your entry fee is returned" : won ? `Prize pool ₹${entryFee.prize} · Platform fee ₹${entryFee.entry * 0.2}` : "Better luck next match!"}
                   </div>
                 </div>
                 <div style={{ textAlign: "right" }}>
                   <div style={{ fontFamily: "var(--fm)", fontSize: 9, color: "var(--sub)", letterSpacing: 1, marginBottom: 4 }}>WALLET</div>
-                  <div style={{ fontFamily: "var(--fd)", fontSize: 22, fontWeight: 700 }}>${wallet.toFixed(2)}</div>
+                  <div style={{ fontFamily: "var(--fd)", fontSize: 22, fontWeight: 700 }}>₹{wallet.toFixed(0)}</div>
                   <div style={{ fontFamily: "var(--fm)", fontSize: 9, color: "var(--green)", marginTop: 2 }}>+${totalEarnings.toFixed(2)} all-time</div>
                 </div>
               </div>
@@ -5575,7 +5666,7 @@ export default function App() {
             {/* WhatsApp Share + Challenge */}
             {(() => {
               const APP_URL = "https://play.cricketclash.in"; // your real URL
-              const margin  = won ? (entryFee.prize - entryFee.entry).toFixed(2) : null;
+              const margin  = won ? (entryFee.prize - entryFee.entry) : null;
               const scoreEmoji = won ? "🏆" : "🏏";
               const scoreLabel = `${myScore} runs`;
               // Encode challenge: score|condition|opp_accuracy so friend chases this score
@@ -5583,7 +5674,7 @@ export default function App() {
               const challengeUrl  = `${APP_URL}?challenge=${challengeCode}`;
 
               const shareText = won
-                ? `${scoreEmoji} I scored ${myScore} runs & won${entryFee.entry > 0 ? ` $${margin}` : ""} on Cricket Clash!\n🏏 vs ${opp?.name} · ${condition?.name}\n\nCan you beat my score? Chase it 👇\n${challengeUrl}`
+                ? `${scoreEmoji} I scored ${myScore} runs & won${entryFee.entry > 0 ? ` ₹${margin}` : ""} on Cricket Clash!\n🏏 vs ${opp?.name} · ${condition?.name}\n\nCan you beat my score? Chase it 👇\n${challengeUrl}`
                 : `🏏 I scored ${myScore} runs on Cricket Clash!\nCan you do better? Chase my target 👇\n${challengeUrl}`;
 
               const openWhatsApp = () => {
@@ -5638,11 +5729,11 @@ export default function App() {
             })()}
 
             <div className="result-btns">
-              <button className="btn btn-amber" onClick={() => setScreen("setup")}>Play Again →</button>
+              <button className="btn btn-amber" onClick={() => goTo("setup")}>Play Again →</button>
               <div style={{ display: "flex", gap: 8 }}>
-                <button className="btn btn-outline btn-sm" style={{ flex: 1 }} onClick={() => { setNavTab("profile"); setScreen("profile"); }}>🌟 Career</button>
-                <button className="btn btn-outline btn-sm" style={{ flex: 1 }} onClick={() => { setNavTab("leaderboard"); setScreen("leaderboard"); }}>🏆 Rankings</button>
-                <button className="btn btn-outline btn-sm" style={{ flex: 1 }} onClick={() => setScreen("wallet")}>💰 Wallet</button>
+                <button className="btn btn-outline btn-sm" style={{ flex: 1 }} onClick={() => { setNavTab("profile"); goTo("profile"); }}>🌟 Career</button>
+                <button className="btn btn-outline btn-sm" style={{ flex: 1 }} onClick={() => { setNavTab("leaderboard"); goTo("leaderboard"); }}>🏆 Rankings</button>
+                <button className="btn btn-outline btn-sm" style={{ flex: 1 }} onClick={() => goTo("wallet")}>💰 Wallet</button>
               </div>
             </div>
           </div>
@@ -5654,10 +5745,10 @@ export default function App() {
             {/* ── Header with CricCoins ── */}
             <div style={{ display:"flex", alignItems:"center", justifyContent:"space-between", padding:"14px 18px 0", flexShrink:0 }}>
               <div style={{ display:"flex", alignItems:"center", gap:10 }}>
-                <button onClick={() => setScreen("landing")} style={{ background:"none", border:"none", fontSize:22, cursor:"pointer", padding:"0 4px", lineHeight:1, color:"var(--amber)" }}>←</button>
+                <button onClick={() => goBack()} style={{ background:"none", border:"none", fontSize:22, cursor:"pointer", padding:"0 4px", lineHeight:1, color:"var(--amber)" }}>←</button>
                 <div style={{ fontFamily:"var(--fd)", fontSize:20, fontWeight:800 }}>My Career</div>
               </div>
-              <div className="coin-bar" onClick={() => setScreen("store")}>🪙 {cricCoins}</div>
+              <div className="coin-bar" onClick={() => goTo("store")}>🪙 {cricCoins}</div>
             </div>
 
             {/* ── Player Card Hero ── */}
@@ -5848,7 +5939,7 @@ export default function App() {
                 <div style={{ background:"var(--s0)", border:"1px solid var(--rim)", borderRadius:"var(--r2)", padding:18 }}>
                   <div style={{ display:"flex", alignItems:"center", justifyContent:"space-between", marginBottom:14 }}>
                     <div className="slbl">Jersey Colour</div>
-                    <button onClick={() => { setNavTab("store"); setScreen("store"); setStoreCat("cosmetic"); setShowAvatarScreen(false); }}
+                    <button onClick={() => { setNavTab("store"); goTo("store"); setStoreCat("cosmetic"); setShowAvatarScreen(false); }}
                       style={{ fontFamily:"var(--fm)", fontSize:9, fontWeight:700, color:"var(--amber)", background:"var(--amberBg)", border:"1px solid rgba(180,83,9,.2)", borderRadius:999, padding:"4px 10px", cursor:"pointer" }}>
                       + More in Store
                     </button>
@@ -5917,7 +6008,7 @@ export default function App() {
         {screen === "store" && (
           <div className="screen store-screen">
             <div className="hdr" style={{ flexShrink:0 }}>
-              <button className="back-btn" onClick={() => setScreen("landing")}>←</button>
+              <button className="back-btn" onClick={() => goBack()}>←</button>
               <div className="hdr-title">CricCoin Store</div>
               <div className="coin-bar" style={{ fontSize:13 }}>🪙 {cricCoins}</div>
             </div>
@@ -5969,7 +6060,7 @@ export default function App() {
         {screen === "leaderboard" && (
           <div className="screen lb-screen">
             <div className="hdr">
-              <button className="back-btn" onClick={() => setScreen("landing")}>←</button>
+              <button className="back-btn" onClick={() => goBack()}>←</button>
               <div className="hdr-title">Rankings</div>
               <div className="hdr-r"><div className="mono-tag" style={{ background: "var(--amberBg)", border: "1px solid rgba(180,83,9,.2)", color: "var(--amber)" }}>Season 2026</div></div>
             </div>
@@ -6004,23 +6095,23 @@ export default function App() {
           <div className="screen" style={{ display: "flex", flexDirection: "column" }}>
             <div className="wallet-hero">
               <div style={{ display: "flex", alignItems: "center", justifyContent: "space-between", marginBottom: 16 }}>
-                <button className="back-btn" style={{ background: "rgba(255,255,255,.1)", border: "1px solid rgba(255,255,255,.15)", color: "#fff" }} onClick={() => setScreen("landing")}>←</button>
+                <button className="back-btn" style={{ background: "rgba(255,255,255,.1)", border: "1px solid rgba(255,255,255,.15)", color: "#fff" }} onClick={() => goBack()}>←</button>
                 <span style={{ fontFamily: "var(--fm)", fontSize: 9, fontWeight: 600, letterSpacing: 3, textTransform: "uppercase", color: "rgba(255,255,255,.4)" }}>SKILL WALLET</span>
                 <div style={{ width: 40 }} />
               </div>
-              <div className="w-bal"><span>$</span>{wallet.toFixed(2)}</div>
+              <div className="w-bal"><span>₹</span>{wallet.toFixed(0)}</div>
               <div className="w-sub">Available balance</div>
             </div>
             <div className="wallet-body" style={{ flex: 1, overflowY: "auto" }}>
               <div style={{ display: "grid", gridTemplateColumns: "1fr 1fr", gap: 10 }}>
-                <button className="btn btn-green btn-sm" onClick={() => setScreen("wallet-connect")}>💳 Add Funds</button>
-                <button className="btn btn-outline btn-sm" onClick={() => { if (wallet >= 5) { setWallet(w => parseFloat((w - 5).toFixed(2))); showToast("✅ Withdrawal initiated — 30 mins"); } else showToast("⚠️ Insufficient balance"); }}>Withdraw</button>
+                <button className="btn btn-green btn-sm" onClick={() => goTo("wallet-connect")}>💳 Add Funds</button>
+                <button className="btn btn-outline btn-sm" onClick={() => { if (wallet >= 100) { setWallet(w => parseFloat((w - 100).toFixed(0))); showToast("✅ Withdrawal initiated — 30 mins"); } else showToast("⚠️ Minimum withdrawal is ₹100"); }}>Withdraw</button>
               </div>
 
               <div className="slbl">How prize money works</div>
               <div style={{ background: "var(--amberBg)", border: "1px solid rgba(180,83,9,.18)", borderRadius: "var(--r2)", padding: 16 }}>
                 <div style={{ display: "grid", gridTemplateColumns: "1fr 1fr 1fr", gap: 10, textAlign: "center" }}>
-                  {[["Your Entry", "$1.00"], ["Prize Pool", "$1.80"], ["Platform Fee", "$0.20"]].map(([l, v]) => (
+                  {[["Your Entry", "₹100"], ["Prize Pool", "₹180"], ["Platform Fee", "₹20"]].map(([l, v]) => (
                     <div key={l}>
                       <div style={{ fontFamily: "var(--fm)", fontSize: 8, fontWeight: 600, color: "var(--sub)", letterSpacing: 1, textTransform: "uppercase", marginBottom: 3 }}>{l}</div>
                       <div style={{ fontFamily: "var(--fd)", fontSize: 20, fontWeight: 700, color: "var(--amber)" }}>{v}</div>
@@ -6054,11 +6145,11 @@ export default function App() {
             {[["play","🏏","Play"],["profile","👤","Career"],["leaderboard","🏆","Ranks"],["store","🪙","Store"],["wallet","💰","Wallet"]].map(([id, ic, lb]) => (
               <button key={id} className={`nav-btn${navTab === id ? " on" : ""}`} onClick={() => {
                 setNavTab(id);
-                if (id === "play") setScreen("landing");
-                else if (id === "profile") { setScreen("profile"); setShowAvatarScreen(false); }
-                else if (id === "leaderboard") setScreen("leaderboard");
-                else if (id === "store") setScreen("store");
-                else setScreen("wallet");
+                if (id === "play") goTo("landing");
+                else if (id === "profile") { goTo("profile"); setShowAvatarScreen(false); }
+                else if (id === "leaderboard") goTo("leaderboard");
+                else if (id === "store") goTo("store");
+                else goTo("wallet");
               }}>
                 <span className="nav-icon">{ic}</span>{lb}
               </button>
