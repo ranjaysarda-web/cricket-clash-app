@@ -2853,8 +2853,8 @@ function WatchingScreen({ opp, feed, finalScore, label, target, isPvp }) {
     return () => clearInterval(t);
   }, []);
 
-  // Ball reveal speed: PvP = 3s (human pace), Bot = 2s (still feels live)
-  const ballInterval = isPvp ? 3000 : 2000;
+  // Ball reveal speed: PvP = 3s (human pace), Bot = 1.5s (snappy)
+  const ballInterval = isPvp ? 3000 : 1500;
 
   useEffect(() => {
     if (!feed || feed.length === 0) return;
@@ -2931,11 +2931,22 @@ function WatchingScreen({ opp, feed, finalScore, label, target, isPvp }) {
         )}
       </div>
 
-      {visibleCount === feed.length && (
-        <div style={{ fontFamily:"var(--fm)", fontSize:11, color:"var(--sub)", textAlign:"center", animation:"fadeUp .4s both" }}>
-          {label === "1st Innings" ? "Your turn to bat is next…" : "Calculating final result…"}
-        </div>
-      )}
+      {visibleCount === feed.length && (() => {
+        // Show a countdown so user knows it's not frozen
+        const CountdownMsg = () => {
+          const [secs, setSecs] = React.useState(4);
+          React.useEffect(() => {
+            const t = setInterval(() => setSecs(s => Math.max(0, s - 1)), 1000);
+            return () => clearInterval(t);
+          }, []);
+          return (
+            <div style={{ fontFamily:"var(--fm)", fontSize:13, color:"var(--amber3)", textAlign:"center", animation:"fadeUp .4s both", fontWeight:700 }}>
+              {label === "1st Innings" ? `🏏 Your turn to bat in ${secs}s…` : "Calculating result…"}
+            </div>
+          );
+        };
+        return <CountdownMsg />;
+      })()}
     </div>
   );
 }
@@ -3561,6 +3572,8 @@ export default function App() {
     setOppScore(score);
     setOppLiveFeed(feed);
     setScreen("watching");
+    // Ball animation: 6 balls × 2s each = 12s, then 2s buffer = 14s total
+    // But we show it faster — 6 balls × 1.5s = 9s + 2s buffer
     setTimeout(() => {
       setInnings(2);
       setQi(0); setTLeft(15); setSel(null); setRev(false); setDone([]);
@@ -3569,7 +3582,7 @@ export default function App() {
       setFrozen(false); setFreeHit(false); setHidden([]);
       setScreen("match");
       qStartRef.current = Date.now();
-    }, 15000);
+    }, 11000);
   }, [opp]);
 
   // Toss winner chooses bat/chase
