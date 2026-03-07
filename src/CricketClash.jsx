@@ -42,7 +42,7 @@ const CONDITIONS = [
     sky:"linear-gradient(180deg,#4a5568 0%,#718096 40%,#a0aec0 100%)",
     atmosphere:"Overcast | Humid 82% | 16°C", wind:"SW 18 km/h", weatherIcon:"🌦",
     broadcastTag:"LIVE · DAY MATCH", broadcastColor:"#0369a1",
-    pitchColor:"#8B7355", pitchDesc:"Soft, Green", overlay:"rgba(7,89,133,.55)" },
+    pitchColor:"#8B7355", pitchDesc:"Soft, Green", overlay:"rgba(0,0,0,.25)" },
   { id:"dry",    icon:"☀️", name:"Dry Pitch, Spin Day",     desc:"Crumbling surface. Spin bowling questions dominate.",     theme:"#92400e", bg:"#fffbeb", cat:"Test Cricket",
     isNight:false, stadium:"MA Chidambaram Stadium", venue:"Chennai, India",
     img:null,
@@ -50,7 +50,7 @@ const CONDITIONS = [
     sky:"linear-gradient(180deg,#F59E0B 0%,#FBBF24 30%,#FDE68A 100%)",
     atmosphere:"Sunny | Humidity 68% | 34°C", wind:"NE 8 km/h", weatherIcon:"☀️",
     broadcastTag:"LIVE · DAY MATCH", broadcastColor:"#b45309",
-    pitchColor:"#C4A96A", pitchDesc:"Hard, Dry, Dusty", overlay:"rgba(120,53,15,.55)" },
+    pitchColor:"#C4A96A", pitchDesc:"Hard, Dry, Dusty", overlay:"rgba(0,0,0,.25)" },
   { id:"flat",   icon:"🏟", name:"Flat Track Belter",       desc:"Six-hitting bonanza. Batting records & T20 questions.",   theme:"#166534", bg:"#f0fdf4", cat:"T20 Cricket",
     isNight:true,  stadium:"Narendra Modi Stadium", venue:"Ahmedabad, India",
     img:null,
@@ -58,7 +58,7 @@ const CONDITIONS = [
     sky:"linear-gradient(180deg,#0a0a1a 0%,#1a1a4a 50%,#2d3a6b 100%)",
     atmosphere:"Clear Night | 29°C | Dew: Heavy", wind:"NW 12 km/h", weatherIcon:"🌙",
     broadcastTag:"LIVE · NIGHT MATCH", broadcastColor:"#22d3ee",
-    pitchColor:"#A8956B", pitchDesc:"Flat, True Bounce", overlay:"rgba(0,0,30,.65)" },
+    pitchColor:"#A8956B", pitchDesc:"Flat, True Bounce", overlay:"rgba(0,0,0,.25)" },
   { id:"seam",   icon:"🌬", name:"Green Top, Early Seam",   desc:"Seam movement galore. Classic fast bowling questions.",   theme:"#5b21b6", bg:"#faf5ff", cat:"Player Records",
     isNight:false, stadium:"MCG", venue:"Melbourne, Australia",
     img:null,
@@ -66,7 +66,7 @@ const CONDITIONS = [
     sky:"linear-gradient(180deg,#1e3a5f 0%,#2d6a9f 50%,#87ceeb 100%)",
     atmosphere:"Partly Cloudy | 22°C | Moisture: High", wind:"WSW 24 km/h", weatherIcon:"🌬",
     broadcastTag:"LIVE · DAY MATCH", broadcastColor:"#7c3aed",
-    pitchColor:"#6B8C42", pitchDesc:"Lush, Grassy Cover", overlay:"rgba(55,20,120,.5)" },
+    pitchColor:"#6B8C42", pitchDesc:"Lush, Grassy Cover", overlay:"rgba(0,0,0,.25)" },
   { id:"dew",    icon:"🌙", name:"Night Match, Heavy Dew",  desc:"Dew factor advantage. ODI & T20 batting questions.",      theme:"#1e40af", bg:"#eff6ff", cat:"ODI Cricket",
     isNight:true,  stadium:"Wankhede Stadium", venue:"Mumbai, India",
     img:null,
@@ -74,7 +74,7 @@ const CONDITIONS = [
     sky:"linear-gradient(180deg,#020617 0%,#0f172a 40%,#1e3a5f 100%)",
     atmosphere:"Clear Night | 27°C | Dew: Heavy", wind:"Sea breeze 14 km/h", weatherIcon:"🌙",
     broadcastTag:"LIVE · NIGHT MATCH", broadcastColor:"#60a5fa",
-    pitchColor:"#4A7C59", pitchDesc:"Damp, Dew-affected", overlay:"rgba(0,10,40,.72)" },
+    pitchColor:"#4A7C59", pitchDesc:"Damp, Dew-affected", overlay:"rgba(0,0,0,.25)" },
   { id:"dusty",  icon:"🏜", name:"Sub-Continent Dust Bowl", desc:"Reverse swing & spin. ICC tournament history questions.", theme:"#b45309", bg:"#fefce8", cat:"ICC Tournaments",
     isNight:false, stadium:"Eden Gardens", venue:"Kolkata, India",
     img:null,
@@ -82,7 +82,7 @@ const CONDITIONS = [
     sky:"linear-gradient(180deg,#92400e 0%,#b45309 40%,#d97706 100%)",
     atmosphere:"Hazy | Dusty | 38°C", wind:"Hot wind 22 km/h", weatherIcon:"🏜",
     broadcastTag:"LIVE · DAY MATCH", broadcastColor:"#f59e0b",
-    pitchColor:"#B8956A", pitchDesc:"Hard, Cracked, Dusty", overlay:"rgba(120,50,5,.6)" },
+    pitchColor:"#B8956A", pitchDesc:"Hard, Cracked, Dusty", overlay:"rgba(0,0,0,.25)" },
 ];
 
 // ─── SKILL DOMAINS ─────────────────────────────────────────────────────────────
@@ -2351,7 +2351,7 @@ html,body{background:var(--bg);color:var(--txt);font-family:var(--fh);-webkit-fo
 .cond-screen{flex:1;display:flex;flex-direction:column;overflow-y:auto;position:relative;background:#000;-webkit-overflow-scrolling:touch}
 .cond-stadium-bg{position:absolute;inset:0;background-size:cover;background-position:center top;z-index:0;transition:opacity .5s}
 .cond-overlay{position:absolute;inset:0;z-index:1}
-.cond-vignette{position:absolute;inset:0;z-index:2;background:radial-gradient(ellipse at 50% 30%,transparent 30%,rgba(0,0,0,.7) 100%)}
+.cond-vignette{position:absolute;inset:0;z-index:2;background:linear-gradient(to bottom,rgba(0,0,0,.1) 0%,rgba(0,0,0,.05) 40%,rgba(0,0,0,.6) 80%,rgba(0,0,0,.85) 100%)}
 .cond-content{position:relative;z-index:3;flex:1;display:flex;flex-direction:column;justify-content:space-between;padding:0}
 
 /* TV broadcast header bar */
@@ -2364,18 +2364,18 @@ html,body{background:var(--bg);color:var(--txt);font-family:var(--fh);-webkit-fo
 /* Stadium name lower-third */
 .lower-third{padding:10px 14px 6px;background:linear-gradient(transparent,rgba(0,0,0,.6))}
 .lt-venue{font-family:var(--fm);font-size:9px;font-weight:700;letter-spacing:3px;text-transform:uppercase;color:rgba(255,255,255,.5);margin-bottom:3px}
-.lt-stadium{font-family:var(--fd);font-size:18px;font-weight:800;color:#fff;letter-spacing:-.3px;line-height:1.1}
+.lt-stadium{font-family:var(--fd);font-size:16px;font-weight:800;color:#fff;letter-spacing:-.3px;line-height:1.1}
 
 /* Pitch report card — bottom sheet style */
-.pitch-report-sheet{background:rgba(0,0,0,.82);backdrop-filter:blur(16px);border-top:1px solid rgba(255,255,255,.1);padding:18px 18px 28px;display:flex;flex-direction:column;gap:14px}
+.pitch-report-sheet{background:rgba(0,0,0,.75);backdrop-filter:blur(20px);border-top:1px solid rgba(255,255,255,.08);padding:14px 18px 20px;display:flex;flex-direction:column;gap:10px}
 .pitch-tag{font-family:var(--fm);font-size:8px;font-weight:700;letter-spacing:3px;text-transform:uppercase;color:rgba(255,255,255,.4);display:flex;align-items:center;gap:6px}
 .pitch-tag::before{content:"";display:block;width:18px;height:2px;border-radius:999px;background:var(--tagColor,#fff)}
-.pitch-name{font-family:var(--fd);font-size:28px;font-weight:900;color:#fff;line-height:1.1;letter-spacing:-.5px}
-.pitch-desc{font-size:13px;color:rgba(255,255,255,.55);line-height:1.5;margin-top:2px}
+.pitch-name{font-family:var(--fd);font-size:22px;font-weight:900;color:#fff;line-height:1.1;letter-spacing:-.5px}
+.pitch-desc{font-size:12px;color:rgba(255,255,255,.55);line-height:1.4;margin-top:1px}
 
 /* Weather + pitch strip */
-.pitch-stats-row{display:grid;grid-template-columns:repeat(3,1fr);gap:8px}
-.pitch-stat{background:rgba(255,255,255,.07);border:1px solid rgba(255,255,255,.1);border-radius:10px;padding:9px 8px;display:flex;flex-direction:column;align-items:center;gap:3px}
+.pitch-stats-row{display:grid;grid-template-columns:repeat(3,1fr);gap:6px}
+.pitch-stat{background:rgba(255,255,255,.07);border:1px solid rgba(255,255,255,.1);border-radius:10px;padding:7px 6px;display:flex;flex-direction:column;align-items:center;gap:2px}
 .pitch-stat-val{font-family:var(--fm);font-size:11px;font-weight:700;color:#fff}
 .pitch-stat-lbl{font-family:var(--fm);font-size:7px;font-weight:600;letter-spacing:1px;text-transform:uppercase;color:rgba(255,255,255,.35)}
 
@@ -3392,6 +3392,8 @@ export default function App() {
     } else {
       fetchInBackground(cond);
     }
+    screenHistoryRef.current = [...screenHistoryRef.current, "toss"];
+    window.history.pushState({ screen: "toss" }, "", "");
     setScreen("toss");
   }, [fetchInBackground]);
 
@@ -3411,6 +3413,8 @@ export default function App() {
     setMatchType("bot"); setMatchId(null); setLoading(false);
     setInSuperOver(false); setSoPhase("intro"); setSuperOverWinner(null);
     fetchInBackground(cond);
+    screenHistoryRef.current = [...screenHistoryRef.current, "toss"];
+    window.history.pushState({ screen: "toss" }, "", "");
     setScreen("toss");
   }, [fetchInBackground]);
 
@@ -3449,6 +3453,8 @@ export default function App() {
       setMatchType("bot"); setMatchId(null); setLoading(false);
       setInSuperOver(false); setSoPhase("intro"); setSuperOverWinner(null);
       qsReadyRef.current = Promise.resolve(buildQuestionSet(null, cond));
+      screenHistoryRef.current = [...screenHistoryRef.current, "toss"];
+      window.history.pushState({ screen: "toss" }, "", "");
       setScreen("toss");
     };
 
@@ -3471,6 +3477,8 @@ export default function App() {
         setTossState("idle"); setTossWinner(null); setBatFirst(null);
         setMatchType("bot"); setMatchId(null); setLoading(false);
         setInSuperOver(false); setSoPhase("intro"); setSuperOverWinner(null);
+        screenHistoryRef.current = [...screenHistoryRef.current, "toss"];
+        window.history.pushState({ screen: "toss" }, "", "");
         setScreen("toss");
       }
     }, 10000);
@@ -3608,6 +3616,8 @@ export default function App() {
     const batFirstDecision = choice === "bat" ? "player" : "opp";
     setBatFirst(batFirstDecision);
     setInnings(1);
+    screenHistoryRef.current = [...screenHistoryRef.current, "conditions"];
+    window.history.pushState({ screen: "conditions" }, "", "");
     setScreen("conditions");
   }, []);
 
@@ -4950,7 +4960,8 @@ export default function App() {
                 {condition.stadiumImg && (
                   <img src={condition.stadiumImg} alt={condition.stadium}
                     style={{ position:"absolute", inset:0, width:"100%", height:"100%", objectFit:"cover",
-                      filter: isNight ? "brightness(.6)" : "brightness(.95)" }} />
+                      objectPosition:"center 40%",
+                      filter: isNight ? "brightness(.65)" : "brightness(1)" }} />
                 )}
                 {/* Oval boundary SVG overlay (only for CSS fallback) */}
                 {!condition.stadiumImg && (
@@ -5091,12 +5102,14 @@ export default function App() {
                     Questions from <span style={{ color: bc, fontWeight:700 }}>{condition.cat}</span> · Your skill will grow this match
                   </div>
 
-                  {/* CTA — always show button immediately, questions built instantly from local bank */}
-                  <button
-                    onClick={startInnings}
-                    style={{ width:"100%", background:bc, color:"#fff", border:"none", borderRadius:14, padding:"15px 0", fontFamily:"var(--fd)", fontSize:17, fontWeight:800, cursor:"pointer", boxShadow:`0 4px 20px ${bc}55`, letterSpacing:.3 }}>
-                    {batFirst === "player" ? "🏏  Start Batting" : "▶  Watch Opponent Bat"}
-                  </button>
+                  {/* CTA — sticky at bottom so always visible */}
+                  <div style={{ position:"sticky", bottom:0, paddingBottom:8, paddingTop:8, background:"linear-gradient(to bottom, transparent, rgba(0,0,0,.85) 30%)" }}>
+                    <button
+                      onClick={startInnings}
+                      style={{ width:"100%", background:bc, color:"#fff", border:"none", borderRadius:14, padding:"18px 0", fontFamily:"var(--fd)", fontSize:18, fontWeight:800, cursor:"pointer", boxShadow:`0 4px 24px ${bc}88`, letterSpacing:.3 }}>
+                      {batFirst === "player" ? "🏏  Start Batting" : "▶  Watch Opponent Bat"}
+                    </button>
+                  </div>
                 </div>
               </div>
             </div>
