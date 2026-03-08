@@ -1938,6 +1938,8 @@ const _EXTENDED_BANK_TEMP = [
 {q:"Which team beat India in the 2022 T20 World Cup semi-final?",opts:["England","Pakistan","Bangladesh","South Africa"],ans:0,skill:"history",coachNote:"England beat India by 10 wickets in the 2022 T20 World Cup semi-final at Adelaide — Jos Buttler and Alex Hales destroying India's 168 in just 16 overs."}
 ];
 
+// ── ALL_QUESTIONS: merged from all banks ──────────────────────────────────────
+const ALL_QUESTIONS = [...FALLBACK_BANK, ..._EXTENDED_BANK_TEMP];
 
 // ─── COMMENTARY ────────────────────────────────────────────────────────────────
 const COMMENTARY = {
@@ -2060,8 +2062,11 @@ function buildQuestionSet(aiQs, condition, matchCount = 0) {
     available = [...ALL_QUESTIONS];
   }
 
-  // Shuffle available
-  available = available.sort(() => Math.random() - .5);
+  // Fisher-Yates shuffle — unbiased, truly random
+  for (let i = available.length - 1; i > 0; i--) {
+    const j = Math.floor(Math.random() * (i + 1));
+    [available[i], available[j]] = [available[j], available[i]];
+  }
 
   // Pick 1 condition-biased question (matches condition.cat keyword)
   const condKeyword = condition.cat.toLowerCase();
@@ -2077,11 +2082,15 @@ function buildQuestionSet(aiQs, condition, matchCount = 0) {
   if (condBiased) pool.push(condBiased);
 
   // Fill remaining slots by rotating through skill targets
+  // Shuffle each skill bucket too for variety
   const skillBuckets = {};
   for (const skill of Object.keys(SKILL_TARGETS)) {
-    skillBuckets[skill] = available.filter(q =>
-      q.skill === skill && !pool.includes(q)
-    );
+    const bucket = available.filter(q => q.skill === skill && !pool.includes(q));
+    for (let i = bucket.length - 1; i > 0; i--) {
+      const j = Math.floor(Math.random() * (i + 1));
+      [bucket[i], bucket[j]] = [bucket[j], bucket[i]];
+    }
+    skillBuckets[skill] = bucket;
   }
 
   const skillOrder = ["batting","bowling","history","ipl","womens","batting","history"];
@@ -2127,27 +2136,182 @@ function buildQuestionSet(aiQs, condition, matchCount = 0) {
 // ─── AUDIO (sound effects only — no TTS/speech) ────────────────────────────────
 // ─── REAL CROWD SOUNDS via HTML Audio ─────────────────────────────────────────
 // Free crowd SFX from Pixabay (no auth, CORS-open, royalty-free)
-const CROWD_SOUNDS = {
-  crowd_cheer: "https://cdn.pixabay.com/audio/2022/03/10/audio_8cb747b7c9.mp3",  // crowd cheer/roar
-  crowd_clap:  "https://cdn.pixabay.com/audio/2022/03/15/audio_f2e0f53e0e.mp3",  // crowd applause
-  crowd_win:   "https://cdn.pixabay.com/audio/2021/08/04/audio_0625c1539c.mp3",  // big crowd celebration
-  suspense:    "https://cdn.pixabay.com/audio/2022/10/30/audio_946f99dcea.mp3",  // suspense/tension
-};
-// Pre-load crowd audio objects (created once, reused)
-const _crowdAudio = {};
-function playCrowdSound(name, vol = 0.7) {
+// ── SYNTHESISED CROWD & MUSIC SOUNDS (no CDN needed) ─────────────────────────
+let _bgMusicNode = null;   // background music loop ref
+let _bgMusicCtx  = null;
+
+function getAudioCtx() {
+  if (!_bgMusicCtx || _bgMusicCtx.state === "closed") {
+    _bgMusicCtx = new (window.AudioContext || window.webkitAudioContext)();
+  }
+  return _bgMusicCtx;
+}
+
+// Synthesised crowd cheer — white noise burst, swells, fades
+// Real audio files — loaded from /sounds/ in public folder
+const _realAudio = {};
+function playRealSound(file, vol = 0.7, loop = false) {
   try {
-    const url = CROWD_SOUNDS[name];
-    if (!url) return;
-    if (!_crowdAudio[name]) {
-      _crowdAudio[name] = new Audio(url);
-      _crowdAudio[name].preload = "auto";
+    const key = file + loop;
+    if (!_realAudio[key]) {
+      _realAudio[key] = new Audio(file);
+      _realAudio[key].preload = "auto";
+      _realAudio[key].loop = loop;
     }
-    const a = _crowdAudio[name];
+    const a = _realAudio[key];
     a.volume = vol;
     a.currentTime = 0;
-    a.play().catch(() => {});
+    return a.play().catch(() => null);
+  } catch { return Promise.resolve(); }
+}
+function stopRealSound(file, loop = false) {
+  try {
+    const a = _realAudio[file + loop];
+    if (a) { a.pause(); a.currentTime = 0; }
   } catch {}
+}
+
+function playCrowdSound(name, vol = 0.7) {
+  try {
+    const c = getAudioCtx();
+    const now = c.currentTime;
+    if (name === "crowd_cheer" || name === "crowd_win") {
+      // Use real crowd cheer file
+      playRealSound("/crowd_cheer.wav", vol * (name === "crowd_win" ? 1 : 0.85)).catch(() => null);
+      return;
+      // Noise burst — layered crowd roar
+      const bufSize = c.sampleRate * (name === "crowd_win" ? 2.8 : 1.6);
+      const buf = c.createBuffer(1, bufSize, c.sampleRate);
+      const data = buf.getChannelData(0);
+      for (let i = 0; i < bufSize; i++) data[i] = (Math.random() * 2 - 1) * 0.4;
+      const src = c.createBufferSource();
+      src.buffer = buf;
+      // Low-pass filter to make it sound like a crowd not static
+      const lp = c.createBiquadFilter();
+      lp.type = "lowpass"; lp.frequency.value = 1400;
+      const hp = c.createBiquadFilter();
+      hp.type = "highpass"; hp.frequency.value = 200;
+      const gain = c.createGain();
+      src.connect(lp); lp.connect(hp); hp.connect(gain); gain.connect(c.destination);
+      gain.gain.setValueAtTime(0, now);
+      gain.gain.linearRampToValueAtTime(vol, now + 0.18);
+      gain.gain.linearRampToValueAtTime(vol * 0.8, now + 0.6);
+      gain.gain.exponentialRampToValueAtTime(0.001, now + (name === "crowd_win" ? 2.8 : 1.6));
+      src.start(now); src.stop(now + (name === "crowd_win" ? 2.9 : 1.7));
+      // Add rising cheer tones for big moments
+      if (name === "crowd_win") {
+        [220, 330, 440, 550, 660].forEach((f, i) => {
+          const o = c.createOscillator(), g = c.createGain();
+          o.type = "sine"; o.frequency.setValueAtTime(f, now + i * 0.18);
+          o.frequency.linearRampToValueAtTime(f * 1.15, now + 1.4);
+          g.gain.setValueAtTime(0, now + i * 0.18);
+          g.gain.linearRampToValueAtTime(0.06, now + i * 0.18 + 0.12);
+          g.gain.exponentialRampToValueAtTime(0.001, now + 2.5);
+          o.connect(g); g.connect(c.destination);
+          o.start(now + i * 0.18); o.stop(now + 2.6);
+        });
+      }
+    } else if (name === "crowd_clap") {
+      // Use real clapping file
+      playRealSound("/crowd_cheer.wav", vol * 0.65).catch(() => null);
+      return;
+      // (synth fallback below — unreachable but kept for reference)
+      for (let i = 0; i < 5; i++) {
+        const bufSize = Math.floor(c.sampleRate * 0.07);
+        const buf = c.createBuffer(1, bufSize, c.sampleRate);
+        const data = buf.getChannelData(0);
+        for (let j = 0; j < bufSize; j++) data[j] = (Math.random() * 2 - 1) * 0.7;
+        const src = c.createBufferSource();
+        src.buffer = buf;
+        const lp = c.createBiquadFilter(); lp.type = "bandpass"; lp.frequency.value = 1800; lp.Q.value = 0.8;
+        const g = c.createGain();
+        const t = now + i * 0.22;
+        g.gain.setValueAtTime(vol * 0.7, t);
+        g.gain.exponentialRampToValueAtTime(0.001, t + 0.12);
+        src.connect(lp); lp.connect(g); g.connect(c.destination);
+        src.start(t); src.stop(t + 0.14);
+      }
+    } else if (name === "suspense") {
+      // Low pulsing drone
+      [55, 82, 110].forEach((f, i) => {
+        const o = c.createOscillator(), g = c.createGain();
+        o.type = "sawtooth"; o.frequency.value = f;
+        g.gain.setValueAtTime(0, now + i * 0.1);
+        g.gain.linearRampToValueAtTime(0.04, now + i * 0.1 + 0.3);
+        g.gain.exponentialRampToValueAtTime(0.001, now + 1.8);
+        o.connect(g); g.connect(c.destination);
+        o.start(now + i * 0.1); o.stop(now + 1.9);
+      });
+    }
+  } catch {}
+}
+
+// ── IPL CONDITIONS STING ─────────────────────────────────────────────────────
+let _iplStingAudio = null;
+function playIplSting() {
+  try {
+    if (!_iplStingAudio) {
+      _iplStingAudio = new Audio("/ipl.mp3");
+      _iplStingAudio.preload = "auto";
+    }
+    _iplStingAudio.currentTime = 0;
+    _iplStingAudio.volume = 0.85;
+    // Auto-stop after 5 seconds
+    _iplStingAudio.play().catch(() => {});
+    setTimeout(() => {
+      try {
+        if (!_iplStingAudio.paused) {
+          const fadeOut = setInterval(() => {
+            if (_iplStingAudio.volume > 0.05) {
+              _iplStingAudio.volume = Math.max(0, _iplStingAudio.volume - 0.05);
+            } else {
+              _iplStingAudio.pause();
+              _iplStingAudio.currentTime = 0;
+              clearInterval(fadeOut);
+            }
+          }, 50);
+        }
+      } catch {}
+    }, 4500);
+  } catch {}
+}
+
+// ── BACKGROUND AMBIENT CROWD LOOP ────────────────────────────────────────────
+let _ambientAudio = null;
+
+function startBgMusic() {
+  try {
+    if (_ambientAudio && !_ambientAudio.paused) return; // already playing
+    if (!_ambientAudio) {
+      _ambientAudio = new Audio("/crowd_ambient.wav");
+      _ambientAudio.loop = true;
+      _ambientAudio.preload = "auto";
+    }
+    _ambientAudio.volume = 0.18;
+    _ambientAudio.play().catch(() => {});
+  } catch {}
+}
+
+function stopBgMusic() {
+  try {
+    if (_ambientAudio && !_ambientAudio.paused) {
+      // Fade out smoothly
+      const fadeOut = setInterval(() => {
+        if (!_ambientAudio) { clearInterval(fadeOut); return; }
+        if (_ambientAudio.volume > 0.02) {
+          _ambientAudio.volume = Math.max(0, _ambientAudio.volume - 0.02);
+        } else {
+          _ambientAudio.pause();
+          _ambientAudio.currentTime = 0;
+          clearInterval(fadeOut);
+        }
+      }, 50);
+    }
+  } catch {}
+}
+
+function setBgMusicVolume(v) {
+  try { if (_ambientAudio) _ambientAudio.volume = Math.max(0, Math.min(1, v)); } catch {}
 }
 
 function useAudio(on) {
@@ -2162,10 +2326,10 @@ function useAudio(on) {
     try {
       const c = new (window.AudioContext || window.webkitAudioContext)();
       if (t === "tick") { const o = c.createOscillator(), g = c.createGain(); o.connect(g); g.connect(c.destination); o.frequency.value = 880; g.gain.setValueAtTime(.025, c.currentTime); g.gain.exponentialRampToValueAtTime(.001, c.currentTime + .07); o.start(); o.stop(c.currentTime + .07); }
-      else if (t === "ok") { [523, 659, 784].forEach((f, i) => { const o = c.createOscillator(), g = c.createGain(); o.connect(g); g.connect(c.destination); o.frequency.value = f; g.gain.setValueAtTime(.055, c.currentTime + i * .09); g.gain.exponentialRampToValueAtTime(.001, c.currentTime + i * .09 + .16); o.start(c.currentTime + i * .09); o.stop(c.currentTime + i * .09 + .18); }); }
+      else if (t === "ok") { [523, 659, 784, 1047].forEach((f, i) => { const o = c.createOscillator(), g = c.createGain(); o.type = i < 2 ? "triangle" : "sine"; o.connect(g); g.connect(c.destination); o.frequency.value = f; g.gain.setValueAtTime(.07, c.currentTime + i * .08); g.gain.exponentialRampToValueAtTime(.001, c.currentTime + i * .08 + .18); o.start(c.currentTime + i * .08); o.stop(c.currentTime + i * .08 + .2); }); }
       else if (t === "bad") { const o = c.createOscillator(), g = c.createGain(); o.type = "sawtooth"; o.connect(g); g.connect(c.destination); o.frequency.value = 130; g.gain.setValueAtTime(.055, c.currentTime); g.gain.exponentialRampToValueAtTime(.001, c.currentTime + .28); o.start(); o.stop(c.currentTime + .3); }
       else if (t === "coin") { [440, 550, 660, 880, 1100].forEach((f, i) => { const o = c.createOscillator(), g = c.createGain(); o.connect(g); g.connect(c.destination); o.frequency.value = f; g.gain.setValueAtTime(.06, c.currentTime + i * .07); g.gain.exponentialRampToValueAtTime(.001, c.currentTime + i * .07 + .15); o.start(c.currentTime + i * .07); o.stop(c.currentTime + i * .07 + .17); }); }
-      else if (t === "win") { [523, 659, 784, 1047].forEach((f, i) => { const o = c.createOscillator(), g = c.createGain(); o.connect(g); g.connect(c.destination); o.frequency.value = f; g.gain.setValueAtTime(.07, c.currentTime + i * .12); g.gain.exponentialRampToValueAtTime(.001, c.currentTime + i * .12 + .22); o.start(c.currentTime + i * .12); o.stop(c.currentTime + i * .12 + .25); }); }
+      else if (t === "win") { [392, 523, 659, 784, 1047, 1319].forEach((f, i) => { const o = c.createOscillator(), g = c.createGain(); o.type = i % 2 === 0 ? "triangle" : "sine"; o.connect(g); g.connect(c.destination); o.frequency.value = f; g.gain.setValueAtTime(.09, c.currentTime + i * .1); g.gain.exponentialRampToValueAtTime(.001, c.currentTime + i * .1 + .3); o.start(c.currentTime + i * .1); o.stop(c.currentTime + i * .1 + .32); }); }
       else if (t === "between") { [330, 440, 330].forEach((f, i) => { const o = c.createOscillator(), g = c.createGain(); o.connect(g); g.connect(c.destination); o.frequency.value = f; g.gain.setValueAtTime(.035, c.currentTime + i * .3); g.gain.exponentialRampToValueAtTime(.001, c.currentTime + i * .3 + .25); o.start(c.currentTime + i * .3); o.stop(c.currentTime + i * .3 + .28); }); }
     } catch {}
   }, [on]);
@@ -3328,8 +3492,11 @@ export default function App() {
   // Questions are built in background during toss
   const qsReadyRef = useRef(null); // stores promise
   const fetchInBackground = useCallback((cond) => {
-    // Skip remote API call (CORS fails in browser) — resolve immediately from local bank
-    qsReadyRef.current = Promise.resolve(buildQuestionSet(null, cond));
+    // Build immediately from local bank and store in both ref and state
+    const questions = buildQuestionSet(null, cond);
+    qsRef.current = questions;
+    setQs(questions);
+    qsReadyRef.current = Promise.resolve(questions);
   }, []);
 
   const getQs = useCallback(async () => {
@@ -3452,7 +3619,10 @@ export default function App() {
       setTossState("idle"); setTossWinner(null); setBatFirst(null);
       setMatchType("bot"); setMatchId(null); setLoading(false);
       setInSuperOver(false); setSoPhase("intro"); setSuperOverWinner(null);
-      qsReadyRef.current = Promise.resolve(buildQuestionSet(null, cond));
+      const builtQs = buildQuestionSet(null, cond);
+      qsRef.current = builtQs;
+      setQs(builtQs);
+      qsReadyRef.current = Promise.resolve(builtQs);
       screenHistoryRef.current = [...screenHistoryRef.current, "toss"];
       window.history.pushState({ screen: "toss" }, "", "");
       setScreen("toss");
@@ -3465,8 +3635,10 @@ export default function App() {
         // Nuclear fallback — just go to toss with minimal state
         if (queuePollRef.current) { clearInterval(queuePollRef.current); queuePollRef.current = null; }
         showToast("No opponent found — playing vs AI 🤖");
-        setCondition(CONDITIONS[0]);
-        setOpp(OPPS[0]);
+        const fbCond = CONDITIONS[Math.floor(Math.random() * CONDITIONS.length)];
+        const fbOpp  = OPPS[Math.floor(Math.random() * OPPS.length)];
+        setCondition(fbCond);
+        setOpp(fbOpp);
         setMyScore(0); setOppScore(0); setWickets(0);
         setQi(0); setDone([]); setTLeft(15);
         setSel(null); setRev(false); setCStreak(0); setMaxStreak(0);
@@ -3622,29 +3794,128 @@ export default function App() {
   }, []);
 
   // ── START INNINGS ─────────────────────────────────────────────────────────────
-  // Called directly with current state values to avoid stale closure issues
   const startInnings = useCallback((currentBatFirst, currentInnings, currentCondition) => {
-    const cond = currentCondition || CONDITIONS[0];
+    try {
+      const cond = currentCondition || CONDITIONS[0];
 
-    // Reuse questions if already built, otherwise build now
-    let questions = qsRef.current;
-    if (!questions || questions.length === 0) {
-      try { questions = buildQuestionSet(null, cond); } catch(e) { questions = ALL_QUESTIONS.slice(0, 6); }
+      // Build questions — always ensure both ref and state are set
+      let questions = qsRef.current;
+      if (!questions || questions.length === 0) {
+        try { questions = buildQuestionSet(null, cond); } catch(e) { questions = null; }
+        if (!questions || questions.length === 0) questions = ALL_QUESTIONS.slice(0, 6);
+      }
       qsRef.current = questions;
-      setQs(questions);
-    }
+      setQs(questions);  // always sync state
 
-    if (currentBatFirst === "opp" && currentInnings === 1) {
-      simulateOppFirstInnings(questions);
-    } else {
+      if (currentBatFirst === "opp" && currentInnings === 1) {
+        // Opponent bats first — simulate their innings then player chases
+        try {
+          const oppAcc = opp?.acc || 0.62;
+          let score = 0;
+          const feed = [];
+          for (let i = 0; i < 6; i++) {
+            const ok = Math.random() < oppAcc;
+            const runs = ok ? (Math.random() < 0.3 ? 6 : Math.random() < 0.5 ? 4 : Math.floor(Math.random()*3)+1) : 0;
+            if (ok) score += runs; else score = Math.max(0, score - 5);
+            feed.push({ qi: i, score: Math.max(0, score), ok });
+          }
+          score = Math.max(0, score);
+          setOppScore(score);
+          setOppLiveFeed(feed);
+          setScreen("watching");
+          setTimeout(() => {
+            // Force-build questions synchronously — never rely on stale state
+            let freshQs = qsRef.current;
+            if (!freshQs || freshQs.length === 0) {
+              try { freshQs = buildQuestionSet(null, CONDITIONS[0]); } catch(e) {}
+              if (!freshQs || freshQs.length === 0) freshQs = ALL_QUESTIONS.slice(0, 6);
+              qsRef.current = freshQs;
+            }
+            setQs([...freshQs]);
+            setInnings(2);
+            setQi(0); setTLeft(15); setSel(null); setRev(false); setDone([]);
+            setCStreak(0); setWickets(0);
+            setPuFF(true); setPuTF(true); setPuFH(true);
+            setFrozen(false); setFreeHit(false); setHidden([]);
+            setLoading(false);
+            setScreen("match");
+            qStartRef.current = Date.now();
+          }, 11000);
+        } catch(e) {
+          // If simulation fails, go straight to match as player batting first
+          setBatFirst("player");
+          setScreen("match");
+          qStartRef.current = Date.now();
+        }
+      } else {
+        setScreen("match");
+        qStartRef.current = Date.now();
+      }
+    } catch(e) {
+      // Nuclear fallback — just start match no matter what
       setScreen("match");
       qStartRef.current = Date.now();
     }
-  }, [simulateOppFirstInnings]);
+  }, [opp]);
+
+  // ── BACKGROUND MUSIC CONTROL ────────────────────────────────────────────────
+  // Browsers block audio until first user interaction — unlock on first tap
+  const audioUnlockedRef = useRef(false);
+  useEffect(() => {
+    const unlock = () => {
+      if (audioUnlockedRef.current) return;
+      audioUnlockedRef.current = true;
+      if (sfxOn) startBgMusic();
+    };
+    window.addEventListener("click", unlock, { once: true });
+    window.addEventListener("touchstart", unlock, { once: true });
+    return () => {
+      window.removeEventListener("click", unlock);
+      window.removeEventListener("touchstart", unlock);
+    };
+  }, []);
+
+  useEffect(() => {
+    if (!audioUnlockedRef.current) return; // wait for first tap
+    if (!sfxOn) { stopBgMusic(); return; }
+    if (screen === "conditions") {
+      setBgMusicVolume(0.07);
+      playIplSting();
+      setTimeout(() => setBgMusicVolume(0.18), 5500);
+    } else if (["auth","landing","setup","finding","toss"].includes(screen)) {
+      startBgMusic();
+      setBgMusicVolume(0.18);
+    } else if (screen === "match") {
+      setBgMusicVolume(0.06);
+    } else if (screen === "result") {
+      stopBgMusic();
+    } else {
+      setBgMusicVolume(0.12);
+    }
+  }, [screen, sfxOn]);
+
+  // ── AUTO-RECOVER MISSING QUESTIONS ───────────────────────────────────────────
+  useEffect(() => {
+    if (screen !== "match") return;
+    const currentQ = qs[qi] || qsRef.current[qi];
+    if (!currentQ) {
+      // Questions missing — build and set immediately
+      let freshQs = qsRef.current;
+      if (!freshQs || freshQs.length === 0) {
+        try { freshQs = buildQuestionSet(null, condition || CONDITIONS[0]); } catch(e) {}
+        if (!freshQs || freshQs.length === 0) freshQs = ALL_QUESTIONS.slice(0, 6);
+        qsRef.current = freshQs;
+      }
+      setQs([...freshQs]);
+      setTLeft(15); // reset timer so player gets full time
+    }
+  }, [screen, qi]);
 
   // ── TIMER ─────────────────────────────────────────────────────────────────────
   useEffect(() => {
     if (screen !== "match" || rev || frozen || loading || showBetween || !playerBatting) return;
+    const q = qs[qi] || qsRef.current[qi];
+    if (!q) return; // don't tick if question not loaded yet
     if (tLeft <= 0) { handleTimeout(); return; }
     tiRef.current = setTimeout(() => {
       if (tLeft <= 5) snd("tick");
@@ -4138,7 +4409,7 @@ export default function App() {
     if (screen !== "result") cleanRef.current = false;
   }, [screen]);
 
-  const q = qs[qi];
+  const q = qs[qi] || qsRef.current[qi];
   const tPct = (tLeft / 15) * 100;
   const tCol = frozen ? "#7c3aed" : tLeft > 8 ? "#0369a1" : tLeft > 4 ? "#d97706" : "#dc2626";
   const rawWon   = myScore > oppScore;
@@ -5034,10 +5305,7 @@ export default function App() {
               )}
 
               {/* ── Pitch strip ── */}
-              <div className="pitch-strip" style={{ "--pitchTop":pitchTop, "--pitchBot":pitchBot }}>
-                <div className="crease-line" style={{ top:10 }} />
-                <div className="crease-line" style={{ bottom:10 }} />
-              </div>
+              {/* pitch strip removed */}
 
               {/* ── All content over the image ── */}
               <div className="cond-content">
@@ -5227,8 +5495,10 @@ export default function App() {
             })()}
 
             {/* Loading */}
-            {loading ? (
+            {(loading) ? (
               <div className="load-q"><div className="spinner" /><div className="load-sub">Preparing pitch…</div></div>
+            ) : !q ? (
+              <div className="load-q"><div className="spinner" /><div className="load-sub">Loading questions…</div></div>
             ) : q ? (
               <>
                 {/* Timer */}
