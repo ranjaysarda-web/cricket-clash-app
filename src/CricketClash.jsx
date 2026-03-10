@@ -2253,26 +2253,26 @@ function playIplSting() {
     if (!_iplStingAudio) {
       _iplStingAudio = new Audio("/ipl.mp3");
       _iplStingAudio.preload = "auto";
+      _iplStingAudio.loop = true; // loop until player taps
     }
     _iplStingAudio.currentTime = 0;
     _iplStingAudio.volume = 0.85;
-    // Auto-stop after 5 seconds
     _iplStingAudio.play().catch(() => {});
-    setTimeout(() => {
-      try {
-        if (!_iplStingAudio.paused) {
-          const fadeOut = setInterval(() => {
-            if (_iplStingAudio.volume > 0.05) {
-              _iplStingAudio.volume = Math.max(0, _iplStingAudio.volume - 0.05);
-            } else {
-              _iplStingAudio.pause();
-              _iplStingAudio.currentTime = 0;
-              clearInterval(fadeOut);
-            }
-          }, 50);
+  } catch {}
+}
+
+function stopIplSting() {
+  try {
+    if (_iplStingAudio && !_iplStingAudio.paused) {
+      const fadeOut = setInterval(() => {
+        if (_iplStingAudio && _iplStingAudio.volume > 0.06) {
+          _iplStingAudio.volume = Math.max(0, _iplStingAudio.volume - 0.06);
+        } else {
+          if (_iplStingAudio) { _iplStingAudio.pause(); _iplStingAudio.currentTime = 0; }
+          clearInterval(fadeOut);
         }
-      } catch {}
-    }, 4500);
+      }, 40);
+    }
   } catch {}
 }
 
@@ -2997,7 +2997,7 @@ const CRICKET_FACTS = [
   "🌟 Virat Kohli scored centuries in all three formats before he turned 25.",
 ];
 
-function WatchingScreen({ opp, feed, finalScore, label, target, isPvp }) {
+function WatchingScreen({ opp, feed, finalScore, label, target, isPvp, onProceed }) {
   const [visibleCount, setVisibleCount] = useState(0);
   const [displayScore, setDisplayScore] = useState(0);
   const [ticking, setTicking] = useState(false);
@@ -3096,20 +3096,37 @@ function WatchingScreen({ opp, feed, finalScore, label, target, isPvp }) {
       </div>
 
       {visibleCount === feed.length && (() => {
-        // Show a countdown so user knows it's not frozen
-        const CountdownMsg = () => {
-          const [secs, setSecs] = React.useState(4);
+        const ProceedPanel = () => {
+          const [secs, setSecs] = React.useState(5);
           React.useEffect(() => {
-            const t = setInterval(() => setSecs(s => Math.max(0, s - 1)), 1000);
+            const t = setInterval(() => {
+              setSecs(s => {
+                if (s <= 1) { clearInterval(t); if (onProceed) onProceed(); return 0; }
+                return s - 1;
+              });
+            }, 1000);
             return () => clearInterval(t);
           }, []);
           return (
-            <div style={{ fontFamily:"var(--fm)", fontSize:13, color:"var(--amber3)", textAlign:"center", animation:"fadeUp .4s both", fontWeight:700 }}>
-              {label === "1st Innings" ? `🏏 Your turn to bat in ${secs}s…` : "Calculating result…"}
+            <div style={{ display:"flex", flexDirection:"column", alignItems:"center", gap:10, animation:"fadeUp .4s both", width:"100%" }}>
+              <div style={{ fontFamily:"var(--fm)", fontSize:12, color:"var(--amber3)", fontWeight:700, textAlign:"center" }}>
+                {label === "1st Innings" ? `🏏 Your turn to bat in ${secs}s…` : `🏆 Result in ${secs}s…`}
+              </div>
+              <button
+                onClick={() => { if (onProceed) onProceed(); }}
+                style={{
+                  width:"100%", padding:"14px 0", borderRadius:"var(--r2)",
+                  background:"linear-gradient(135deg,var(--amber),var(--amber2))",
+                  border:"none", color:"#fff", fontFamily:"var(--fh)", fontSize:15,
+                  fontWeight:700, cursor:"pointer", letterSpacing:0.5,
+                  boxShadow:"0 4px 16px rgba(180,83,9,.35)"
+                }}>
+                {label === "1st Innings" ? "🏏 Start Batting Now" : "🏆 See Result"}
+              </button>
             </div>
           );
         };
-        return <CountdownMsg />;
+        return <ProceedPanel />;
       })()}
     </div>
   );
@@ -3297,6 +3314,8 @@ export default function App() {
   const betweenRef = useRef();
   const cleanRef = useRef(false);
   const qsRef = useRef([]); // keep qs accessible in callbacks
+  const watchProceedRef = useRef(null);
+  const watchProceedFiredRef = useRef(false);
   const snd = useAudio(sfxOn);
 
   // ── AUTH / LOGIN ──────────────────────────────────────────────────────────────
@@ -3492,11 +3511,10 @@ export default function App() {
   // Questions are built in background during toss
   const qsReadyRef = useRef(null); // stores promise
   const fetchInBackground = useCallback((cond) => {
-    // Build immediately from local bank and store in both ref and state
-    const questions = buildQuestionSet(null, cond);
-    qsRef.current = questions;
-    setQs(questions);
-    qsReadyRef.current = Promise.resolve(questions);
+    // Don't pre-build here — startInnings will always build fresh questions.
+    // Pre-building would waste 6 seenQHashes slots per match without the player ever seeing those questions.
+    qsRef.current = [];
+    qsReadyRef.current = null;
   }, []);
 
   const getQs = useCallback(async () => {
@@ -3770,17 +3788,28 @@ export default function App() {
     setOppScore(score);
     setOppLiveFeed(feed);
     setScreen("watching");
-    // Ball animation: 6 balls × 2s each = 12s, then 2s buffer = 14s total
-    // But we show it faster — 6 balls × 1.5s = 9s + 2s buffer
-    setTimeout(() => {
+    // doProceed — called by button tap OR auto-timeout after 11s
+    const doProceed = () => {
+      if (watchProceedFiredRef.current) return;
+      watchProceedFiredRef.current = true;
+      // Always build fresh questions for 2nd innings
+      let freshQs = null;
+      try { freshQs = buildQuestionSet(null, condition || CONDITIONS[0]); } catch(e) {}
+      if (!freshQs || freshQs.length === 0) freshQs = ALL_QUESTIONS.slice(0, 6);
+      qsRef.current = freshQs;
+      setQs([...freshQs]);
       setInnings(2);
       setQi(0); setTLeft(15); setSel(null); setRev(false); setDone([]);
       setCStreak(0); setWickets(0);
       setPuFF(true); setPuTF(true); setPuFH(true);
       setFrozen(false); setFreeHit(false); setHidden([]);
+      setLoading(false);
       setScreen("match");
       qStartRef.current = Date.now();
-    }, 11000);
+    };
+    watchProceedFiredRef.current = false;
+    watchProceedRef.current = doProceed;
+    setTimeout(doProceed, 11000);
   }, [opp]);
 
   // Toss winner chooses bat/chase
@@ -3798,14 +3827,12 @@ export default function App() {
     try {
       const cond = currentCondition || CONDITIONS[0];
 
-      // Build questions — always ensure both ref and state are set
-      let questions = qsRef.current;
-      if (!questions || questions.length === 0) {
-        try { questions = buildQuestionSet(null, cond); } catch(e) { questions = null; }
-        if (!questions || questions.length === 0) questions = ALL_QUESTIONS.slice(0, 6);
-      }
+      // Always build a FRESH question set — never reuse from previous match
+      let questions = null;
+      try { questions = buildQuestionSet(null, cond); } catch(e) { questions = null; }
+      if (!questions || questions.length === 0) questions = ALL_QUESTIONS.slice(0, 6);
       qsRef.current = questions;
-      setQs(questions);  // always sync state
+      setQs(questions);
 
       if (currentBatFirst === "opp" && currentInnings === 1) {
         // Opponent bats first — simulate their innings then player chases
@@ -4041,15 +4068,22 @@ export default function App() {
     clearTimeout(soTimerRef.current);
     // Pick 3 fresh questions from bank (avoid already-used ones)
     const used = new Set(qsRef.current.map(q => q.q.slice(0, 30)));
-    const fresh = ALL_QUESTIONS.filter(q => !used.has(q.q.slice(0, 30)))
-      .sort(() => Math.random() - 0.5)
-      .slice(0, 3)
-      .map(q => ({ ...q, cat: q.cat || "TRIVIA", coachNote: q.coachNote || "", skill: q.skill || "history" }));
-    setSoQs(fresh);
+    const fresh = ALL_QUESTIONS.filter(q => !used.has(q.q.slice(0, 30)));
+    // Fisher-Yates shuffle
+    for (let i = fresh.length - 1; i > 0; i--) {
+      const j = Math.floor(Math.random() * (i + 1));
+      [fresh[i], fresh[j]] = [fresh[j], fresh[i]];
+    }
+    const soQsPicked = fresh.slice(0, 3).map(q => ({
+      ...q, cat: q.cat || "TRIVIA", coachNote: q.coachNote || "", skill: q.skill || "history"
+    }));
+    setSoQs(soQsPicked);
     setSoQi(0); setSoMyScore(0); setSoOppScore(0);
     setSoSel(null); setSoRev(false); setSoTLeft(15); setSoTimes([]);
     setInSuperOver(true);
     setSoPhase("intro");
+    // Move to a clean screen so nothing renders over Super Over
+    setScreen("match");
     snd("suspense");
     // Auto-advance past intro
     setTimeout(() => {
@@ -4149,19 +4183,9 @@ export default function App() {
       // Must read myScore at callback time via ref to avoid stale closure
       setMyScore(cur => {
         if (cur === finalOppScore) {
-          // TIE → start Super Over instead of going to result
-          const used = new Set(qsRef.current.map(q => q.q.slice(0, 30)));
-          const fresh = ALL_QUESTIONS
-            .filter(q => !used.has(q.q.slice(0, 30)))
-            .sort(() => Math.random() - 0.5)
-            .slice(0, 3)
-            .map(q => ({ ...q, cat: q.cat || "TRIVIA", coachNote: q.coachNote || "", skill: q.skill || "history" }));
-          setSoQs(fresh);
-          setSoQi(0); setSoMyScore(0); setSoOppScore(0);
-          setSoSel(null); setSoRev(false); setSoTLeft(15); setSoTimes([]);
-          setInSuperOver(true);
-          setSoPhase("intro");
-          setTimeout(() => { setSoPhase("batting"); soStartRef.current = Date.now(); }, 2800);
+          // TIE → start Super Over
+          // Use setTimeout to ensure state is settled before Super Over kicks in
+          setTimeout(() => startSuperOver(), 50);
         } else {
           setScreen("result");
         }
@@ -5376,7 +5400,7 @@ export default function App() {
 
                   {/* CTA — always visible, part of pinned bottom panel */}
                   <button
-                    onClick={() => startInnings(batFirst, innings, condition)}
+                    onClick={() => { stopIplSting(); startInnings(batFirst, innings, condition); }}
                     style={{ width:"100%", background:bc, color:"#fff", border:"none", borderRadius:12, padding:"14px 0", fontFamily:"var(--fd)", fontSize:17, fontWeight:800, cursor:"pointer", boxShadow:`0 4px 20px ${bc}88`, letterSpacing:.3, flexShrink:0 }}>
                     {batFirst === "player" ? "🏏  Start Batting" : "▶  Watch Opponent Bat"}
                   </button>
@@ -5395,6 +5419,7 @@ export default function App() {
             label={screen === "watching" ? "1st Innings" : "Chase"}
             target={screen === "watching" ? null : myScore}
             isPvp={matchType === "pvp"}
+            onProceed={() => { if (watchProceedRef.current) watchProceedRef.current(); }}
           />
         )}
 
@@ -5443,7 +5468,7 @@ export default function App() {
         })()}
 
         {/* ══════ MATCH SCREEN ══════ */}
-        {screen === "match" && (
+        {screen === "match" && !inSuperOver && (
           <div className="match-wrap">
             {/* Scoreboard */}
             <div className="scoreboard">
