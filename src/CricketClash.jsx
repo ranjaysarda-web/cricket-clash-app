@@ -2013,8 +2013,10 @@ Schema: [{"q":"...","opts":["A","B","C","D"],"ans":0,"cat":"...","skill":"battin
 }
 
 // Global session question dedup tracker — persists across matches in the same session
-const seenQHashes = new Set();
 function hashQ(q) { return q.q.slice(0, 30); }
+const _loadSeenHashes = () => { try { const s = sessionStorage.getItem("cc_seen_q"); return s ? new Set(JSON.parse(s)) : new Set(); } catch(e) { return new Set(); } };
+const seenQHashes = _loadSeenHashes();
+const _saveSeenHashes = () => { try { sessionStorage.setItem("cc_seen_q", JSON.stringify([...seenQHashes])); } catch(e) {} };
 
 // ── SEEDED RNG (for reproducible friend challenges) ────────────────────────
 function seededRng(seed) {
@@ -2050,6 +2052,7 @@ function buildSeededQuestions(seed, conditionId) {
 }
 
 function buildQuestionSet(aiQs, condition, matchCount = 0) {
+  console.log("[BQS] called. seenQHashes size:", seenQHashes.size, "| stack:", new Error().stack.split("\n")[2]?.trim());
   // Target skill distribution per match (7 questions)
   // Biased toward condition's cat, always varied
   const SKILL_TARGETS = { batting: 2, bowling: 1, ipl: 1, history: 2, womens: 1 };
@@ -2058,7 +2061,7 @@ function buildQuestionSet(aiQs, condition, matchCount = 0) {
   let available = ALL_QUESTIONS.filter(q => !seenQHashes.has(hashQ(q)));
   // If we've used most of the bank, reset dedup (every ~20 matches)
   if (available.length < 14) {
-    seenQHashes.clear();
+    seenQHashes.clear(); _saveSeenHashes();
     available = [...ALL_QUESTIONS];
   }
 
@@ -2123,7 +2126,9 @@ function buildQuestionSet(aiQs, condition, matchCount = 0) {
   }
 
   const final = pool.slice(0, 6);
+  console.log("[BQS] returning questions:", final.map(q => q.q.slice(0,40)));
   final.forEach(q => seenQHashes.add(hashQ(q)));
+  _saveSeenHashes();
 
   return final.map(q => ({
     ...q,
@@ -3366,6 +3371,8 @@ export default function App() {
           setNick(data.player.nickname);
           setWallet(data.player.wallet / 100);
           window.__CRICKET_TOKEN__ = saved;
+          screenHistoryRef.current = ["landing"];
+          window.history.replaceState({ screen: "landing" }, "", "");
           setScreen("landing");
         } else {
           localStorage.removeItem("cc_token");
@@ -3429,6 +3436,8 @@ export default function App() {
     if (provider === "guest") {
       setLoggedIn(false);
       setNick("Guest");
+      screenHistoryRef.current = ["landing"];
+      window.history.replaceState({ screen: "landing" }, "", "");
       setScreen("landing");
       return;
     }
@@ -3479,6 +3488,8 @@ export default function App() {
       setLoggedIn(true);
       setNick(data.player.nickname);
       setWallet(data.player.wallet / 100);
+      screenHistoryRef.current = ["landing"];
+      window.history.replaceState({ screen: "landing" }, "", "");
       setScreen("landing");
     } catch (e) {
       setAuthError("Network error - check your connection and try again");
@@ -3637,10 +3648,7 @@ export default function App() {
       setTossState("idle"); setTossWinner(null); setBatFirst(null);
       setMatchType("bot"); setMatchId(null); setLoading(false);
       setInSuperOver(false); setSoPhase("intro"); setSuperOverWinner(null);
-      const builtQs = buildQuestionSet(null, cond);
-      qsRef.current = builtQs;
-      setQs(builtQs);
-      qsReadyRef.current = Promise.resolve(builtQs);
+      qsRef.current = []; qsReadyRef.current = null;
       screenHistoryRef.current = [...screenHistoryRef.current, "toss"];
       window.history.pushState({ screen: "toss" }, "", "");
       setScreen("toss");
@@ -3745,7 +3753,7 @@ export default function App() {
     // Build questions with safe fallback
     let questions;
     try { questions = buildSeededQuestions(seed, cond.id); } catch(e) { questions = null; }
-    if (!questions || questions.length === 0) questions = ALL_QUESTIONS.slice(0, 6);
+    if (!questions || questions.length === 0) questions = [...ALL_QUESTIONS].sort(()=>Math.random()-.5).slice(0,6); console.warn("[FALLBACK HIT] line ~3756+3887 — buildQuestionSet may have failed");
 
     qsRef.current = questions;
     setQs(questions);
@@ -3795,7 +3803,7 @@ export default function App() {
       // Always build fresh questions for 2nd innings
       let freshQs = null;
       try { freshQs = buildQuestionSet(null, condition || CONDITIONS[0]); } catch(e) {}
-      if (!freshQs || freshQs.length === 0) freshQs = ALL_QUESTIONS.slice(0, 6);
+      if (!freshQs || freshQs.length === 0) freshQs = [...ALL_QUESTIONS].sort(()=>Math.random()-.5).slice(0,6); console.warn("[FALLBACK HIT] freshQs fallback triggered");
       qsRef.current = freshQs;
       setQs([...freshQs]);
       setInnings(2);
@@ -3827,13 +3835,6 @@ export default function App() {
     try {
       const cond = currentCondition || CONDITIONS[0];
 
-      // Always build a FRESH question set — never reuse from previous match
-      let questions = null;
-      try { questions = buildQuestionSet(null, cond); } catch(e) { questions = null; }
-      if (!questions || questions.length === 0) questions = ALL_QUESTIONS.slice(0, 6);
-      qsRef.current = questions;
-      setQs(questions);
-
       if (currentBatFirst === "opp" && currentInnings === 1) {
         // Opponent bats first — simulate their innings then player chases
         try {
@@ -3850,14 +3851,16 @@ export default function App() {
           setOppScore(score);
           setOppLiveFeed(feed);
           setScreen("watching");
-          setTimeout(() => {
-            // Force-build questions synchronously — never rely on stale state
-            let freshQs = qsRef.current;
-            if (!freshQs || freshQs.length === 0) {
-              try { freshQs = buildQuestionSet(null, CONDITIONS[0]); } catch(e) {}
-              if (!freshQs || freshQs.length === 0) freshQs = ALL_QUESTIONS.slice(0, 6);
-              qsRef.current = freshQs;
-            }
+
+          // doProceed — shared by "Bat Now" button tap AND 11s auto-timeout
+          const doProceed = () => {
+            if (watchProceedFiredRef.current) return;
+            watchProceedFiredRef.current = true;
+            // Always build FRESH questions for the player's chase innings
+            let freshQs = null;
+            try { freshQs = buildQuestionSet(null, cond); } catch(e) {}
+            if (!freshQs || freshQs.length === 0) freshQs = [...ALL_QUESTIONS].sort(()=>Math.random()-.5).slice(0,6); console.warn("[FALLBACK HIT] freshQs fallback triggered");
+            qsRef.current = freshQs;
             setQs([...freshQs]);
             setInnings(2);
             setQi(0); setTLeft(15); setSel(null); setRev(false); setDone([]);
@@ -3867,7 +3870,10 @@ export default function App() {
             setLoading(false);
             setScreen("match");
             qStartRef.current = Date.now();
-          }, 11000);
+          };
+          watchProceedFiredRef.current = false;
+          watchProceedRef.current = doProceed;
+          setTimeout(doProceed, 11000);
         } catch(e) {
           // If simulation fails, go straight to match as player batting first
           setBatFirst("player");
@@ -3875,6 +3881,12 @@ export default function App() {
           qStartRef.current = Date.now();
         }
       } else {
+        // Player bats first — build fresh questions now
+        let questions = null;
+        try { questions = buildQuestionSet(null, cond); } catch(e) { questions = null; }
+        if (!questions || questions.length === 0) questions = [...ALL_QUESTIONS].sort(()=>Math.random()-.5).slice(0,6); console.warn("[FALLBACK HIT] line ~3756+3887 — buildQuestionSet may have failed");
+        qsRef.current = questions;
+        setQs(questions);
         setScreen("match");
         qStartRef.current = Date.now();
       }
@@ -3930,7 +3942,7 @@ export default function App() {
       let freshQs = qsRef.current;
       if (!freshQs || freshQs.length === 0) {
         try { freshQs = buildQuestionSet(null, condition || CONDITIONS[0]); } catch(e) {}
-        if (!freshQs || freshQs.length === 0) freshQs = ALL_QUESTIONS.slice(0, 6);
+        if (!freshQs || freshQs.length === 0) freshQs = [...ALL_QUESTIONS].sort(()=>Math.random()-.5).slice(0,6); console.warn("[FALLBACK HIT] freshQs fallback triggered");
         qsRef.current = freshQs;
       }
       setQs([...freshQs]);
