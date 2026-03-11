@@ -2052,7 +2052,6 @@ function buildSeededQuestions(seed, conditionId) {
 }
 
 function buildQuestionSet(aiQs, condition, matchCount = 0) {
-  console.log("[BQS] called. seenQHashes size:", seenQHashes.size, "| stack:", new Error().stack.split("\n")[2]?.trim());
   // Target skill distribution per match (7 questions)
   // Biased toward condition's cat, always varied
   const SKILL_TARGETS = { batting: 2, bowling: 1, ipl: 1, history: 2, womens: 1 };
@@ -2126,7 +2125,6 @@ function buildQuestionSet(aiQs, condition, matchCount = 0) {
   }
 
   const final = pool.slice(0, 6);
-  console.log("[BQS] returning questions:", final.map(q => q.q.slice(0,40)));
   final.forEach(q => seenQHashes.add(hashQ(q)));
   _saveSeenHashes();
 
@@ -2488,30 +2486,124 @@ html,body{background:var(--bg);color:var(--txt);font-family:var(--fh);-webkit-fo
 .comm-btn{flex:1;padding:8px;border:none;border-radius:8px;font-family:var(--fh);font-size:11px;font-weight:600;cursor:pointer;transition:all .2s;background:transparent;color:var(--sub)}
 .comm-btn.on{background:var(--s0);color:var(--txt);box-shadow:var(--sh-xs)}
 
-/* ══════ TOSS ══════ */
-.toss-screen{flex:1;display:flex;flex-direction:column;align-items:center;justify-content:center;gap:clamp(12px,3vh,22px);padding:clamp(16px,4vh,32px) 24px;background:linear-gradient(160deg,#1a2e1a 0%,#1c1917 50%,#1a1a2e 100%);overflow-y:auto}
-.toss-players{display:flex;align-items:center;justify-content:center;gap:16px;width:100%}
-.tp{flex:1;display:flex;flex-direction:column;align-items:center;gap:5px;max-width:120px}
-.tp-flag{font-size:38px;animation:floatBob 2.8s ease-in-out infinite}
-.tp-name{font-size:11px;font-weight:600;color:rgba(255,255,255,.6);text-align:center;overflow:hidden;text-overflow:ellipsis;white-space:nowrap;width:100%}
-.tp-elo{font-family:var(--fm);font-size:10px;color:rgba(255,255,255,.3)}
-.toss-vs{font-family:var(--fd);font-size:16px;font-weight:700;color:rgba(255,255,255,.2);flex-shrink:0}
-/* 3D coin */
+/* ══════ TOSS — BROADCAST CINEMATIC ══════ */
+.toss-screen{flex:1;display:flex;flex-direction:column;align-items:stretch;position:relative;overflow:hidden;background:#000}
+
+/* Stadium background layers */
+.ts-stadium-bg{position:absolute;inset:0;z-index:0;background:radial-gradient(ellipse 120% 60% at 50% 80%,#1a3a0a 0%,#0d1f06 40%,#000 100%)}
+.ts-floodlights{position:absolute;inset:0;z-index:1;pointer-events:none}
+.ts-fl{position:absolute;width:180px;height:180px;border-radius:50%;filter:blur(60px);opacity:.22}
+.ts-fl.left{top:-40px;left:-40px;background:radial-gradient(#fff9c4,transparent)}
+.ts-fl.right{top:-40px;right:-40px;background:radial-gradient(#fff9c4,transparent)}
+.ts-fl.center{top:20%;left:50%;transform:translateX(-50%);width:300px;height:200px;background:radial-gradient(#ffffee,transparent);opacity:.08}
+.ts-grass{position:absolute;bottom:0;left:0;right:0;height:35%;z-index:1;background:linear-gradient(180deg,transparent,#0a1f04 60%,#050f02)}
+.ts-pitch{position:absolute;bottom:28%;left:50%;transform:translateX(-50%);width:40px;height:110px;z-index:2;background:linear-gradient(180deg,#c8b97a,#b8a568,#a08952);border-radius:4px;opacity:.5;box-shadow:0 0 30px rgba(200,185,122,.2)}
+.ts-crowd-line{position:absolute;bottom:32%;left:0;right:0;height:2px;z-index:2;background:linear-gradient(90deg,transparent,rgba(255,255,220,.04),rgba(255,255,220,.08),rgba(255,255,220,.04),transparent)}
+
+/* Scan lines overlay */
+.ts-scanlines{position:absolute;inset:0;z-index:3;pointer-events:none;background:repeating-linear-gradient(0deg,transparent,transparent 2px,rgba(0,0,0,.03) 2px,rgba(0,0,0,.03) 4px)}
+
+/* TV broadcast bar top */
+.ts-topbar{position:relative;z-index:10;display:flex;align-items:center;justify-content:space-between;padding:10px 14px 8px;background:rgba(0,0,0,.7);backdrop-filter:blur(12px);border-bottom:1px solid rgba(255,255,255,.07);flex-shrink:0}
+.ts-live-badge{display:flex;align-items:center;gap:5px;background:#dc2626;border-radius:4px;padding:2px 8px;font-family:var(--fm);font-size:9px;font-weight:800;letter-spacing:2px;color:#fff;text-transform:uppercase}
+.ts-live-dot{width:6px;height:6px;border-radius:50%;background:#fff;animation:livePulse .9s ease-in-out infinite}
+@keyframes livePulse{0%,100%{opacity:1;transform:scale(1)}50%{opacity:.4;transform:scale(.7)}}
+.ts-channel{font-family:var(--fd);font-size:13px;font-weight:900;color:rgba(255,255,255,.85);letter-spacing:.5px}
+.ts-time{font-family:var(--fm);font-size:10px;color:rgba(255,255,255,.4);letter-spacing:1px}
+
+/* Content area */
+.ts-body{position:relative;z-index:5;flex:1;display:flex;flex-direction:column;align-items:center;justify-content:space-around;padding:8px 20px 16px;gap:4px}
+
+/* Match title strip */
+.ts-title-strip{text-align:center;animation:tsSlideDown .5s cubic-bezier(.22,1,.36,1) both}
+@keyframes tsSlideDown{from{opacity:0;transform:translateY(-16px)}to{opacity:1;transform:none}}
+.ts-match-label{font-family:var(--fm);font-size:8px;font-weight:700;letter-spacing:4px;text-transform:uppercase;color:rgba(255,255,220,.4);margin-bottom:3px}
+.ts-match-title{font-family:var(--fd);font-size:clamp(19px,5.5vw,26px);font-weight:900;color:#fff;letter-spacing:-.5px;text-shadow:0 0 40px rgba(255,255,220,.3)}
+
+/* Players row */
+.ts-players{display:flex;align-items:center;justify-content:center;gap:0;width:100%;animation:tsFadeUp .5s .1s cubic-bezier(.22,1,.36,1) both}
+@keyframes tsFadeUp{from{opacity:0;transform:translateY(20px)}to{opacity:1;transform:none}}
+.ts-player{flex:1;display:flex;flex-direction:column;align-items:center;gap:6px;max-width:130px}
+.ts-player-card{border-radius:10px;box-shadow:0 6px 28px rgba(0,0,0,.5),0 0 0 1.5px rgba(255,255,255,.1);overflow:hidden;position:relative}
+.ts-player-name{font-family:var(--fm);font-size:9px;font-weight:700;letter-spacing:1.5px;text-transform:uppercase;color:rgba(255,255,255,.55);text-align:center}
+.ts-player-elo{font-family:var(--fm);font-size:10px;font-weight:600;color:rgba(255,255,220,.35);text-align:center}
+
+/* VS divider */
+.ts-vs-wrap{display:flex;flex-direction:column;align-items:center;gap:4px;flex-shrink:0;padding:0 8px}
+.ts-vs{font-family:var(--fd);font-size:clamp(11px,3vw,14px);font-weight:900;color:rgba(255,255,255,.15);letter-spacing:2px}
+.ts-vs-line{width:1px;height:24px;background:linear-gradient(180deg,transparent,rgba(255,255,255,.1),transparent)}
+
+/* Coin area */
+.ts-coin-area{display:flex;flex-direction:column;align-items:center;gap:10px;animation:tsFadeUp .5s .2s cubic-bezier(.22,1,.36,1) both}
+.ts-coin-label{font-family:var(--fm);font-size:9px;font-weight:700;letter-spacing:3px;text-transform:uppercase;color:rgba(255,255,220,.35)}
+.ts-coin-wrap{perspective:700px;cursor:pointer}
+.ts-coin{width:clamp(88px,24vw,120px);height:clamp(88px,24vw,120px);border-radius:50%;position:relative;transform-style:preserve-3d;transition:transform .1s;filter:drop-shadow(0 0 18px rgba(251,191,36,.25))}
+.ts-coin.spinning{animation:tsCoinSpin 2s cubic-bezier(.45,.05,.55,.95) forwards}
+@keyframes tsCoinSpin{0%{transform:rotateY(0)}15%{transform:rotateY(900deg) scale(1.1)}85%{transform:rotateY(1710deg) scale(1.05)}100%{transform:rotateY(1800deg)}}
+.ts-coin-face{position:absolute;inset:0;border-radius:50%;display:flex;align-items:center;justify-content:center;font-size:42px;backface-visibility:hidden}
+.ts-coin-h{background:conic-gradient(from 30deg,#b45309,#f59e0b,#fbbf24,#fcd34d,#f59e0b,#b45309);box-shadow:0 0 0 3px rgba(251,191,36,.3),0 8px 32px rgba(180,83,9,.5),inset 0 2px 6px rgba(255,255,255,.4),inset 0 -2px 6px rgba(0,0,0,.2)}
+.ts-coin-t{background:conic-gradient(from 30deg,#374151,#6b7280,#9ca3af,#d1d5db,#6b7280,#374151);transform:rotateY(180deg);box-shadow:0 8px 24px rgba(0,0,0,.3),inset 0 2px 4px rgba(255,255,255,.15)}
+.ts-tap-hint{font-family:var(--fm);font-size:10px;color:rgba(255,255,220,.3);letter-spacing:1px;animation:hintPulse 2s ease-in-out infinite}
+@keyframes hintPulse{0%,100%{opacity:.35}50%{opacity:.8}}
+
+/* Result banner */
+.ts-result-banner{width:100%;animation:tsBannerIn .5s cubic-bezier(.22,1,.36,1) both}
+@keyframes tsBannerIn{from{opacity:0;transform:scale(.88) translateY(12px)}to{opacity:1;transform:none}}
+.ts-result-won{background:linear-gradient(135deg,rgba(21,128,61,.25),rgba(16,185,129,.12));border:1px solid rgba(74,222,128,.25);border-radius:14px;padding:16px;text-align:center;position:relative;overflow:hidden}
+.ts-result-won::before{content:"";position:absolute;inset:0;background:radial-gradient(ellipse 80% 50% at 50% 0%,rgba(74,222,128,.08),transparent);pointer-events:none}
+.ts-result-lost{background:linear-gradient(135deg,rgba(124,58,237,.18),rgba(109,40,217,.1));border:1px solid rgba(139,92,246,.2);border-radius:14px;padding:16px;text-align:center;position:relative;overflow:hidden}
+.ts-result-lost::before{content:"";position:absolute;inset:0;background:radial-gradient(ellipse 80% 50% at 50% 0%,rgba(139,92,246,.08),transparent);pointer-events:none}
+.ts-result-eyebrow{font-family:var(--fm);font-size:8px;font-weight:700;letter-spacing:4px;text-transform:uppercase;margin-bottom:6px;opacity:.6}
+.ts-result-headline{font-family:var(--fd);font-size:clamp(20px,6vw,28px);font-weight:900;line-height:1.1;margin-bottom:4px}
+.ts-result-sub{font-family:var(--fm);font-size:11px;opacity:.55;letter-spacing:.5px}
+
+/* Confetti particle */
+.ts-confetti{position:absolute;width:6px;height:6px;border-radius:1px;pointer-events:none;z-index:20;animation:tsConfettiFall var(--dur,1.8s) var(--delay,0s) cubic-bezier(.25,.46,.45,.94) forwards}
+@keyframes tsConfettiFall{0%{transform:translateY(-20px) rotate(0deg);opacity:1}100%{transform:translateY(160px) rotate(var(--rot,360deg)) translateX(var(--dx,0px));opacity:0}}
+
+/* Choice cards — broadcast style */
+.ts-choice-grid{display:grid;grid-template-columns:1fr 1fr;gap:10px;width:100%;animation:tsFadeUp .4s .05s cubic-bezier(.22,1,.36,1) both}
+.ts-choice{border-radius:12px;padding:18px 12px;cursor:pointer;display:flex;flex-direction:column;align-items:center;gap:8px;transition:transform .18s,box-shadow .18s;position:relative;overflow:hidden;border:1.5px solid transparent}
+.ts-choice::before{content:"";position:absolute;inset:0;opacity:0;transition:opacity .18s;border-radius:inherit}
+.ts-choice:active{transform:scale(.96)}
+.ts-choice.bat-card{background:linear-gradient(145deg,rgba(180,83,9,.22),rgba(120,53,15,.15));border-color:rgba(251,191,36,.25);box-shadow:0 4px 20px rgba(180,83,9,.2)}
+.ts-choice.bat-card:hover{transform:translateY(-3px);box-shadow:0 10px 40px rgba(180,83,9,.35)}
+.ts-choice.bat-card::before{background:radial-gradient(ellipse at 50% 0%,rgba(251,191,36,.12),transparent)}
+.ts-choice.bat-card:hover::before{opacity:1}
+.ts-choice.chase-card{background:linear-gradient(145deg,rgba(3,105,161,.22),rgba(7,89,133,.15));border-color:rgba(56,189,248,.2);box-shadow:0 4px 20px rgba(3,105,161,.2)}
+.ts-choice.chase-card:hover{transform:translateY(-3px);box-shadow:0 10px 40px rgba(3,105,161,.35)}
+.ts-choice.chase-card::before{background:radial-gradient(ellipse at 50% 0%,rgba(56,189,248,.1),transparent)}
+.ts-choice.chase-card:hover::before{opacity:1}
+.ts-choice-icon{font-size:36px;filter:drop-shadow(0 2px 8px rgba(0,0,0,.4))}
+.ts-choice-label{font-family:var(--fd);font-size:17px;font-weight:900;letter-spacing:-.2px}
+.ts-choice-desc{font-family:var(--fm);font-size:9px;color:rgba(255,255,255,.45);text-align:center;line-height:1.4;letter-spacing:.3px}
+.ts-choice-tag{position:absolute;top:8px;right:8px;font-family:var(--fm);font-size:7px;font-weight:700;letter-spacing:1.5px;text-transform:uppercase;padding:2px 6px;border-radius:4px}
+
+/* Opponent won — single CTA */
+.ts-opp-won{width:100%;animation:tsBannerIn .5s cubic-bezier(.22,1,.36,1) both;display:flex;flex-direction:column;gap:10px}
+.ts-opp-cta{background:linear-gradient(135deg,rgba(251,191,36,.15),rgba(180,83,9,.1));border:1.5px solid rgba(251,191,36,.2);border-radius:12px;padding:15px 20px;cursor:pointer;font-family:var(--fd);font-size:16px;font-weight:800;color:#fff;width:100%;transition:transform .15s,box-shadow .15s;text-align:center;letter-spacing:.3px;box-shadow:0 4px 20px rgba(180,83,9,.2)}
+.ts-opp-cta:active{transform:scale(.97)}
+.ts-opp-cta:hover{box-shadow:0 8px 32px rgba(180,83,9,.35);transform:translateY(-2px)}
+
+/* Bottom bar */
+.ts-bottombar{position:relative;z-index:10;flex-shrink:0;background:rgba(0,0,0,.6);backdrop-filter:blur(10px);border-top:1px solid rgba(255,255,255,.06);padding:6px 14px;display:flex;align-items:center;justify-content:space-between}
+.ts-ticker{font-family:var(--fm);font-size:9px;color:rgba(255,255,220,.3);letter-spacing:1px;overflow:hidden;white-space:nowrap}
+
+/* Keep legacy coin class names for compat */
 .coin-wrap{perspective:600px}
 .coin{width:clamp(80px,22vw,120px);height:clamp(80px,22vw,120px);border-radius:50%;position:relative;transform-style:preserve-3d;cursor:pointer;transition:transform .1s}
 .coin.spinning{animation:coinSpin 1.8s cubic-bezier(.45,.05,.55,.95) forwards}
 .coin-face{position:absolute;inset:0;border-radius:50%;display:flex;align-items:center;justify-content:center;font-size:44px;backface-visibility:hidden}
-.coin-heads{background:linear-gradient(135deg,#c8963c,#f59e0b,#fbbf24,#d97706);background-size:300% 300%;animation:gradShift 3s ease-in-out infinite;box-shadow:0 8px 32px rgba(180,83,9,.4),inset 0 2px 4px rgba(255,255,255,.3)}
-.coin-tails{background:linear-gradient(135deg,#78716c,#a8a29e,#d6d3d1);transform:rotateY(180deg);box-shadow:0 8px 24px rgba(0,0,0,.2)}
-/* Choice screen */
+.coin-heads{background:linear-gradient(135deg,#c8963c,#f59e0b,#fbbf24,#d97706);box-shadow:0 8px 32px rgba(180,83,9,.4),inset 0 2px 4px rgba(255,255,255,.3)}
+.coin-tails{background:linear-gradient(135deg,#78716c,#a8a29e,#d6d3d1);transform:rotateY(180deg)}
+
+/* Choice screen legacy */
 .choice-screen{flex:1;display:flex;flex-direction:column;align-items:center;justify-content:center;gap:20px;padding:32px 24px;background:linear-gradient(180deg,var(--bg),var(--s2))}
 .choice-cards{display:grid;grid-template-columns:1fr 1fr;gap:12px;width:100%}
 .choice-card{background:var(--s0);border:2px solid var(--rim2);border-radius:var(--r3);padding:24px 16px;cursor:pointer;transition:all .22s;display:flex;flex-direction:column;align-items:center;gap:10px;box-shadow:var(--sh)}
-.choice-card:hover{transform:translateY(-3px);box-shadow:var(--sh-lg)}
+.choice-card:hover{transform:translateY(-3px)}
 .choice-card.bat{border-color:var(--amber)}
-.choice-card.bat:hover{background:var(--amberBg);box-shadow:0 12px 40px rgba(180,83,9,.2)}
 .choice-card.chase{border-color:var(--blue)}
-.choice-card.chase:hover{background:var(--blueBg);box-shadow:0 12px 40px rgba(3,105,161,.2)}
 .choice-icon{font-size:44px}
 .choice-title{font-family:var(--fd);font-size:20px;font-weight:800}
 .choice-desc{font-size:11px;color:var(--sub);text-align:center;line-height:1.45}
@@ -3153,13 +3245,15 @@ export default function App() {
   // goBack: navigate backward (pops history stack)
   const goBack = useCallback((fallback = "landing") => {
     const hist = screenHistoryRef.current;
-    if (hist.length > 1) {
-      const prev = hist[hist.length - 2];
-      screenHistoryRef.current = hist.slice(0, -1);
-      setScreen(prev);
-    } else {
-      setScreen(fallback);
+    const prev = hist.length > 1 ? hist[hist.length - 2] : fallback;
+    screenHistoryRef.current = hist.length > 1 ? hist.slice(0, -1) : [fallback];
+    // Sync navTab so bottom nav highlights correctly
+    const NAV_SCREENS = ["landing", "profile", "leaderboard", "store", "wallet"];
+    if (NAV_SCREENS.includes(prev)) {
+      const tab = prev === "landing" ? "play" : prev;
+      setNavTab(tab);
     }
+    setScreen(prev);
   }, []);
 
   // Android hardware back button via browser popstate
@@ -3753,7 +3847,6 @@ export default function App() {
     // Build questions with safe fallback
     let questions;
     try { questions = buildSeededQuestions(seed, cond.id); } catch(e) { questions = null; }
-    if (!questions || questions.length === 0) questions = [...ALL_QUESTIONS].sort(()=>Math.random()-.5).slice(0,6); console.warn("[FALLBACK HIT] line ~3756+3887 — buildQuestionSet may have failed");
 
     qsRef.current = questions;
     setQs(questions);
@@ -3803,7 +3896,7 @@ export default function App() {
       // Always build fresh questions for 2nd innings
       let freshQs = null;
       try { freshQs = buildQuestionSet(null, condition || CONDITIONS[0]); } catch(e) {}
-      if (!freshQs || freshQs.length === 0) freshQs = [...ALL_QUESTIONS].sort(()=>Math.random()-.5).slice(0,6); console.warn("[FALLBACK HIT] freshQs fallback triggered");
+      if (!freshQs || freshQs.length === 0) freshQs = [...ALL_QUESTIONS].sort(() => Math.random() - .5).slice(0, 6);
       qsRef.current = freshQs;
       setQs([...freshQs]);
       setInnings(2);
@@ -3859,7 +3952,7 @@ export default function App() {
             // Always build FRESH questions for the player's chase innings
             let freshQs = null;
             try { freshQs = buildQuestionSet(null, cond); } catch(e) {}
-            if (!freshQs || freshQs.length === 0) freshQs = [...ALL_QUESTIONS].sort(()=>Math.random()-.5).slice(0,6); console.warn("[FALLBACK HIT] freshQs fallback triggered");
+            if (!freshQs || freshQs.length === 0) freshQs = [...ALL_QUESTIONS].sort(() => Math.random() - .5).slice(0, 6);
             qsRef.current = freshQs;
             setQs([...freshQs]);
             setInnings(2);
@@ -3884,7 +3977,7 @@ export default function App() {
         // Player bats first — build fresh questions now
         let questions = null;
         try { questions = buildQuestionSet(null, cond); } catch(e) { questions = null; }
-        if (!questions || questions.length === 0) questions = [...ALL_QUESTIONS].sort(()=>Math.random()-.5).slice(0,6); console.warn("[FALLBACK HIT] line ~3756+3887 — buildQuestionSet may have failed");
+        if (!questions || questions.length === 0) questions = [...ALL_QUESTIONS].sort(() => Math.random() - .5).slice(0, 6);
         qsRef.current = questions;
         setQs(questions);
         setScreen("match");
@@ -3942,7 +4035,6 @@ export default function App() {
       let freshQs = qsRef.current;
       if (!freshQs || freshQs.length === 0) {
         try { freshQs = buildQuestionSet(null, condition || CONDITIONS[0]); } catch(e) {}
-        if (!freshQs || freshQs.length === 0) freshQs = [...ALL_QUESTIONS].sort(()=>Math.random()-.5).slice(0,6); console.warn("[FALLBACK HIT] freshQs fallback triggered");
         qsRef.current = freshQs;
       }
       setQs([...freshQs]);
@@ -5165,97 +5257,164 @@ export default function App() {
         )}
 
         {/* ══════ TOSS ══════ */}
-        {screen === "toss" && (
+        {screen === "toss" && (() => {
+          // Confetti particles for toss win
+          const confettiColors = ["#fbbf24","#4ade80","#60a5fa","#f472b6","#a78bfa","#fb923c"];
+          const confettiItems = Array.from({length:22},(_,i) => ({
+            id:i, color:confettiColors[i%confettiColors.length],
+            left:`${10+Math.random()*80}%`,
+            dur:`${1.4+Math.random()*.8}s`,
+            delay:`${Math.random()*.5}s`,
+            rot:`${180+Math.floor(Math.random()*360)}deg`,
+            dx:`${-30+Math.floor(Math.random()*60)}px`,
+            shape: i%3===0 ? "50%" : "2px",
+          }));
+
+          return (
           <div className="screen toss-screen">
-            {/* Back button */}
-            <div style={{ position:"absolute", top:12, left:12, zIndex:10 }}>
-              <button className="back-btn" onClick={() => goBack()}>←</button>
+            {/* Atmosphere layers */}
+            <div className="ts-stadium-bg"/>
+            <div className="ts-floodlights">
+              <div className="ts-fl left"/><div className="ts-fl right"/><div className="ts-fl center"/>
             </div>
-            {/* PvP vs Bot badge */}
-            <div style={{ display:"flex", justifyContent:"center", marginBottom:4 }}>
-              <div style={{
-                padding:"4px 12px", borderRadius:20,
-                background: matchType === "pvp" ? "rgba(74,222,128,.12)" : "rgba(255,255,255,.06)",
-                border: `1px solid ${matchType === "pvp" ? "rgba(74,222,128,.3)" : "rgba(255,255,255,.12)"}`,
-                fontSize:11, fontFamily:"var(--fm)", letterSpacing:1, textTransform:"uppercase",
-                color: matchType === "pvp" ? "#4ade80" : "rgba(255,255,255,.35)",
-              }}>
-                {matchType === "pvp" ? "⚡ Real Player" : "🤖 AI Opponent"}
-              </div>
-            </div>
-            <div className="toss-players">
-              <div style={{ display:"flex", flexDirection:"column", alignItems:"center", gap:6 }}>
-                {/* Jersey card on toss — explicit colors for dark bg visibility */}
-                {(() => {
-                  const pal = JERSEY_PALETTES.find(p => p.id === avatarPalette) || JERSEY_PALETTES[0];
-                  const jCol = pal.primary || career.jerseyColor;
-                  const scale = 0.42;
-                  return (
-                    <div style={{ display:"flex", flexDirection:"column", alignItems:"center", gap: 4 }}>
-                      <div style={{ width:22, height:18, borderRadius:"11px 11px 4px 4px", background: career.helmetColor, boxShadow:"0 2px 6px rgba(0,0,0,.4)" }} />
-                      <div style={{ width: 67, height: 84, borderRadius:8, background: jCol, boxShadow:"0 4px 20px rgba(0,0,0,.5), 0 0 0 2px rgba(255,255,255,.12)", display:"flex", flexDirection:"column", alignItems:"center", justifyContent:"center", position:"relative", overflow:"hidden" }}>
-                        <div style={{ position:"absolute", left:"50%", top:0, bottom:0, width:11, transform:"translateX(-50%)", background:"rgba(0,0,0,.15)" }} />
-                        <div style={{ fontFamily:"var(--fd)", fontSize:34, fontWeight:900, color:"rgba(255,255,255,.92)", lineHeight:1, zIndex:1, textShadow:"0 2px 6px rgba(0,0,0,.3)" }}>{avatarNum}</div>
-                        <div style={{ fontFamily:"var(--fm)", fontSize:6, fontWeight:700, letterSpacing:1.5, color:"rgba(255,255,255,.6)", textTransform:"uppercase", zIndex:1 }}>{nick?.slice(0,8) || "YOU"}</div>
-                      </div>
-                      <div style={{ fontFamily:"var(--fm)", fontSize:7, fontWeight:700, letterSpacing:1, textTransform:"uppercase", color: career.color, background:"rgba(0,0,0,.5)", borderRadius:999, padding:"2px 8px", border:`1px solid ${career.color}50` }}>{career.badge}</div>
-                    </div>
-                  );
-                })()}
-                <div style={{ fontFamily:"var(--fm)", fontSize:10, fontWeight:700, color:"rgba(255,255,255,.7)", marginTop:2 }}>{nick || "You"}</div>
-              </div>
-              <div className="toss-vs">VS</div>
-              <div className="tp"><div className="tp-flag">{opp?.flag}</div><div className="tp-name">{opp?.name}</div><div className="tp-elo">{opp?.elo}</div></div>
-            </div>
+            <div className="ts-grass"/>
+            <div className="ts-pitch"/>
+            <div className="ts-crowd-line"/>
+            <div className="ts-scanlines"/>
 
-            <div style={{ fontFamily: "var(--fd)", fontSize: 26, fontWeight: 800, textAlign: "center", color: "#fff" }}>
-              {tossState === "idle" ? "Tap to toss" : tossState === "spinning" ? "Tossing…" : tossWinner === "player" ? "🎉 You won the toss!" : `${opp?.name} won the toss`}
-            </div>
-            {tossState === "idle" && <div style={{ fontSize: 12, color: "rgba(255,255,255,.4)", textAlign: "center" }}>Toss winner decides — bat first or chase</div>}
+            {/* Confetti burst on toss win */}
+            {tossState === "result" && tossWinner === "player" && confettiItems.map(c => (
+              <div key={c.id} className="ts-confetti" style={{
+                left:c.left, background:c.color,
+                "--dur":c.dur,"--delay":c.delay,"--rot":c.rot,"--dx":c.dx,
+                borderRadius:c.shape, top:"35%",
+              }}/>
+            ))}
 
-            {/* 3D Coin */}
-            <div className="coin-wrap" onClick={doToss} style={{ cursor: tossState === "idle" ? "pointer" : "default" }}>
-              <div className={`coin${tossState === "spinning" ? " spinning" : ""}`}>
-                <div className="coin-face coin-heads">🏏</div>
-                <div className="coin-face coin-tails">🏟</div>
+            {/* TV Top Bar */}
+            <div className="ts-topbar">
+              <div className="ts-live-badge"><div className="ts-live-dot"/>LIVE</div>
+              <div className="ts-channel">🏏 CRICKET CLASH</div>
+              <div style={{display:"flex",alignItems:"center",gap:6}}>
+                <div style={{background:"rgba(255,255,255,.07)",borderRadius:4,padding:"2px 7px",fontFamily:"var(--fm)",fontSize:9,fontWeight:700,letterSpacing:1,color:"rgba(255,255,255,.4)",textTransform:"uppercase"}}>
+                  {matchType === "pvp" ? "⚡ LIVE PvP" : "🤖 VS AI"}
+                </div>
               </div>
             </div>
 
-            {tossState === "result" && (
-              <div style={{ display: "flex", flexDirection: "column", alignItems: "center", gap: 14, width: "100%", animation: "fadeUp .4s cubic-bezier(.22,1,.36,1)" }}>
-                {tossWinner === "player" ? (
-                  <>
-                    <div style={{ fontSize: 13, color: "var(--sub)", textAlign: "center" }}>
-                      Your choice — bat first or chase?
-                    </div>
-                    <div className="choice-cards">
-                      <div className="choice-card bat" onClick={() => chooseBatOrChase("bat")}>
-                        <span className="choice-icon">🏏</span>
-                        <div className="choice-title" style={{ color: "var(--amber)" }}>Bat First</div>
-                        <div className="choice-desc">Set a target. Put runs on the board. Make them chase.</div>
+            {/* Main body */}
+            <div className="ts-body">
+              {/* Match title */}
+              <div className="ts-title-strip">
+                <div className="ts-match-label">MATCH TOSS</div>
+                <div className="ts-match-title">Who Wins The Toss?</div>
+              </div>
+
+              {/* Players row */}
+              <div className="ts-players">
+                {/* Player card */}
+                <div className="ts-player" style={{animation:"tsFadeUp .5s .15s cubic-bezier(.22,1,.36,1) both"}}>
+                  {(() => {
+                    const pal = JERSEY_PALETTES.find(p => p.id === avatarPalette) || JERSEY_PALETTES[0];
+                    const jCol = pal.primary || career.jerseyColor;
+                    return (
+                      <div style={{display:"flex",flexDirection:"column",alignItems:"center",gap:4}}>
+                        <div style={{width:20,height:16,borderRadius:"10px 10px 3px 3px",background:career.helmetColor,boxShadow:"0 2px 8px rgba(0,0,0,.5)"}}/>
+                        <div className="ts-player-card" style={{width:62,height:78,background:jCol,display:"flex",flexDirection:"column",alignItems:"center",justifyContent:"center",position:"relative",overflow:"hidden"}}>
+                          <div style={{position:"absolute",left:"50%",top:0,bottom:0,width:10,transform:"translateX(-50%)",background:"rgba(0,0,0,.18)"}}/>
+                          <div style={{fontFamily:"var(--fd)",fontSize:30,fontWeight:900,color:"rgba(255,255,255,.92)",lineHeight:1,zIndex:1,textShadow:"0 2px 8px rgba(0,0,0,.4)"}}>{avatarNum}</div>
+                          <div style={{fontFamily:"var(--fm)",fontSize:5,fontWeight:700,letterSpacing:1.5,color:"rgba(255,255,255,.6)",textTransform:"uppercase",zIndex:1}}>{nick?.slice(0,8)||"YOU"}</div>
+                        </div>
                       </div>
-                      <div className="choice-card chase" onClick={() => chooseBatOrChase("chase")}>
-                        <span className="choice-icon">🎯</span>
-                        <div className="choice-title" style={{ color: "var(--blue)" }}>Chase</div>
-                        <div className="choice-desc">Let them bat first. Know the target. Hunt it down.</div>
-                      </div>
-                    </div>
-                  </>
-                ) : (
-                  // Opponent won toss — they always bat first, player chases automatically
-                  <div style={{ fontSize: 13, color: "var(--sub)", textAlign: "center", lineHeight: 1.6 }}>
-                    <strong style={{ color: "var(--txt)" }}>{opp?.name}</strong> chose to bat first.<br />
-                    You will be chasing. Get ready.
-                    <br /><br />
-                    <button className="btn btn-amber" style={{ width: "100%" }} onClick={() => chooseBatOrChase("chase")}>
-                      🎯 Got it — Start Match
-                    </button>
+                    );
+                  })()}
+                  <div className="ts-player-name">{nick||"You"}</div>
+                  <div className="ts-player-elo" style={{color:"rgba(255,220,100,.45)",fontSize:9}}>{career.badge}</div>
+                </div>
+
+                {/* VS */}
+                <div className="ts-vs-wrap">
+                  <div className="ts-vs-line"/>
+                  <div className="ts-vs">VS</div>
+                  <div className="ts-vs-line"/>
+                </div>
+
+                {/* Opponent */}
+                <div className="ts-player" style={{animation:"tsFadeUp .5s .2s cubic-bezier(.22,1,.36,1) both"}}>
+                  <div style={{fontSize:44,lineHeight:1,filter:"drop-shadow(0 4px 12px rgba(0,0,0,.5))",animation:"floatBob 2.8s ease-in-out infinite"}}>{opp?.flag}</div>
+                  <div className="ts-player-name">{opp?.name}</div>
+                  <div className="ts-player-elo">{opp?.elo} ELO</div>
+                </div>
+              </div>
+
+              {/* Coin + status */}
+              <div className="ts-coin-area">
+                {tossState !== "result" && (
+                  <div className="ts-coin-label">
+                    {tossState === "idle" ? "— TAP COIN TO TOSS —" : "— TOSSING —"}
                   </div>
                 )}
+                {tossState !== "result" && (
+                  <div className="ts-coin-wrap" onClick={doToss} style={{cursor:tossState==="idle"?"pointer":"default"}}>
+                    <div className={`ts-coin${tossState==="spinning"?" spinning":""}`}>
+                      <div className="ts-coin-face ts-coin-h">🏏</div>
+                      <div className="ts-coin-face ts-coin-t">🏟</div>
+                    </div>
+                  </div>
+                )}
+                {tossState === "idle" && (
+                  <div className="ts-tap-hint">Tap the coin to decide fate</div>
+                )}
               </div>
-            )}
+
+              {/* Result — toss won by player */}
+              {tossState === "result" && tossWinner === "player" && (
+                <div style={{width:"100%",display:"flex",flexDirection:"column",gap:10,animation:"tsFadeUp .4s cubic-bezier(.22,1,.36,1) both"}}>
+                  <div className="ts-result-won">
+                    <div className="ts-result-eyebrow" style={{color:"#4ade80"}}>🎉 TOSS WON</div>
+                    <div className="ts-result-headline" style={{color:"#fff"}}>Your Call, Captain</div>
+                    <div className="ts-result-sub">Choose how you want to play</div>
+                  </div>
+                  <div className="ts-choice-grid">
+                    <div className="ts-choice bat-card" onClick={() => chooseBatOrChase("bat")}>
+                      <div className="ts-choice-tag" style={{background:"rgba(251,191,36,.15)",color:"#fbbf24"}}>FIRST</div>
+                      <div className="ts-choice-icon">🏏</div>
+                      <div className="ts-choice-label" style={{color:"#fbbf24"}}>Bat First</div>
+                      <div className="ts-choice-desc">Set the target. Make them chase you down.</div>
+                    </div>
+                    <div className="ts-choice chase-card" onClick={() => chooseBatOrChase("chase")}>
+                      <div className="ts-choice-tag" style={{background:"rgba(56,189,248,.12)",color:"#38bdf8"}}>CHASE</div>
+                      <div className="ts-choice-icon">🎯</div>
+                      <div className="ts-choice-label" style={{color:"#38bdf8"}}>Chase</div>
+                      <div className="ts-choice-desc">Know the target. Hunt it down ball by ball.</div>
+                    </div>
+                  </div>
+                </div>
+              )}
+
+              {/* Result — toss lost */}
+              {tossState === "result" && tossWinner !== "player" && (
+                <div className="ts-opp-won">
+                  <div className="ts-result-lost">
+                    <div className="ts-result-eyebrow" style={{color:"#a78bfa"}}>TOSS LOST</div>
+                    <div className="ts-result-headline" style={{color:"#fff"}}>{opp?.name} Chose to Bat</div>
+                    <div className="ts-result-sub">You're chasing — know the target, hunt it down</div>
+                  </div>
+                  <button className="ts-opp-cta" onClick={() => chooseBatOrChase("chase")}>
+                    🎯 &nbsp; Ready to Chase — Let's Go
+                  </button>
+                </div>
+              )}
+            </div>
+
+            {/* TV Bottom ticker bar */}
+            <div className="ts-bottombar">
+              <div className="ts-ticker">🏟 CRICKET CLASH ARENA &nbsp;·&nbsp; TRIVIA BATTLE &nbsp;·&nbsp; {matchType==="pvp"?"LIVE PvP MATCH":"VS AI OPPONENT"}</div>
+              <button className="back-btn" style={{background:"rgba(255,255,255,.08)",border:"1px solid rgba(255,255,255,.12)",color:"rgba(255,255,255,.5)",padding:"3px 10px",fontSize:12,flexShrink:0}} onClick={() => goBack()}>←</button>
+            </div>
           </div>
-        )}
+          );
+        })()}
 
         {/* ══════ CONDITIONS — BROADCAST STADIUM VIEW ══════ */}
         {screen === "conditions" && condition && (() => {
@@ -6448,7 +6607,7 @@ export default function App() {
           <div className="screen" style={{ display: "flex", flexDirection: "column" }}>
             <div className="wallet-hero">
               <div style={{ display: "flex", alignItems: "center", justifyContent: "space-between", marginBottom: 16 }}>
-                <button className="back-btn" style={{ background: "rgba(255,255,255,.1)", border: "1px solid rgba(255,255,255,.15)", color: "#fff" }} onClick={() => goBack()}>←</button>
+                <button className="back-btn" style={{ background: "rgba(255,255,255,.1)", border: "1px solid rgba(255,255,255,.15)", color: "#fff" }} onClick={() => { screenHistoryRef.current = ["landing"]; setNavTab("play"); setScreen("landing"); }}>←</button>
                 <span style={{ fontFamily: "var(--fm)", fontSize: 9, fontWeight: 600, letterSpacing: 3, textTransform: "uppercase", color: "rgba(255,255,255,.4)" }}>SKILL WALLET</span>
                 <div style={{ width: 40 }} />
               </div>
@@ -6498,11 +6657,12 @@ export default function App() {
             {[["play","🏏","Play"],["profile","👤","Career"],["leaderboard","🏆","Ranks"],["store","🪙","Store"],["wallet","💰","Wallet"]].map(([id, ic, lb]) => (
               <button key={id} className={`nav-btn${navTab === id ? " on" : ""}`} onClick={() => {
                 setNavTab(id);
-                if (id === "play") goTo("landing");
-                else if (id === "profile") { goTo("profile"); setShowAvatarScreen(false); }
-                else if (id === "leaderboard") goTo("leaderboard");
-                else if (id === "store") goTo("store");
-                else goTo("wallet");
+                const dest = id === "play" ? "landing" : id === "profile" ? "profile" : id === "leaderboard" ? "leaderboard" : id === "store" ? "store" : "wallet";
+                if (id === "profile") setShowAvatarScreen(false);
+                // Reset history so back always goes to landing from any nav tab
+                screenHistoryRef.current = ["landing", dest];
+                window.history.replaceState({ screen: dest }, "", "");
+                setScreen(dest);
               }}>
                 <span className="nav-icon">{ic}</span>{lb}
               </button>
