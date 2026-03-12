@@ -2558,7 +2558,7 @@ html,body{background:var(--bg);color:var(--txt);font-family:var(--fh);-webkit-fo
 .ts-result-sub{font-family:var(--fm);font-size:11px;opacity:.55;letter-spacing:.5px}
 
 /* Confetti particle */
-.ts-confetti{position:absolute;width:6px;height:6px;border-radius:1px;pointer-events:none;z-index:20;animation:tsConfettiFall var(--dur,1.8s) var(--delay,0s) cubic-bezier(.25,.46,.45,.94) forwards}
+.ts-confetti{position:absolute;width:8px;height:8px;pointer-events:none;z-index:20;animation:tsConfettiFall 1.8s 0s cubic-bezier(.25,.46,.45,.94) forwards}
 @keyframes tsConfettiFall{0%{transform:translateY(-20px) rotate(0deg);opacity:1}100%{transform:translateY(160px) rotate(var(--rot,360deg)) translateX(var(--dx,0px));opacity:0}}
 
 /* Choice cards — broadcast style */
@@ -3337,6 +3337,7 @@ export default function App() {
 
   // Match state
   const [innings, setInnings] = useState(1); // 1 or 2
+  const inningsRef = useRef(1); // mirror of innings for use in stale closures
   const [qs, setQs] = useState([]);
   const [qi, setQi] = useState(0);
   const [wickets, setWickets] = useState(0);
@@ -3899,7 +3900,7 @@ export default function App() {
       if (!freshQs || freshQs.length === 0) freshQs = [...ALL_QUESTIONS].sort(() => Math.random() - .5).slice(0, 6);
       qsRef.current = freshQs;
       setQs([...freshQs]);
-      setInnings(2);
+      setInnings(2); inningsRef.current = 2;
       setQi(0); setTLeft(15); setSel(null); setRev(false); setDone([]);
       setCStreak(0); setWickets(0);
       setPuFF(true); setPuTF(true); setPuFH(true);
@@ -3917,7 +3918,7 @@ export default function App() {
   const chooseBatOrChase = useCallback((choice) => {
     const batFirstDecision = choice === "bat" ? "player" : "opp";
     setBatFirst(batFirstDecision);
-    setInnings(1);
+    setInnings(1); inningsRef.current = 1;
     screenHistoryRef.current = [...screenHistoryRef.current, "conditions"];
     window.history.pushState({ screen: "conditions" }, "", "");
     setScreen("conditions");
@@ -3955,7 +3956,7 @@ export default function App() {
             if (!freshQs || freshQs.length === 0) freshQs = [...ALL_QUESTIONS].sort(() => Math.random() - .5).slice(0, 6);
             qsRef.current = freshQs;
             setQs([...freshQs]);
-            setInnings(2);
+            setInnings(2); inningsRef.current = 2;
             setQi(0); setTLeft(15); setSel(null); setRev(false); setDone([]);
             setCStreak(0); setWickets(0);
             setPuFF(true); setPuTF(true); setPuFH(true);
@@ -4126,12 +4127,13 @@ export default function App() {
   }, [qi, innings]);
 
   const endInnings = useCallback(async () => {
-    if (innings === 1) {
+    const currentInnings = inningsRef.current; // always current, not stale closure
+    if (currentInnings === 1) {
       if (batFirst === "player") {
         simulateOppChase();
       }
     } else {
-      // Match over — complete in backend
+      // Match over — complete in backend (currentInnings === 2)
       const playerWon = myScore > oppScore;
       const isTie     = myScore === oppScore;
 
@@ -5258,17 +5260,32 @@ export default function App() {
 
         {/* ══════ TOSS ══════ */}
         {screen === "toss" && (() => {
-          // Confetti particles for toss win
+          // Confetti — fixed positions so they don't re-randomise on re-render
           const confettiColors = ["#fbbf24","#4ade80","#60a5fa","#f472b6","#a78bfa","#fb923c"];
-          const confettiItems = Array.from({length:22},(_,i) => ({
-            id:i, color:confettiColors[i%confettiColors.length],
-            left:`${10+Math.random()*80}%`,
-            dur:`${1.4+Math.random()*.8}s`,
-            delay:`${Math.random()*.5}s`,
-            rot:`${180+Math.floor(Math.random()*360)}deg`,
-            dx:`${-30+Math.floor(Math.random()*60)}px`,
-            shape: i%3===0 ? "50%" : "2px",
-          }));
+          const confettiItems = [
+            {id:0,left:"12%",dur:"1.6s",delay:"0s",rot:"210deg",dx:"-20px",shape:"50%"},
+            {id:1,left:"22%",dur:"1.8s",delay:"0.1s",rot:"330deg",dx:"15px",shape:"2px"},
+            {id:2,left:"33%",dur:"1.5s",delay:"0.05s",rot:"180deg",dx:"-10px",shape:"50%"},
+            {id:3,left:"44%",dur:"1.9s",delay:"0.2s",rot:"270deg",dx:"25px",shape:"2px"},
+            {id:4,left:"55%",dur:"1.6s",delay:"0s",rot:"360deg",dx:"-30px",shape:"2px"},
+            {id:5,left:"66%",dur:"1.7s",delay:"0.15s",rot:"220deg",dx:"20px",shape:"50%"},
+            {id:6,left:"78%",dur:"1.5s",delay:"0.08s",rot:"300deg",dx:"-15px",shape:"2px"},
+            {id:7,left:"88%",dur:"1.8s",delay:"0.25s",rot:"190deg",dx:"10px",shape:"50%"},
+            {id:8,left:"18%",dur:"2.0s",delay:"0.1s",rot:"240deg",dx:"30px",shape:"2px"},
+            {id:9,left:"38%",dur:"1.6s",delay:"0.3s",rot:"310deg",dx:"-25px",shape:"50%"},
+            {id:10,left:"52%",dur:"1.7s",delay:"0.05s",rot:"160deg",dx:"18px",shape:"2px"},
+            {id:11,left:"72%",dur:"1.9s",delay:"0.18s",rot:"280deg",dx:"-12px",shape:"50%"},
+            {id:12,left:"28%",dur:"1.5s",delay:"0.22s",rot:"350deg",dx:"22px",shape:"2px"},
+            {id:13,left:"62%",dur:"1.8s",delay:"0.08s",rot:"200deg",dx:"-28px",shape:"50%"},
+            {id:14,left:"82%",dur:"1.6s",delay:"0.35s",rot:"260deg",dx:"14px",shape:"2px"},
+            {id:15,left:"15%",dur:"2.0s",delay:"0.12s",rot:"320deg",dx:"-8px",shape:"50%"},
+            {id:16,left:"45%",dur:"1.7s",delay:"0.28s",rot:"170deg",dx:"26px",shape:"2px"},
+            {id:17,left:"68%",dur:"1.5s",delay:"0.04s",rot:"290deg",dx:"-22px",shape:"50%"},
+            {id:18,left:"85%",dur:"1.8s",delay:"0.16s",rot:"230deg",dx:"16px",shape:"2px"},
+            {id:19,left:"35%",dur:"1.6s",delay:"0.32s",rot:"340deg",dx:"-18px",shape:"50%"},
+            {id:20,left:"58%",dur:"1.9s",delay:"0.06s",rot:"185deg",dx:"28px",shape:"2px"},
+            {id:21,left:"25%",dur:"1.7s",delay:"0.24s",rot:"305deg",dx:"-5px",shape:"50%"},
+          ];
 
           return (
           <div className="screen toss-screen">
@@ -5285,9 +5302,14 @@ export default function App() {
             {/* Confetti burst on toss win */}
             {tossState === "result" && tossWinner === "player" && confettiItems.map(c => (
               <div key={c.id} className="ts-confetti" style={{
-                left:c.left, background:c.color,
-                "--dur":c.dur,"--delay":c.delay,"--rot":c.rot,"--dx":c.dx,
-                borderRadius:c.shape, top:"35%",
+                left:c.left,
+                background:confettiColors[c.id % confettiColors.length],
+                animationDuration:c.dur,
+                animationDelay:c.delay,
+                borderRadius:c.shape,
+                top:"30%",
+                "--rot":c.rot,
+                "--dx":c.dx,
               }}/>
             ))}
 
@@ -5632,8 +5654,22 @@ export default function App() {
                 ))}
               </div>
               <div style={{ fontFamily:"var(--fm)", fontSize:11, color:"rgba(255,255,255,.3)", marginTop:4 }}>
-                {isAhead ? "Defend your lead" : tied ? "One six wins it" : runsNeeded <= 6 ? "One six wins it!" : runsNeeded <= 12 ? "You need boundaries" : "Miracles happen!"}
+                {isAhead ? "Defend your lead" : tied ? "One six wins it" : runsNeeded <= 6 ? "One six wins it!" : runsNeeded <= 12 ? "You need boundaries" : runsNeeded <= 18 ? "You need three sixes!" : ""}
               </div>
+              {!isAhead && !tied && runsNeeded > 18 && (
+                <div style={{
+                  marginTop:8, padding:"10px 20px", borderRadius:10,
+                  background:"rgba(255,255,255,.05)", border:"1px solid rgba(255,255,255,.1)",
+                  textAlign:"center", maxWidth:260,
+                }}>
+                  <div style={{ fontFamily:"var(--fd)", fontSize:15, fontWeight:700, color:"rgba(255,220,100,.7)", marginBottom:4 }}>
+                    🌟 Miracles can happen
+                  </div>
+                  <div style={{ fontFamily:"var(--fm)", fontSize:11, color:"rgba(255,255,255,.35)", lineHeight:1.5 }}>
+                    Get as close as you can — every run counts for your career stats
+                  </div>
+                </div>
+              )}
             </div>
           );
         })()}
