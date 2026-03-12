@@ -3953,7 +3953,9 @@ export default function App() {
             // Always build FRESH questions for the player's chase innings
             let freshQs = null;
             try { freshQs = buildQuestionSet(null, cond); } catch(e) {}
-            if (!freshQs || freshQs.length === 0) freshQs = [...ALL_QUESTIONS].sort(() => Math.random() - .5).slice(0, 6);
+            if (!freshQs || freshQs.length === 0) {
+              freshQs = [...ALL_QUESTIONS].sort(() => Math.random() - .5).slice(0, 6);
+            }
             qsRef.current = freshQs;
             setQs([...freshQs]);
             setInnings(2); inningsRef.current = 2;
@@ -4117,13 +4119,13 @@ export default function App() {
         setShowPressure(false);
         setQi(nextQi);
         setTLeft(15); setSel(null); setRev(false);
-        setFrozen(false); setCmntLine("");
+        setFrozen(false); setCmntLine(""); setHidden([]);
       }, 3200);
       return;
     }
     setQi(nextQi);
     setTLeft(15); setSel(null); setRev(false);
-    setFrozen(false); setCmntLine("");
+    setFrozen(false); setCmntLine(""); setHidden([]);
   }, [qi, innings]);
 
   const endInnings = useCallback(async () => {
@@ -4316,7 +4318,23 @@ export default function App() {
     if (ok) {
       const runs = runsForTime(tLeft);
       if (runs === 6) setBadges(b => { const n = new Set(b); n.add("first_six"); return n; });
-      setMyScore(s => s + runs);
+      setMyScore(s => {
+        const newScore = s + runs;
+        // Show between-question break after short delay
+        setTimeout(() => {
+          triggerBetween({
+            correct: true,
+            cmntLine: rnd(tLeft >= 10
+              ? COMMENTARY[commStyle || "shastri"].fast
+              : COMMENTARY[commStyle || "shastri"].slow),
+            coachNote: "",
+            scoreAfter: newScore, // Now using the correctly calculated score
+            runsScored: runs,
+            qi,
+          });
+        }, 600);
+        return newScore;
+      });
       snd("ok");
       if (runs === 6) snd("crowd_cheer");
       else if (runs === 4) snd("crowd_clap");
@@ -4340,21 +4358,6 @@ export default function App() {
         });
         return updated;
       });
-      line = rnd(tLeft >= 10
-        ? COMMENTARY[commStyle || "shastri"].fast
-        : COMMENTARY[commStyle || "shastri"].slow);
-
-      // Show between-question break after short delay
-      setTimeout(() => {
-        triggerBetween({
-          correct: true,
-          cmntLine: line,
-          coachNote: "",
-          scoreAfter: myScore,
-          runsScored: runs,
-          qi,
-        });
-      }, 600);
     } else if (freeHit) {
       setFreeHit(false);
       setDone(p => [...p, "bad"]);
@@ -4366,16 +4369,17 @@ export default function App() {
         triggerBetween({ correct: false, cmntLine: line, coachNote: "", scoreAfter: myScore, runsScored: 0, qi });
       }, 600);
     } else {
-      setMyScore(s => Math.max(0, s - 5));
+      setMyScore(s => {
+        const newScore = Math.max(0, s - 5);
+        setTimeout(() => {
+          triggerBetween({ correct: false, cmntLine: rnd(COMMENTARY[commStyle || "shastri"].wrong), coachNote: q?.coachNote || "", scoreAfter: newScore, runsScored: -5, qi });
+        }, 600);
+        return newScore;
+      });
       snd("bad");
       setWickets(w => w + 1);
       setCStreak(0);
       setDone(p => [...p, "bad"]);
-      line = rnd(COMMENTARY[commStyle || "shastri"].wrong);
-
-      setTimeout(() => {
-        triggerBetween({ correct: false, cmntLine: line, coachNote: q?.coachNote || "", scoreAfter: myScore, runsScored: -5, qi });
-      }, 600);
     }
 
     setHidden([]);
@@ -4993,50 +4997,256 @@ export default function App() {
         {/* ══════ SETUP ══════ */}
         {/* ══════ FINDING OPPONENT ══════ */}
         {screen === "finding" && (
-          <div className="screen" style={{ display:"flex", flexDirection:"column", alignItems:"center", justifyContent:"center", gap:20, background:"linear-gradient(160deg,#1a2e1a,#1c1917 60%,#1a1a2e)" }}>
-            {/* Spinning cricket ball */}
-            <div style={{ fontSize:64, animation:"spinBall 1.2s linear infinite" }}>🏏</div>
-            <div style={{ textAlign:"center" }}>
-              <div style={{ fontFamily:"var(--fd)", fontSize:22, fontWeight:700, color:"#fff", marginBottom:6 }}>
-                Finding Opponent…
-              </div>
-              <div style={{ fontSize:13, color:"rgba(255,255,255,.45)" }}>
-                {queueWaitMs < 5000
-                  ? "Searching for a real player near your level"
-                  : queueWaitMs < 9000
-                  ? "Almost there — pairing you now"
-                  : "Starting AI match now…"}
-              </div>
-            </div>
+          <div className="screen" style={{ 
+            display:"flex", flexDirection:"column", position:"relative", overflow:"hidden",
+            background:"linear-gradient(160deg,#0a0a0f 0%,#0f1419 40%,#1a1a2e 100%)"
+          }}>
+            {/* Animated grid background */}
+            <div style={{
+              position:"absolute", inset:0, opacity:.08,
+              backgroundImage:`
+                linear-gradient(rgba(180,83,9,.3) 1px, transparent 1px),
+                linear-gradient(90deg, rgba(180,83,9,.3) 1px, transparent 1px)
+              `,
+              backgroundSize:"40px 40px",
+              animation:"gridPulse 3s ease-in-out infinite"
+            }} />
 
-            {/* Wait timer dots */}
-            <div style={{ display:"flex", gap:6 }}>
-              {[0,1,2,3,4].map(i => (
-                <div key={i} style={{
-                  width:8, height:8, borderRadius:"50%",
-                  background: Math.floor(queueWaitMs / 600) % 5 === i ? "var(--amberViv)" : "rgba(255,255,255,.15)",
-                  transition:"background 0.3s",
+            {/* Scanning radar effect */}
+            <div style={{
+              position:"absolute", top:"50%", left:"50%", transform:"translate(-50%, -50%)",
+              width:280, height:280, borderRadius:"50%",
+              border:"2px solid rgba(180,83,9,.15)",
+              animation:"radarPulse 2s ease-out infinite"
+            }} />
+            <div style={{
+              position:"absolute", top:"50%", left:"50%", transform:"translate(-50%, -50%)",
+              width:200, height:200, borderRadius:"50%",
+              border:"1px solid rgba(180,83,9,.1)",
+              animation:"radarPulse 2s ease-out infinite .4s"
+            }} />
+
+            {/* India map scanning animation */}
+            <div style={{
+              position:"absolute", top:"20%", left:"50%", transform:"translateX(-50%)",
+              fontSize:120, opacity:.15, filter:"blur(1px)",
+              animation:"mapScan 3s ease-in-out infinite"
+            }}>🇮🇳</div>
+
+            {/* Main content */}
+            <div style={{ flex:1, display:"flex", flexDirection:"column", alignItems:"center", justifyContent:"center", gap:24, position:"relative", zIndex:10, padding:"0 20px" }}>
+              
+              {/* Animated cricket ball with glow */}
+              <div style={{ position:"relative" }}>
+                <div style={{
+                  position:"absolute", top:"50%", left:"50%", transform:"translate(-50%, -50%)",
+                  width:100, height:100, borderRadius:"50%",
+                  background:"radial-gradient(circle, rgba(180,83,9,.3), transparent 70%)",
+                  animation:"glowPulse 1.5s ease-in-out infinite"
                 }} />
-              ))}
-            </div>
-
-            {/* Entry fee reminder */}
-            <div style={{ background:"rgba(255,255,255,.06)", border:"1px solid rgba(255,255,255,.1)", borderRadius:"var(--r2)", padding:"10px 20px", textAlign:"center" }}>
-              <div style={{ fontSize:11, color:"rgba(255,255,255,.4)", textTransform:"uppercase", letterSpacing:1, marginBottom:2 }}>Entry</div>
-              <div style={{ fontFamily:"var(--fd)", fontSize:16, fontWeight:700, color:"var(--amberViv)" }}>
-                {entryFee.entry === 0 ? "Free Practice" : `₹${entryFee.entry} → Win ₹${entryFee.prize}`}
+                <div style={{ fontSize:64, animation:"spinBall 1.2s linear infinite", position:"relative" }}>🏏</div>
               </div>
+
+              {/* Status text */}
+              <div style={{ textAlign:"center" }}>
+                <div style={{ fontFamily:"var(--fd)", fontSize:26, fontWeight:800, color:"#fff", marginBottom:8, letterSpacing:"-0.5px" }}>
+                  {queueWaitMs < 3000
+                    ? "Scanning All of India..."
+                    : queueWaitMs < 7000
+                    ? "Found Players Nearby!"
+                    : queueWaitMs < 9500
+                    ? "Matching You Now..."
+                    : "Connecting to AI..."}
+                </div>
+                <div style={{ fontSize:13, color:"rgba(255,255,255,.5)", fontFamily:"var(--fm)", letterSpacing:".5px" }}>
+                  {queueWaitMs < 3000
+                    ? "Searching 1.4 billion cricket fans"
+                    : queueWaitMs < 7000
+                    ? "Pairing with someone at your level"
+                    : queueWaitMs < 9500
+                    ? "Almost ready — final checks"
+                    : "AI opponent ready to challenge you"}
+                </div>
+              </div>
+
+              {/* Animated scanning dots */}
+              <div style={{ display:"flex", gap:8 }}>
+                {[0,1,2,3,4].map(i => (
+                  <div key={i} style={{
+                    width:10, height:10, borderRadius:"50%",
+                    background: Math.floor(queueWaitMs / 500) % 5 === i 
+                      ? "linear-gradient(135deg, #f59e0b, #d97706)" 
+                      : "rgba(255,255,255,.12)",
+                    boxShadow: Math.floor(queueWaitMs / 500) % 5 === i 
+                      ? "0 0 12px rgba(245,158,11,.6)" 
+                      : "none",
+                    transition:"all 0.3s ease",
+                    transform: Math.floor(queueWaitMs / 500) % 5 === i ? "scale(1.3)" : "scale(1)"
+                  }} />
+                ))}
+              </div>
+
+              {/* Premium stakes display */}
+              <div style={{
+                background:"linear-gradient(135deg, rgba(180,83,9,.08) 0%, rgba(217,119,6,.12) 100%)",
+                border:"1px solid rgba(180,83,9,.25)",
+                borderRadius:16,
+                padding:"20px 28px",
+                display:"flex",
+                flexDirection:"column",
+                gap:16,
+                width:"100%",
+                maxWidth:320,
+                boxShadow:"0 8px 32px rgba(0,0,0,.3), inset 0 1px 0 rgba(255,255,255,.05)"
+              }}>
+                <div style={{ textAlign:"center", borderBottom:"1px solid rgba(180,83,9,.15)", paddingBottom:12 }}>
+                  <div style={{ fontSize:9, color:"rgba(255,255,255,.4)", textTransform:"uppercase", letterSpacing:2, marginBottom:6, fontFamily:"var(--fm)", fontWeight:600 }}>
+                    Match Stakes
+                  </div>
+                </div>
+                
+                <div style={{ display:"grid", gridTemplateColumns:"1fr auto 1fr", gap:12, alignItems:"center" }}>
+                  {/* Your Entry */}
+                  <div style={{ textAlign:"center" }}>
+                    <div style={{ fontSize:10, color:"rgba(255,255,255,.4)", marginBottom:4, fontFamily:"var(--fm)", letterSpacing:1 }}>
+                      YOU STAKE
+                    </div>
+                    <div style={{ fontFamily:"var(--fd)", fontSize:24, fontWeight:800, color:"#fff" }}>
+                      {entryFee.entry === 0 ? "FREE" : `₹${entryFee.entry}`}
+                    </div>
+                  </div>
+
+                  {/* Arrow */}
+                  <div style={{ fontSize:20, color:"var(--amber)", opacity:.6 }}>→</div>
+
+                  {/* Prize */}
+                  <div style={{ textAlign:"center" }}>
+                    <div style={{ fontSize:10, color:"rgba(255,255,255,.4)", marginBottom:4, fontFamily:"var(--fm)", letterSpacing:1 }}>
+                      WIN UP TO
+                    </div>
+                    <div style={{ 
+                      fontFamily:"var(--fd)", fontSize:24, fontWeight:800, 
+                      background:"linear-gradient(135deg, #f59e0b, #fbbf24)",
+                      WebkitBackgroundClip:"text",
+                      WebkitTextFillColor:"transparent",
+                      backgroundClip:"text"
+                    }}>
+                      {entryFee.entry === 0 ? "XP" : `₹${entryFee.prize}`}
+                    </div>
+                  </div>
+                </div>
+
+                {entryFee.entry > 0 && (
+                  <div style={{
+                    background:"rgba(180,83,9,.08)",
+                    borderRadius:8,
+                    padding:"8px 12px",
+                    fontSize:10,
+                    color:"rgba(255,255,255,.5)",
+                    textAlign:"center",
+                    fontFamily:"var(--fm)",
+                    borderTop:"1px solid rgba(180,83,9,.1)"
+                  }}>
+                    🏆 Winner takes <strong style={{color:"var(--amber)"}}>₹{entryFee.prize}</strong> · 
+                    Platform fee ₹{Math.round(entryFee.entry * 0.2)}
+                  </div>
+                )}
+              </div>
+
+              {/* Countdown timer */}
+              <div style={{
+                display:"flex",
+                alignItems:"center",
+                gap:10,
+                padding:"10px 20px",
+                background:"rgba(255,255,255,.04)",
+                border:"1px solid rgba(255,255,255,.08)",
+                borderRadius:12
+              }}>
+                <div style={{
+                  width:32, height:32,
+                  borderRadius:"50%",
+                  background: queueWaitMs > 8000 ? "rgba(220,38,38,.15)" : "rgba(180,83,9,.12)",
+                  border: queueWaitMs > 8000 ? "2px solid rgba(220,38,38,.3)" : "2px solid rgba(180,83,9,.2)",
+                  display:"flex",
+                  alignItems:"center",
+                  justifyContent:"center",
+                  fontFamily:"var(--fd)",
+                  fontSize:13,
+                  fontWeight:700,
+                  color: queueWaitMs > 8000 ? "var(--red)" : "var(--amber)"
+                }}>
+                  {Math.max(0, 10 - Math.floor(queueWaitMs / 1000))}
+                </div>
+                <div style={{ fontSize:11, color:"rgba(255,255,255,.4)", fontFamily:"var(--fm)" }}>
+                  {queueWaitMs < 10000 
+                    ? "Finding real player..." 
+                    : "Switching to AI opponent"}
+                </div>
+              </div>
+
+              {/* Info text */}
+              <div style={{ 
+                fontSize:11, 
+                color:"rgba(255,255,255,.25)", 
+                textAlign:"center", 
+                maxWidth:280,
+                fontFamily:"var(--fm)",
+                lineHeight:1.5
+              }}>
+                {queueWaitMs < 10000
+                  ? "⚡ Real players found will be matched based on skill level"
+                  : "🤖 No worries — AI opponents are equally challenging"}
+              </div>
+
+              {/* Cancel button */}
+              <button
+                onClick={cancelQueue}
+                style={{
+                  padding:"12px 32px",
+                  borderRadius:12,
+                  background:"transparent",
+                  border:"1px solid rgba(255,255,255,.15)",
+                  color:"rgba(255,255,255,.5)",
+                  fontFamily:"var(--fm)",
+                  fontSize:13,
+                  fontWeight:600,
+                  cursor:"pointer",
+                  marginTop:12,
+                  transition:"all .2s",
+                  letterSpacing:".5px"
+                }}
+                onMouseEnter={e => {
+                  e.target.style.borderColor = "rgba(220,38,38,.4)";
+                  e.target.style.color = "rgba(220,38,38,.8)";
+                }}
+                onMouseLeave={e => {
+                  e.target.style.borderColor = "rgba(255,255,255,.15)";
+                  e.target.style.color = "rgba(255,255,255,.5)";
+                }}>
+                Cancel Search
+              </button>
             </div>
 
-            <div style={{ fontSize:11, color:"rgba(255,255,255,.25)", textAlign:"center", maxWidth:240 }}>
-              If no opponent is found within 10 seconds, you'll be matched with an AI opponent automatically
-            </div>
-
-            <button
-              onClick={cancelQueue}
-              style={{ padding:"10px 28px", borderRadius:"var(--r2)", background:"transparent", border:"1px solid rgba(255,255,255,.2)", color:"rgba(255,255,255,.5)", fontFamily:"var(--fm)", fontSize:12, cursor:"pointer", marginTop:8 }}>
-              Cancel
-            </button>
+            {/* CSS keyframes - add to existing styles */}
+            <style>{`
+              @keyframes radarPulse {
+                0%, 100% { transform: translate(-50%, -50%) scale(1); opacity: 0.3; }
+                50% { transform: translate(-50%, -50%) scale(1.1); opacity: 0.1; }
+              }
+              @keyframes mapScan {
+                0%, 100% { transform: translateX(-50%) scale(1); opacity: .12; }
+                50% { transform: translateX(-50%) scale(1.05); opacity: .18; }
+              }
+              @keyframes glowPulse {
+                0%, 100% { opacity: .3; transform: translate(-50%, -50%) scale(1); }
+                50% { opacity: .6; transform: translate(-50%, -50%) scale(1.15); }
+              }
+              @keyframes gridPulse {
+                0%, 100% { opacity: .06; }
+                50% { opacity: .12; }
+              }
+            `}</style>
           </div>
         )}
 
@@ -5676,7 +5886,7 @@ export default function App() {
 
         {/* ══════ MATCH SCREEN ══════ */}
         {screen === "match" && !inSuperOver && (
-          <div className="match-wrap">
+          <div className="match-wrap" style={{ background: condition?.sky || "var(--bg)" }}>
             {/* Scoreboard */}
             <div className="scoreboard">
               <div className="sb-p">
@@ -5693,7 +5903,7 @@ export default function App() {
                 </div>
                 {innings === 2 && target ? (
                   <div style={{ fontFamily:"var(--fm)", fontSize:8, color:"var(--amber)", letterSpacing:1, marginTop:2, fontWeight:700 }}>
-                    NEED {Math.max(0, target - myScore)} · TARGET {target - 1}
+                    NEED {Math.max(0, target - myScore)} FROM {6 - qi} BALLS
                   </div>
                 ) : (
                   <div style={{ fontFamily:"var(--fm)", fontSize:8, color:"var(--sub)", letterSpacing:1, marginTop:2 }}>
@@ -5707,6 +5917,48 @@ export default function App() {
                 <div className={`sb-score${!playerBatting ? " batting" : ""}`}>{oppScore}</div>
               </div>
             </div>
+
+            {/* Chase equation banner - always shown during innings 2 when player is batting */}
+            {innings === 2 && target && playerBatting && (
+              <div style={{
+                margin: "8px 14px 0",
+                padding: "10px 16px",
+                borderRadius: 12,
+                background: myScore >= (target - 1) ? "rgba(21,128,61,.08)" : "rgba(217,119,6,.08)",
+                border: `1.5px solid ${myScore >= (target - 1) ? "rgba(21,128,61,.25)" : "rgba(217,119,6,.25)"}`,
+                display: "flex",
+                alignItems: "center",
+                justifyContent: "space-around",
+                gap: 8
+              }}>
+                <div style={{ textAlign: "center", flex: 1 }}>
+                  <div style={{ fontFamily: "var(--fm)", fontSize: 8, color: "rgba(255,255,255,.5)", letterSpacing: 1.2, marginBottom: 3, fontWeight: 600, textTransform: "uppercase" }}>
+                    Target
+                  </div>
+                  <div style={{ fontFamily: "var(--fd)", fontSize: 22, fontWeight: 800, color: "var(--amber)", lineHeight: 1 }}>
+                    {target - 1}
+                  </div>
+                </div>
+                <div style={{ width: 1, height: 32, background: "rgba(255,255,255,.15)" }} />
+                <div style={{ textAlign: "center", flex: 1 }}>
+                  <div style={{ fontFamily: "var(--fm)", fontSize: 8, color: "rgba(255,255,255,.5)", letterSpacing: 1.2, marginBottom: 3, fontWeight: 600, textTransform: "uppercase" }}>
+                    Need
+                  </div>
+                  <div style={{ fontFamily: "var(--fd)", fontSize: 22, fontWeight: 800, color: myScore >= (target - 1) ? "var(--green)" : "var(--amber)", lineHeight: 1 }}>
+                    {Math.max(0, target - myScore)}
+                  </div>
+                </div>
+                <div style={{ width: 1, height: 32, background: "rgba(255,255,255,.15)" }} />
+                <div style={{ textAlign: "center", flex: 1 }}>
+                  <div style={{ fontFamily: "var(--fm)", fontSize: 8, color: "rgba(255,255,255,.5)", letterSpacing: 1.2, marginBottom: 3, fontWeight: 600, textTransform: "uppercase" }}>
+                    Balls
+                  </div>
+                  <div style={{ fontFamily: "var(--fd)", fontSize: 22, fontWeight: 800, color: "var(--blue)", lineHeight: 1 }}>
+                    {6 - qi}
+                  </div>
+                </div>
+              </div>
+            )}
 
             {/* Compact tension strip — last 2 questions only */}
             {innings === 2 && target && qi >= 4 && playerBatting && (() => {
@@ -5807,86 +6059,243 @@ export default function App() {
 
             {/* ══ BETWEEN QUESTIONS OVERLAY ══ */}
             {showBetween && betweenData && (
-              <div className="between-overlay">
-                <div style={{ fontFamily: "var(--fm)", fontSize: 9, fontWeight: 700, letterSpacing: 3, color: "var(--sub)", textTransform: "uppercase" }}>
-                  Q{betweenData.qIdx + 1} of 6 — {betweenData.correct ? "Correct!" : "Missed"}
+              <div className="between-overlay" style={{ background: betweenData.correct ? "linear-gradient(160deg, #f0fdf4 0%, #dcfce7 100%)" : "linear-gradient(160deg, #fef2f2 0%, #fee2e2 100%)" }}>
+                
+                {/* Clean header */}
+                <div style={{ 
+                  fontFamily: "var(--fm)", 
+                  fontSize: 10, 
+                  fontWeight: 600, 
+                  letterSpacing: 2, 
+                  color: betweenData.correct ? "#15803d" : "#991b1b",
+                  textTransform: "uppercase",
+                  opacity: 0.6
+                }}>
+                  Question {betweenData.qIdx + 1} of 6
                 </div>
-                <div style={{ fontFamily: "var(--fd)", fontSize: 58, fontWeight: 800, color: betweenData.correct ? "var(--green)" : "var(--red)", lineHeight: 1, textAlign: "center" }}>
+
+                {/* Large, clean emoji */}
+                <div style={{ 
+                  fontSize: 72, 
+                  lineHeight: 1,
+                  margin: "12px 0"
+                }}>
                   {betweenData.correct ? "✅" : "❌"}
                 </div>
 
-                {/* Runs scored this ball — the new addition */}
+                {/* Score card - cleaner design */}
                 <div style={{
-                  display: "flex", alignItems: "center", justifyContent: "center", gap: 10,
-                  background: betweenData.runsScored > 0
-                    ? "rgba(21,128,61,.12)" : betweenData.runsScored < 0
-                    ? "rgba(220,38,38,.1)" : "rgba(255,255,255,.05)",
-                  border: `1px solid ${betweenData.runsScored > 0 ? "rgba(21,128,61,.25)" : betweenData.runsScored < 0 ? "rgba(220,38,38,.2)" : "rgba(255,255,255,.1)"}`,
-                  borderRadius: "var(--r2)", padding: "10px 20px", width: "100%",
+                  display: "flex",
+                  gap: 16,
+                  background: "#fff",
+                  borderRadius: 16,
+                  padding: "20px 24px",
+                  boxShadow: "0 4px 12px rgba(0,0,0,.08)",
+                  width: "100%",
+                  maxWidth: 340
                 }}>
-                  <div style={{ textAlign: "center" }}>
-                    <div style={{ fontFamily: "var(--fm)", fontSize: 9, letterSpacing: 2, textTransform: "uppercase", color: "rgba(255,255,255,.4)", marginBottom: 4 }}>
-                      This ball
-                    </div>
-                    <div style={{ fontFamily: "var(--fd)", fontSize: 36, fontWeight: 800, lineHeight: 1,
-                      color: betweenData.runsScored === 6 ? "var(--green)"
-                           : betweenData.runsScored === 4 ? "var(--blue)"
-                           : betweenData.runsScored === 2 ? "var(--amber)"
-                           : "var(--red)"
+                  {/* This Ball */}
+                  <div style={{ flex: 1, textAlign: "center" }}>
+                    <div style={{ 
+                      fontFamily: "var(--fm)", 
+                      fontSize: 9, 
+                      letterSpacing: 1.5, 
+                      textTransform: "uppercase", 
+                      color: "#6b7280",
+                      marginBottom: 6,
+                      fontWeight: 600
                     }}>
-                      {betweenData.runsScored > 0 ? `+${betweenData.runsScored}` : betweenData.runsScored === 0 ? "DOT" : `${betweenData.runsScored}`}
+                      This Ball
                     </div>
-                    <div style={{ fontFamily: "var(--fm)", fontSize: 10, color: "rgba(255,255,255,.4)", marginTop: 3 }}>
-                      {betweenData.runsScored === 6 ? "SIX! 🏏"
-                       : betweenData.runsScored === 4 ? "FOUR! 🎯"
+                    <div style={{ 
+                      fontFamily: "var(--fd)", 
+                      fontSize: 42, 
+                      fontWeight: 800, 
+                      lineHeight: 1,
+                      color: betweenData.runsScored === 6 ? "#15803d"
+                           : betweenData.runsScored === 4 ? "#0369a1"
+                           : betweenData.runsScored === 2 ? "#d97706"
+                           : betweenData.runsScored === 0 ? "#6b7280"
+                           : "#dc2626"
+                    }}>
+                      {betweenData.runsScored > 0 ? `+${betweenData.runsScored}` : betweenData.runsScored === 0 ? "0" : betweenData.runsScored}
+                    </div>
+                    <div style={{ 
+                      fontFamily: "var(--fm)", 
+                      fontSize: 10, 
+                      color: "#9ca3af", 
+                      marginTop: 4,
+                      fontWeight: 500
+                    }}>
+                      {betweenData.runsScored === 6 ? "Six!"
+                       : betweenData.runsScored === 4 ? "Four!"
                        : betweenData.runsScored === 2 ? "Two runs"
-                       : betweenData.runsScored === 0 ? "No runs scored"
-                       : "Wicket! −5 runs"}
+                       : betweenData.runsScored === 0 ? "Dot ball"
+                       : "Wicket"}
                     </div>
                   </div>
-                  <div style={{ width: 1, height: 44, background: "rgba(255,255,255,.1)" }} />
-                  <div style={{ textAlign: "center" }}>
-                    <div style={{ fontFamily: "var(--fm)", fontSize: 9, letterSpacing: 2, textTransform: "uppercase", color: "rgba(255,255,255,.4)", marginBottom: 4 }}>
+
+                  {/* Divider */}
+                  <div style={{ width: 1, background: "#e5e7eb", margin: "8px 0" }} />
+
+                  {/* Total Score */}
+                  <div style={{ flex: 1, textAlign: "center" }}>
+                    <div style={{ 
+                      fontFamily: "var(--fm)", 
+                      fontSize: 9, 
+                      letterSpacing: 1.5, 
+                      textTransform: "uppercase", 
+                      color: "#6b7280",
+                      marginBottom: 6,
+                      fontWeight: 600
+                    }}>
                       Total
                     </div>
-                    <div style={{ fontFamily: "var(--fd)", fontSize: 36, fontWeight: 800, color: "var(--amber)", lineHeight: 1 }}>
-                      {myScore}
+                    <div style={{ 
+                      fontFamily: "var(--fd)", 
+                      fontSize: 42, 
+                      fontWeight: 800, 
+                      color: "#d97706", 
+                      lineHeight: 1 
+                    }}>
+                      {betweenData.scoreAfter}
                     </div>
-                    <div style={{ fontFamily: "var(--fm)", fontSize: 10, color: "rgba(255,255,255,.4)", marginTop: 3 }}>
+                    <div style={{ 
+                      fontFamily: "var(--fm)", 
+                      fontSize: 10, 
+                      color: "#9ca3af", 
+                      marginTop: 4,
+                      fontWeight: 500
+                    }}>
                       runs
                     </div>
                   </div>
                 </div>
 
-                {/* Commentary */}
+                {/* Commentary - cleaner */}
                 {betweenData.cmntLine && (
-                  <div className="bq-cmnt">
-                    <div className="bq-speaker">{commStyle === "shastri" ? "🎙 Ravi Shastri" : "📻 Harsha Bhogle"}</div>
-                    {betweenData.cmntLine}
+                  <div style={{
+                    background: "#fff",
+                    borderLeft: "3px solid #f59e0b",
+                    borderRadius: 12,
+                    padding: "14px 18px",
+                    width: "100%",
+                    maxWidth: 340,
+                    boxShadow: "0 2px 8px rgba(0,0,0,.06)"
+                  }}>
+                    <div style={{ 
+                      fontFamily: "var(--fm)", 
+                      fontSize: 9, 
+                      color: "#d97706", 
+                      letterSpacing: 1,
+                      textTransform: "uppercase",
+                      marginBottom: 6,
+                      fontWeight: 700
+                    }}>
+                      {commStyle === "shastri" ? "🎙 Ravi Shastri" : "📻 Harsha Bhogle"}
+                    </div>
+                    <div style={{ 
+                      fontSize: 13, 
+                      color: "#374151", 
+                      lineHeight: 1.5,
+                      fontFamily: "var(--fm)"
+                    }}>
+                      "{betweenData.cmntLine}"
+                    </div>
                   </div>
                 )}
 
-                {/* Coach note (only on wrong) */}
+                {/* Coach note - cleaner */}
                 {!betweenData.correct && betweenData.coachNote && (
-                  <div className="bq-coach">
-                    <div className="bq-coach-lbl">🎓 Coach's Note</div>
-                    <div className="bq-coach-text">{betweenData.coachNote}</div>
+                  <div style={{
+                    background: "#eff6ff",
+                    border: "1px solid #bfdbfe",
+                    borderRadius: 12,
+                    padding: "14px 18px",
+                    width: "100%",
+                    maxWidth: 340
+                  }}>
+                    <div style={{ 
+                      fontFamily: "var(--fm)", 
+                      fontSize: 9, 
+                      color: "#1e40af", 
+                      letterSpacing: 1,
+                      textTransform: "uppercase",
+                      marginBottom: 6,
+                      fontWeight: 700
+                    }}>
+                      🎓 Coach's Note
+                    </div>
+                    <div style={{ 
+                      fontSize: 12, 
+                      color: "#1e3a8a", 
+                      lineHeight: 1.5,
+                      fontFamily: "var(--fm)"
+                    }}>
+                      {betweenData.coachNote}
+                    </div>
                   </div>
                 )}
 
-                {/* Countdown */}
-                <div style={{ display: "flex", flexDirection: "column", alignItems: "center", gap: 6 }}>
-                  <div className="bq-countdown">
+                {/* Countdown - minimal and clean */}
+                <div style={{ 
+                  display: "flex", 
+                  flexDirection: "column", 
+                  alignItems: "center", 
+                  gap: 8,
+                  marginTop: 8
+                }}>
+                  <div style={{ 
+                    fontSize: 11, 
+                    color: "#6b7280",
+                    fontFamily: "var(--fm)",
+                    fontWeight: 500
+                  }}>
                     {betweenData.qIdx < 5 ? `Next ball in ${betweenCount}s` : "Innings ending…"}
                   </div>
-                  <div className="bq-progress">
-                    <div className="bq-progress-fill" style={{ width: `${(betweenCount / 10) * 100}%` }} />
+                  <div style={{
+                    width: 200,
+                    height: 4,
+                    background: "#e5e7eb",
+                    borderRadius: 4,
+                    overflow: "hidden"
+                  }}>
+                    <div style={{ 
+                      height: "100%",
+                      background: "linear-gradient(90deg, #f59e0b, #d97706)",
+                      width: `${(betweenCount / 10) * 100}%`,
+                      transition: "width 1s linear",
+                      borderRadius: 4
+                    }} />
                   </div>
                 </div>
 
-                {/* Skip button */}
+                {/* Skip button - cleaner */}
                 {betweenData.qIdx < 5 && (
-                  <button className="btn btn-outline btn-sm" onClick={() => { clearTimeout(betweenRef.current); setBetweenCount(0); }}>
+                  <button 
+                    onClick={() => { clearTimeout(betweenRef.current); setBetweenCount(0); }}
+                    style={{
+                      padding: "10px 24px",
+                      borderRadius: 10,
+                      background: "#fff",
+                      border: "1px solid #d1d5db",
+                      color: "#6b7280",
+                      fontFamily: "var(--fm)",
+                      fontSize: 12,
+                      fontWeight: 600,
+                      cursor: "pointer",
+                      marginTop: 8,
+                      boxShadow: "0 1px 3px rgba(0,0,0,.08)",
+                      transition: "all .15s"
+                    }}
+                    onMouseEnter={e => {
+                      e.target.style.background = "#f9fafb";
+                      e.target.style.borderColor = "#9ca3af";
+                    }}
+                    onMouseLeave={e => {
+                      e.target.style.background = "#fff";
+                      e.target.style.borderColor = "#d1d5db";
+                    }}>
                     Skip → Next Ball
                   </button>
                 )}
@@ -6053,16 +6462,59 @@ export default function App() {
 
         {/* ══════ RESULT ══════ */}
         {screen === "result" && (
-          <div className="screen result-screen">
+          <div className="screen" style={{ 
+            display: "flex", 
+            flexDirection: "column", 
+            background: won ? "linear-gradient(160deg, #f0fdf4 0%, #ecfdf5 100%)" : isTie ? "linear-gradient(160deg, #eff6ff 0%, #dbeafe 100%)" : "linear-gradient(160deg, #fef2f2 0%, #fef2f2 100%)",
+            padding: "24px 20px",
+            gap: 20,
+            overflowY: "auto"
+          }}>
             {won && <Confetti />}
-            <span className="r-icon">{isTie ? "⚡" : won ? "🏆" : "💪"}</span>
-            {superOverWinner && (
-              <div style={{ fontFamily:"var(--fm)", fontSize:10, letterSpacing:3, color:"#22d3ee", textTransform:"uppercase", marginBottom:2 }}>⚡ Via Super Over</div>
-            )}
-            <div className="r-title" style={{ color: isTie ? "#22d3ee" : won ? "var(--amber)" : "var(--blue)" }}>
-              {isTie ? "It's a Tie!" : won ? "Victory!" : "Well Played"}
+            
+            {/* Trophy icon - cleaner */}
+            <div style={{ fontSize: 64, textAlign: "center", margin: "8px 0" }}>
+              {isTie ? "⚡" : won ? "🏆" : "💪"}
             </div>
-            <div className="r-sub">
+
+            {/* Super Over badge */}
+            {superOverWinner && (
+              <div style={{ 
+                fontFamily: "var(--fm)", 
+                fontSize: 9, 
+                letterSpacing: 2, 
+                color: "#0ea5e9", 
+                textTransform: "uppercase", 
+                textAlign: "center",
+                fontWeight: 700
+              }}>
+                ⚡ Via Super Over
+              </div>
+            )}
+
+            {/* Result title - cleaner */}
+            <div style={{ 
+              fontFamily: "var(--fd)", 
+              fontSize: 32, 
+              fontWeight: 800, 
+              textAlign: "center",
+              color: isTie ? "#0284c7" : won ? "#15803d" : "#374151",
+              letterSpacing: "-0.5px",
+              lineHeight: 1
+            }}>
+              {isTie ? "It's a Tie!" : won ? "Victory!" : "Good Try!"}
+            </div>
+
+            {/* Subtitle - cleaner */}
+            <div style={{ 
+              fontSize: 13, 
+              color: "#6b7280", 
+              textAlign: "center",
+              fontFamily: "var(--fm)",
+              lineHeight: 1.5,
+              maxWidth: 320,
+              margin: "-8px auto 0"
+            }}>
               {superOverWinner
                 ? superOverWinner === "player"
                   ? "You won the Super Over! Full match scores were level."
@@ -6073,10 +6525,10 @@ export default function App() {
                     ? innings === 2
                       ? `You chased it down! ${opp?.name} is defeated.`
                       : `Your total was too good for ${opp?.name}.`
-                    : `${opp?.name} wins this one. Study up and rematch!`}
+                    : `${opp?.name} wins. Study up and come back stronger!`}
             </div>
 
-            {/* Score comparison — first batter always LEFT, chaser always RIGHT */}
+            {/* Score comparison - cleaner card */}
             {(() => {
               const pBatFirst = batFirst === "player";
               const leftFlag  = pBatFirst ? (country?.flag || "🏏") : opp?.flag;
@@ -6087,64 +6539,309 @@ export default function App() {
               const rightScore = pBatFirst ? oppScore : myScore;
               const tied       = leftScore === rightScore;
               return (
-                <div className="innings-compare">
-                  <div style={{ position:"absolute", top:0, left:0, right:0, height:2, background: tied ? "linear-gradient(90deg,#22d3ee,#22d3ee)" : `linear-gradient(90deg,var(--amber),var(--green))` }} />
-                  <div className="ic-p">
-                    <div className="ic-flag">{leftFlag}</div>
-                    <div className="ic-name">{leftName}</div>
-                    <div className="ic-innings">BATTED 1ST</div>
-                    <div className="ic-score" style={{ color: leftScore >= rightScore ? (tied ? "#22d3ee" : "var(--amber)") : "var(--sub)" }}>{leftScore}</div>
-                    {leftScore > rightScore && <div className="ic-crown">👑</div>}
-                    {tied && <div className="ic-crown">⚡</div>}
-                  </div>
-                  <div className="ic-vs">VS</div>
-                  <div className="ic-p">
-                    <div className="ic-flag">{rightFlag}</div>
-                    <div className="ic-name">{rightName}</div>
-                    <div className="ic-innings">CHASED</div>
-                    <div className="ic-score" style={{ color: rightScore >= leftScore ? (tied ? "#22d3ee" : "var(--amber)") : "var(--sub)" }}>{rightScore}</div>
-                    {rightScore > leftScore && <div className="ic-crown">👑</div>}
-                    {tied && <div className="ic-crown">⚡</div>}
+                <div style={{
+                  background: "#fff",
+                  borderRadius: 16,
+                  padding: "20px",
+                  boxShadow: "0 4px 12px rgba(0,0,0,.08)",
+                  position: "relative",
+                  overflow: "hidden"
+                }}>
+                  {/* Top accent bar */}
+                  <div style={{ 
+                    position: "absolute", 
+                    top: 0, 
+                    left: 0, 
+                    right: 0, 
+                    height: 3, 
+                    background: tied ? "#0ea5e9" : won ? "linear-gradient(90deg, #15803d, #22c55e)" : "linear-gradient(90deg, #dc2626, #f87171)" 
+                  }} />
+
+                  <div style={{ display: "flex", alignItems: "center", justifyContent: "space-around", gap: 16 }}>
+                    {/* Left player */}
+                    <div style={{ flex: 1, textAlign: "center" }}>
+                      <div style={{ fontSize: 32, marginBottom: 6 }}>{leftFlag}</div>
+                      <div style={{ 
+                        fontFamily: "var(--fm)", 
+                        fontSize: 11, 
+                        color: "#6b7280",
+                        marginBottom: 8,
+                        fontWeight: 600
+                      }}>
+                        {leftName}
+                      </div>
+                      <div style={{ 
+                        fontSize: 8, 
+                        color: "#9ca3af", 
+                        letterSpacing: 1,
+                        textTransform: "uppercase",
+                        marginBottom: 6,
+                        fontFamily: "var(--fm)",
+                        fontWeight: 600
+                      }}>
+                        Batted 1st
+                      </div>
+                      <div style={{ 
+                        fontFamily: "var(--fd)", 
+                        fontSize: 36, 
+                        fontWeight: 800,
+                        color: leftScore >= rightScore ? (tied ? "#0ea5e9" : "#15803d") : "#d1d5db",
+                        lineHeight: 1
+                      }}>
+                        {leftScore}
+                      </div>
+                      {leftScore > rightScore && <div style={{ fontSize: 20, marginTop: 6 }}>👑</div>}
+                      {tied && <div style={{ fontSize: 20, marginTop: 6 }}>⚡</div>}
+                    </div>
+
+                    {/* VS divider */}
+                    <div style={{ 
+                      fontFamily: "var(--fm)", 
+                      fontSize: 10, 
+                      color: "#d1d5db",
+                      fontWeight: 700,
+                      letterSpacing: 1
+                    }}>
+                      VS
+                    </div>
+
+                    {/* Right player */}
+                    <div style={{ flex: 1, textAlign: "center" }}>
+                      <div style={{ fontSize: 32, marginBottom: 6 }}>{rightFlag}</div>
+                      <div style={{ 
+                        fontFamily: "var(--fm)", 
+                        fontSize: 11, 
+                        color: "#6b7280",
+                        marginBottom: 8,
+                        fontWeight: 600
+                      }}>
+                        {rightName}
+                      </div>
+                      <div style={{ 
+                        fontSize: 8, 
+                        color: "#9ca3af", 
+                        letterSpacing: 1,
+                        textTransform: "uppercase",
+                        marginBottom: 6,
+                        fontFamily: "var(--fm)",
+                        fontWeight: 600
+                      }}>
+                        Chased
+                      </div>
+                      <div style={{ 
+                        fontFamily: "var(--fd)", 
+                        fontSize: 36, 
+                        fontWeight: 800,
+                        color: rightScore >= leftScore ? (tied ? "#0ea5e9" : "#15803d") : "#d1d5db",
+                        lineHeight: 1
+                      }}>
+                        {rightScore}
+                      </div>
+                      {rightScore > leftScore && <div style={{ fontSize: 20, marginTop: 6 }}>👑</div>}
+                      {tied && <div style={{ fontSize: 20, marginTop: 6 }}>⚡</div>}
+                    </div>
                   </div>
                 </div>
               );
             })()}
 
-            {/* Stats */}
-            <div className="stats-grid">
-              <div className="sg"><div className="sgv" style={{ color: "var(--green)" }}>{done.filter(a => a === "ok").length}</div><div className="sgl">Correct</div></div>
-              <div className="sg"><div className="sgv" style={{ color: "var(--red)" }}>{wickets}</div><div className="sgl">Wickets</div></div>
-              <div className="sg"><div className="sgv" style={{ color: "var(--amber)" }}>{maxStreak}🔥</div><div className="sgl">Best Run</div></div>
-              <div className="sg"><div className="sgv">{Math.round((done.filter(a => a === "ok").length / Math.max(1, done.length)) * 100)}%</div><div className="sgl">Accuracy</div></div>
+            {/* Stats grid - cleaner */}
+            <div style={{ 
+              display: "grid", 
+              gridTemplateColumns: "repeat(4, 1fr)", 
+              gap: 10 
+            }}>
+              <div style={{ 
+                background: "#fff", 
+                borderRadius: 12, 
+                padding: "14px 8px", 
+                textAlign: "center",
+                boxShadow: "0 2px 6px rgba(0,0,0,.06)"
+              }}>
+                <div style={{ 
+                  fontFamily: "var(--fd)", 
+                  fontSize: 24, 
+                  fontWeight: 800, 
+                  color: "#15803d",
+                  lineHeight: 1
+                }}>
+                  {done.filter(a => a === "ok").length}
+                </div>
+                <div style={{ 
+                  fontFamily: "var(--fm)", 
+                  fontSize: 9, 
+                  color: "#9ca3af", 
+                  marginTop: 4,
+                  textTransform: "uppercase",
+                  letterSpacing: 0.5,
+                  fontWeight: 600
+                }}>
+                  Correct
+                </div>
+              </div>
+
+              <div style={{ 
+                background: "#fff", 
+                borderRadius: 12, 
+                padding: "14px 8px", 
+                textAlign: "center",
+                boxShadow: "0 2px 6px rgba(0,0,0,.06)"
+              }}>
+                <div style={{ 
+                  fontFamily: "var(--fd)", 
+                  fontSize: 24, 
+                  fontWeight: 800, 
+                  color: "#dc2626",
+                  lineHeight: 1
+                }}>
+                  {wickets}
+                </div>
+                <div style={{ 
+                  fontFamily: "var(--fm)", 
+                  fontSize: 9, 
+                  color: "#9ca3af", 
+                  marginTop: 4,
+                  textTransform: "uppercase",
+                  letterSpacing: 0.5,
+                  fontWeight: 600
+                }}>
+                  Wickets
+                </div>
+              </div>
+
+              <div style={{ 
+                background: "#fff", 
+                borderRadius: 12, 
+                padding: "14px 8px", 
+                textAlign: "center",
+                boxShadow: "0 2px 6px rgba(0,0,0,.06)"
+              }}>
+                <div style={{ 
+                  fontFamily: "var(--fd)", 
+                  fontSize: 24, 
+                  fontWeight: 800, 
+                  color: "#d97706",
+                  lineHeight: 1
+                }}>
+                  {maxStreak}🔥
+                </div>
+                <div style={{ 
+                  fontFamily: "var(--fm)", 
+                  fontSize: 9, 
+                  color: "#9ca3af", 
+                  marginTop: 4,
+                  textTransform: "uppercase",
+                  letterSpacing: 0.5,
+                  fontWeight: 600
+                }}>
+                  Best Run
+                </div>
+              </div>
+
+              <div style={{ 
+                background: "#fff", 
+                borderRadius: 12, 
+                padding: "14px 8px", 
+                textAlign: "center",
+                boxShadow: "0 2px 6px rgba(0,0,0,.06)"
+              }}>
+                <div style={{ 
+                  fontFamily: "var(--fd)", 
+                  fontSize: 24, 
+                  fontWeight: 800, 
+                  color: "#0369a1",
+                  lineHeight: 1
+                }}>
+                  {Math.round((done.filter(a => a === "ok").length / Math.max(1, done.length)) * 100)}%
+                </div>
+                <div style={{ 
+                  fontFamily: "var(--fm)", 
+                  fontSize: 9, 
+                  color: "#9ca3af", 
+                  marginTop: 4,
+                  textTransform: "uppercase",
+                  letterSpacing: 0.5,
+                  fontWeight: 600
+                }}>
+                  Accuracy
+                </div>
+              </div>
             </div>
 
-            {/* Prize */}
+            {/* Prize card - cleaner */}
             {entryFee.entry > 0 ? (
-              <div className="prize-card" style={{
-                background: isTie ? "rgba(34,211,238,.06)" : won ? "var(--greenBg)" : "var(--s2)",
-                border: `1px solid ${isTie ? "rgba(34,211,238,.25)" : won ? "rgba(21,128,61,.25)" : "var(--rim)"}`,
+              <div style={{
+                background: isTie ? "#eff6ff" : won ? "#f0fdf4" : "#fef2f2",
+                border: `2px solid ${isTie ? "#bfdbfe" : won ? "#bbf7d0" : "#fecaca"}`,
+                borderRadius: 16,
+                padding: "18px 20px",
+                display: "flex",
+                justifyContent: "space-between",
+                alignItems: "center"
               }}>
-                <div style={{ position: "absolute", top: 0, left: 0, right: 0, height: 2, background: isTie ? "#22d3ee" : won ? "var(--green)" : "var(--dim)", borderRadius: "var(--r2) var(--r2) 0 0" }} />
                 <div>
-                  <div style={{ fontFamily: "var(--fm)", fontSize: 9, fontWeight: 700, letterSpacing: 2, textTransform: "uppercase", color: isTie ? "#22d3ee" : won ? "var(--green)" : "var(--sub)", marginBottom: 4 }}>
+                  <div style={{ 
+                    fontFamily: "var(--fm)", 
+                    fontSize: 9, 
+                    fontWeight: 700, 
+                    letterSpacing: 1.5, 
+                    textTransform: "uppercase", 
+                    color: isTie ? "#1e40af" : won ? "#15803d" : "#991b1b",
+                    marginBottom: 6
+                  }}>
                     {isTie ? "Entry Refunded ⚡" : won ? "Prize Won 🏆" : "Entry Fee"}
                   </div>
-                  <div style={{ fontFamily: "var(--fd)", fontSize: 36, fontWeight: 800, color: isTie ? "#22d3ee" : won ? "var(--green)" : "var(--red)", letterSpacing: -1, lineHeight: 1 }}>
+                  <div style={{ 
+                    fontFamily: "var(--fd)", 
+                    fontSize: 32, 
+                    fontWeight: 800, 
+                    color: isTie ? "#1e40af" : won ? "#15803d" : "#dc2626",
+                    letterSpacing: -1, 
+                    lineHeight: 1,
+                    marginBottom: 4
+                  }}>
                     {isTie ? `₹${entryFee.entry}` : won ? `+₹${entryFee.prize - entryFee.entry}` : `-₹${entryFee.entry}`}
                   </div>
-                  <div style={{ fontFamily: "var(--fm)", fontSize: 10, color: "var(--sub)", marginTop: 4 }}>
-                    {isTie ? "Dead heat — your entry fee is returned" : won ? `Prize pool ₹${entryFee.prize} · Platform fee ₹${entryFee.entry * 0.2}` : "Better luck next match!"}
+                  <div style={{ 
+                    fontFamily: "var(--fm)", 
+                    fontSize: 10, 
+                    color: "#6b7280"
+                  }}>
+                    {isTie ? "Your entry fee is returned" : won ? `Prize ₹${entryFee.prize} won` : "Try again!"}
                   </div>
                 </div>
                 <div style={{ textAlign: "right" }}>
-                  <div style={{ fontFamily: "var(--fm)", fontSize: 9, color: "var(--sub)", letterSpacing: 1, marginBottom: 4 }}>WALLET</div>
-                  <div style={{ fontFamily: "var(--fd)", fontSize: 22, fontWeight: 700 }}>₹{wallet.toFixed(0)}</div>
-                  <div style={{ fontFamily: "var(--fm)", fontSize: 9, color: "var(--green)", marginTop: 2 }}>+${totalEarnings.toFixed(2)} all-time</div>
+                  <div style={{ 
+                    fontFamily: "var(--fm)", 
+                    fontSize: 9, 
+                    color: "#9ca3af", 
+                    letterSpacing: 1, 
+                    marginBottom: 4,
+                    fontWeight: 600
+                  }}>
+                    WALLET
+                  </div>
+                  <div style={{ 
+                    fontFamily: "var(--fd)", 
+                    fontSize: 22, 
+                    fontWeight: 700,
+                    color: "#374151"
+                  }}>
+                    ₹{wallet.toFixed(0)}
+                  </div>
                 </div>
               </div>
             ) : (
-              <div style={{ background: "var(--s2)", border: "1px solid var(--rim)", borderRadius: "var(--r2)", padding: 14, textAlign: "center", fontSize: 13, color: "var(--sub)", width: "100%" }}>
-                Free match · <strong style={{ color: isTie ? "#22d3ee" : "var(--amber)" }}>+{xpEarned + (isTie ? 30 : won ? 60 : 10)} XP</strong> earned
+              <div style={{ 
+                background: "#fff", 
+                border: "1px solid #e5e7eb", 
+                borderRadius: 12, 
+                padding: 14, 
+                textAlign: "center", 
+                fontSize: 13, 
+                color: "#6b7280"
+              }}>
+                Free match · <strong style={{ color: isTie ? "#0ea5e9" : "#d97706" }}>+{xpEarned + (isTie ? 30 : won ? 60 : 10)} XP</strong> earned
               </div>
             )}
 
@@ -6642,8 +7339,15 @@ export default function App() {
         {screen === "wallet" && (
           <div className="screen" style={{ display: "flex", flexDirection: "column" }}>
             <div className="wallet-hero">
-              <div style={{ display: "flex", alignItems: "center", justifyContent: "space-between", marginBottom: 16 }}>
-                <button className="back-btn" style={{ background: "rgba(255,255,255,.1)", border: "1px solid rgba(255,255,255,.15)", color: "#fff" }} onClick={() => { screenHistoryRef.current = ["landing"]; setNavTab("play"); setScreen("landing"); }}>←</button>
+              <div style={{ display: "flex", alignItems: "center", justifyContent: "space-between", marginBottom: 16, position: "relative", zIndex: 10 }}>
+                <button 
+                  className="back-btn" 
+                  style={{ background: "rgba(255,255,255,.1)", border: "1px solid rgba(255,255,255,.15)", color: "#fff", position: "relative", zIndex: 10 }} 
+                  onClick={() => { 
+                    setNavTab("play");
+                    setScreen("landing");
+                  }}
+                >←</button>
                 <span style={{ fontFamily: "var(--fm)", fontSize: 9, fontWeight: 600, letterSpacing: 3, textTransform: "uppercase", color: "rgba(255,255,255,.4)" }}>SKILL WALLET</span>
                 <div style={{ width: 40 }} />
               </div>
