@@ -3894,12 +3894,16 @@ export default function App() {
     const doProceed = () => {
       if (watchProceedFiredRef.current) return;
       watchProceedFiredRef.current = true;
+      // Preserve condition for innings 2 background
+      const currentCondition = condition || CONDITIONS[0];
       // Always build fresh questions for 2nd innings
       let freshQs = null;
-      try { freshQs = buildQuestionSet(null, condition || CONDITIONS[0]); } catch(e) {}
+      try { freshQs = buildQuestionSet(null, currentCondition); } catch(e) {}
       if (!freshQs || freshQs.length === 0) freshQs = [...ALL_QUESTIONS].sort(() => Math.random() - .5).slice(0, 6);
       qsRef.current = freshQs;
       setQs([...freshQs]);
+      // Explicitly re-set condition to ensure it persists
+      setCondition(currentCondition);
       setInnings(2); inningsRef.current = 2;
       setQi(0); setTLeft(15); setSel(null); setRev(false); setDone([]);
       setCStreak(0); setWickets(0);
@@ -3958,6 +3962,8 @@ export default function App() {
             }
             qsRef.current = freshQs;
             setQs([...freshQs]);
+            // Explicitly re-set condition to ensure it persists in innings 2
+            setCondition(cond);
             setInnings(2); inningsRef.current = 2;
             setQi(0); setTLeft(15); setSel(null); setRev(false); setDone([]);
             setCStreak(0); setWickets(0);
@@ -5886,7 +5892,7 @@ export default function App() {
 
         {/* ══════ MATCH SCREEN ══════ */}
         {screen === "match" && !inSuperOver && (
-          <div className="match-wrap" style={{ background: condition?.sky || "var(--bg)" }}>
+          <div className="match-wrap" style={{ background: condition?.sky || "linear-gradient(to bottom, #1e293b, #0f172a)", minHeight: "100vh" }}>
             {/* Scoreboard */}
             <div className="scoreboard">
               <div className="sb-p">
