@@ -2661,7 +2661,7 @@ html,body{background:var(--bg);color:var(--txt);font-family:var(--fh);-webkit-fo
 .cond-badge{font-family:var(--fm);font-size:9px;font-weight:600;letter-spacing:2px;text-transform:uppercase;border-radius:999px;padding:5px 14px;border:1.5px solid}
 
 /* ══════ MATCH SCREEN ══════ */
-.match-wrap{display:flex;flex-direction:column;flex:1;background:var(--bg);position:relative}
+.match-wrap{display:flex;flex-direction:column;flex:1;position:relative}
 
 /* Scoreboard */
 .scoreboard{background:linear-gradient(135deg,#1a2e1a,#1f3d1f);border-bottom:3px solid #2d5a2d;padding:12px 16px;display:flex;align-items:center;justify-content:space-between;box-shadow:0 4px 20px rgba(0,0,0,.25);position:relative}
@@ -3094,6 +3094,39 @@ const CRICKET_FACTS = [
   "🌟 Virat Kohli scored centuries in all three formats before he turned 25.",
 ];
 
+// WatchingScreen countdown panel component (hoisted to prevent recreation)
+const ProceedPanel = ({ label, onProceed }) => {
+  const [secs, setSecs] = React.useState(5);
+  React.useEffect(() => {
+    const t = setInterval(() => {
+      setSecs(s => {
+        if (s <= 1) { clearInterval(t); if (onProceed) onProceed(); return 0; }
+        return s - 1;
+      });
+    }, 1000);
+    return () => clearInterval(t);
+  }, [onProceed]);
+  
+  return (
+    <div style={{ display:"flex", flexDirection:"column", alignItems:"center", gap:10, animation:"fadeUp .4s both", width:"100%" }}>
+      <div style={{ fontFamily:"var(--fm)", fontSize:12, color:"var(--amber3)", fontWeight:700, textAlign:"center" }}>
+        {label === "1st Innings" ? `🏏 Your turn to bat in ${secs}s…` : `🏆 Result in ${secs}s…`}
+      </div>
+      <button
+        onClick={() => { if (onProceed) onProceed(); }}
+        style={{
+          width:"100%", padding:"14px 0", borderRadius:"var(--r2)",
+          background:"linear-gradient(135deg,var(--amber),var(--amber2))",
+          border:"none", color:"#fff", fontFamily:"var(--fh)", fontSize:15,
+          fontWeight:700, cursor:"pointer", letterSpacing:0.5,
+          boxShadow:"0 4px 16px rgba(180,83,9,.35)"
+        }}>
+        {label === "1st Innings" ? "🏏 Start Batting Now" : "🏆 See Result"}
+      </button>
+    </div>
+  );
+};
+
 function WatchingScreen({ opp, feed, finalScore, label, target, isPvp, onProceed }) {
   const [visibleCount, setVisibleCount] = useState(0);
   const [displayScore, setDisplayScore] = useState(0);
@@ -3192,39 +3225,9 @@ function WatchingScreen({ opp, feed, finalScore, label, target, isPvp, onProceed
         )}
       </div>
 
-      {visibleCount === feed.length && (() => {
-        const ProceedPanel = () => {
-          const [secs, setSecs] = React.useState(5);
-          React.useEffect(() => {
-            const t = setInterval(() => {
-              setSecs(s => {
-                if (s <= 1) { clearInterval(t); if (onProceed) onProceed(); return 0; }
-                return s - 1;
-              });
-            }, 1000);
-            return () => clearInterval(t);
-          }, []);
-          return (
-            <div style={{ display:"flex", flexDirection:"column", alignItems:"center", gap:10, animation:"fadeUp .4s both", width:"100%" }}>
-              <div style={{ fontFamily:"var(--fm)", fontSize:12, color:"var(--amber3)", fontWeight:700, textAlign:"center" }}>
-                {label === "1st Innings" ? `🏏 Your turn to bat in ${secs}s…` : `🏆 Result in ${secs}s…`}
-              </div>
-              <button
-                onClick={() => { if (onProceed) onProceed(); }}
-                style={{
-                  width:"100%", padding:"14px 0", borderRadius:"var(--r2)",
-                  background:"linear-gradient(135deg,var(--amber),var(--amber2))",
-                  border:"none", color:"#fff", fontFamily:"var(--fh)", fontSize:15,
-                  fontWeight:700, cursor:"pointer", letterSpacing:0.5,
-                  boxShadow:"0 4px 16px rgba(180,83,9,.35)"
-                }}>
-                {label === "1st Innings" ? "🏏 Start Batting Now" : "🏆 See Result"}
-              </button>
-            </div>
-          );
-        };
-        return <ProceedPanel />;
-      })()}
+      {visibleCount === feed.length && (
+        <ProceedPanel label={label} onProceed={onProceed} />
+      )}
     </div>
   );
 }
@@ -3388,7 +3391,9 @@ export default function App() {
 
   // Super Over state
   const [inSuperOver, setInSuperOver] = useState(false);
-  const [soPhase, setSoPhase] = useState("intro"); // intro | batting | watching | result
+  const [soPhase, setSoPhase] = useState("intro"); // opt-in | intro | batting | watching | result | declined
+  const [soPlayerDecision, setSoPlayerDecision] = useState(null); // true | false | null
+  const [soOppDecision, setSoOppDecision] = useState(null); // true | false | null
   const [superOverWinner, setSuperOverWinner] = useState(null); // "player" | "opp" — persists into result screen
   const [soMyScore, setSoMyScore] = useState(0);
   const [soOppScore, setSoOppScore] = useState(0);
@@ -3414,9 +3419,15 @@ export default function App() {
   const betweenRef = useRef();
   const cleanRef = useRef(false);
   const qsRef = useRef([]); // keep qs accessible in callbacks
+  const myScoreRef = useRef(0); // track myScore for callbacks
   const watchProceedRef = useRef(null);
   const watchProceedFiredRef = useRef(false);
   const snd = useAudio(sfxOn);
+
+  // Keep myScoreRef in sync with myScore state
+  useEffect(() => {
+    myScoreRef.current = myScore;
+  }, [myScore]);
 
   // ── AUTH / LOGIN ──────────────────────────────────────────────────────────────
   // Check for challenge/friend-challenge link on mount
@@ -3915,7 +3926,7 @@ export default function App() {
     };
     watchProceedFiredRef.current = false;
     watchProceedRef.current = doProceed;
-    setTimeout(doProceed, 11000);
+    // Let the WatchingScreen UI countdown control the timing (no hardcoded timeout)
   }, [opp]);
 
   // Toss winner chooses bat/chase
@@ -3941,7 +3952,8 @@ export default function App() {
           const feed = [];
           for (let i = 0; i < 6; i++) {
             const ok = Math.random() < oppAcc;
-            const runs = ok ? (Math.random() < 0.3 ? 6 : Math.random() < 0.5 ? 4 : Math.floor(Math.random()*3)+1) : 0;
+            // Generate valid runs only: 2, 4, or 6 (matching player's scoring system)
+            const runs = ok ? (Math.random() < 0.3 ? 6 : Math.random() < 0.5 ? 4 : 2) : 0;
             if (ok) score += runs; else score = Math.max(0, score - 5);
             feed.push({ qi: i, score: Math.max(0, score), ok });
           }
@@ -3975,7 +3987,7 @@ export default function App() {
           };
           watchProceedFiredRef.current = false;
           watchProceedRef.current = doProceed;
-          setTimeout(doProceed, 11000);
+          // Let the WatchingScreen UI countdown control the timing (no hardcoded timeout)
         } catch(e) {
           // If simulation fails, go straight to match as player batting first
           setBatFirst("player");
@@ -4147,10 +4159,12 @@ export default function App() {
 
       // TIE → Super Over instead of result screen
       if (isTie) {
+        console.log("🎯 Match tied! Starting Super Over...");
         startSuperOver();
-        return;
+        return; // CRITICAL: Exit early - do NOT complete match in backend yet
       }
 
+      // Only complete non-tie matches in backend
       if (matchId && loggedIn) {
         try {
           await api(`/matches/${matchId}/complete`, {
@@ -4180,31 +4194,94 @@ export default function App() {
   // ── SUPER OVER ────────────────────────────────────────────────────────────────
   const startSuperOver = useCallback(() => {
     clearTimeout(soTimerRef.current);
-    // Pick 3 fresh questions from bank (avoid already-used ones)
-    const used = new Set(qsRef.current.map(q => q.q.slice(0, 30)));
-    const fresh = ALL_QUESTIONS.filter(q => !used.has(q.q.slice(0, 30)));
-    // Fisher-Yates shuffle
-    for (let i = fresh.length - 1; i > 0; i--) {
-      const j = Math.floor(Math.random() * (i + 1));
-      [fresh[i], fresh[j]] = [fresh[j], fresh[i]];
-    }
-    const soQsPicked = fresh.slice(0, 3).map(q => ({
-      ...q, cat: q.cat || "TRIVIA", coachNote: q.coachNote || "", skill: q.skill || "history"
-    }));
-    setSoQs(soQsPicked);
-    setSoQi(0); setSoMyScore(0); setSoOppScore(0);
-    setSoSel(null); setSoRev(false); setSoTLeft(15); setSoTimes([]);
+    // Reset all Super Over state
+    setSoPlayerDecision(null);
+    setSoOppDecision(null);
+    setSoMyScore(0);
+    setSoOppScore(0);
+    setSoQi(0);
+    setSoSel(null);
+    setSoRev(false);
+    setSoTLeft(15);
+    setSoTimes([]);
+    setSuperOverWinner(null);
+    
+    // Show opt-in screen
     setInSuperOver(true);
-    setSoPhase("intro");
-    // Move to a clean screen so nothing renders over Super Over
+    setSoPhase("opt-in");
     setScreen("match");
     snd("suspense");
-    // Auto-advance past intro
-    setTimeout(() => {
-      setSoPhase("batting");
-      soStartRef.current = Date.now();
-    }, 2800);
   }, []);
+
+  // Handle Super Over opt-in decision
+  const handleSuperOverDecision = useCallback((playerAccepts) => {
+    setSoPlayerDecision(playerAccepts);
+    
+    // Simulate opponent decision (70% accept rate for competitive AI)
+    const oppAccepts = Math.random() < 0.7;
+    setSoOppDecision(oppAccepts);
+    
+    // Show "waiting for opponent" briefly
+    setTimeout(() => {
+      if (playerAccepts && oppAccepts) {
+        // Both accepted → Start Super Over
+        console.log("✅ Both players accepted Super Over!");
+        
+        // Pick 3 fresh questions
+        const used = new Set(qsRef.current.map(q => q.q.slice(0, 30)));
+        const fresh = ALL_QUESTIONS.filter(q => !used.has(q.q.slice(0, 30)));
+        for (let i = fresh.length - 1; i > 0; i--) {
+          const j = Math.floor(Math.random() * (i + 1));
+          [fresh[i], fresh[j]] = [fresh[j], fresh[i]];
+        }
+        const soQsPicked = fresh.slice(0, 3).map(q => ({
+          ...q, cat: q.cat || "TRIVIA", coachNote: q.coachNote || "", skill: q.skill || "history"
+        }));
+        setSoQs(soQsPicked);
+        
+        // Start Super Over intro
+        setSoPhase("intro");
+        snd("suspense");
+        setTimeout(() => {
+          setSoPhase("batting");
+          soStartRef.current = Date.now();
+        }, 2800);
+      } else {
+        // One or both declined → Refund and go to result
+        console.log("❌ Super Over declined");
+        setSoPhase("declined");
+        
+        // Refund entry fee via backend
+        if (matchId && loggedIn && entryFee.entry > 0) {
+          api(`/matches/${matchId}/complete`, {
+            method: "POST",
+            body: {
+              player_score: myScore,
+              opp_score: oppScore,
+              winner: "draw",
+              super_over_declined: true,
+            },
+          }).then(() => {
+            // Refresh wallet
+            return api("/wallet");
+          }).then(walletData => {
+            if (walletData?.wallet?.balance !== undefined) {
+              setWallet(walletData.wallet.balance);
+            }
+          }).catch(err => {
+            console.error("Match finalization error:", err);
+          });
+        }
+        
+        // Show declined message briefly then go to result
+        setTimeout(() => {
+          setInSuperOver(false);
+          setScreen("result");
+        }, 3000);
+      }
+    }, 1500); // 1.5s to show "opponent is deciding..."
+  }, [matchId, loggedIn, entryFee, myScore, oppScore]);
+
 
   // Super Over timer
   useEffect(() => {
@@ -4293,20 +4370,24 @@ export default function App() {
     setOppScore(finalOppScore);
     setOppLiveFeed(feed);
     setScreen("watching_chase");
+    
+    console.log("🏏 Opponent chase complete. Player:", myScoreRef.current, "Opponent:", finalOppScore);
+    
     setTimeout(() => {
-      // Must read myScore at callback time via ref to avoid stale closure
-      setMyScore(cur => {
-        if (cur === finalOppScore) {
-          // TIE → start Super Over
-          // Use setTimeout to ensure state is settled before Super Over kicks in
-          setTimeout(() => startSuperOver(), 50);
-        } else {
-          setScreen("result");
-        }
-        return cur; // don't modify myScore
-      });
+      // Use ref to get current score (avoid stale closure)
+      const playerScore = myScoreRef.current;
+      console.log("⏰ Timeout fired. Checking result - Player:", playerScore, "Opponent:", finalOppScore);
+      
+      if (playerScore === finalOppScore) {
+        // TIE → start Super Over
+        console.log("🎯 Opponent chase resulted in tie! Starting Super Over...");
+        setTimeout(() => startSuperOver(), 100);
+      } else {
+        console.log("📊 Match complete. Going to result screen...");
+        setScreen("result");
+      }
     }, 4500);
-  }, [opp]);
+  }, [opp, startSuperOver]);
 
   // ── ANSWER ────────────────────────────────────────────────────────────────────
   const answer = useCallback(idx => {
@@ -4550,6 +4631,23 @@ export default function App() {
   }, [screen]);
 
   const q = qs[qi] || qsRef.current[qi];
+  
+  // NUCLEAR FALLBACK: If no question during match screen, force-load questions
+  useEffect(() => {
+    if (screen === "match" && !loading && !showBetween && !q && innings === 2) {
+      console.warn("⚠️ INNINGS 2 QUESTIONS MISSING - FORCE LOADING");
+      const currentCondition = condition || CONDITIONS[0];
+      let freshQs = null;
+      try { freshQs = buildQuestionSet(null, currentCondition); } catch(e) {}
+      if (!freshQs || freshQs.length === 0) {
+        freshQs = [...ALL_QUESTIONS].sort(() => Math.random() - .5).slice(0, 6);
+      }
+      qsRef.current = freshQs;
+      setQs([...freshQs]);
+      setCondition(currentCondition); // Also ensure condition is set
+    }
+  }, [screen, loading, showBetween, q, innings, condition]);
+  
   const tPct = (tLeft / 15) * 100;
   const tCol = frozen ? "#7c3aed" : tLeft > 8 ? "#0369a1" : tLeft > 4 ? "#d97706" : "#dc2626";
   const rawWon   = myScore > oppScore;
@@ -5828,7 +5926,24 @@ export default function App() {
             label={screen === "watching" ? "1st Innings" : "Chase"}
             target={screen === "watching" ? null : myScore}
             isPvp={matchType === "pvp"}
-            onProceed={() => { if (watchProceedRef.current) watchProceedRef.current(); }}
+            onProceed={() => {
+              if (screen === "watching_chase") {
+                // For chase scenario, go directly to result/Super Over
+                const playerScore = myScoreRef.current;
+                const oppFinalScore = oppScore;
+                console.log("🏁 Chase complete button clicked - Player:", playerScore, "Opponent:", oppFinalScore);
+                if (playerScore === oppFinalScore) {
+                  console.log("🎯 Tie! Starting Super Over...");
+                  startSuperOver();
+                } else {
+                  console.log("📊 Going to result screen...");
+                  setScreen("result");
+                }
+              } else if (watchProceedRef.current) {
+                // For innings 1 scenario, use the ref callback
+                watchProceedRef.current();
+              }
+            }}
           />
         )}
 
@@ -5892,7 +6007,13 @@ export default function App() {
 
         {/* ══════ MATCH SCREEN ══════ */}
         {screen === "match" && !inSuperOver && (
-          <div className="match-wrap" style={{ background: condition?.sky || "linear-gradient(to bottom, #1e293b, #0f172a)", minHeight: "100vh" }}>
+          <div className="match-wrap" style={{ 
+            background: condition?.sky || "linear-gradient(to bottom, #1e293b 0%, #0f172a 100%)", 
+            backgroundColor: "#0f172a",
+            minHeight: "100vh",
+            width: "100%",
+            position: "relative"
+          }}>
             {/* Scoreboard */}
             <div className="scoreboard">
               <div className="sb-p">
@@ -6311,6 +6432,163 @@ export default function App() {
         )}
 
         {/* ══════ SUPER OVER ══════ */}
+        {/* ══════ SUPER OVER OPT-IN SCREEN ══════ */}
+        {inSuperOver && soPhase === "opt-in" && (
+          <div style={{
+            position:"fixed", inset:0, zIndex:300,
+            background:"linear-gradient(160deg,#1a1a0a,#2a2010,#1c1917)",
+            display:"flex", flexDirection:"column", alignItems:"center",
+            justifyContent:"center", gap:20, animation:"scaleIn .3s both", padding:"0 24px",
+          }}>
+            <div style={{ fontSize:56 }}>⚡</div>
+            <div style={{ fontFamily:"var(--fd)", fontSize:32, fontWeight:800, color:"#fff", textAlign:"center", lineHeight:1.1 }}>
+              It's a Tie!
+            </div>
+            <div style={{ fontFamily:"var(--fd)", fontSize:15, color:"rgba(255,255,255,.6)", textAlign:"center", maxWidth:340 }}>
+              Scores level at {myScore} runs — what a match!
+            </div>
+
+            {soPlayerDecision === null ? (
+              // Player hasn't decided yet
+              <>
+                <div style={{ 
+                  background:"rgba(255,255,255,.05)", 
+                  border:"1px solid rgba(255,255,255,.1)",
+                  borderRadius:"var(--r2)", 
+                  padding:"20px 24px", 
+                  maxWidth:360,
+                  textAlign:"center"
+                }}>
+                  <div style={{ fontFamily:"var(--fm)", fontSize:10, letterSpacing:2, color:"rgba(255,255,255,.4)", textTransform:"uppercase", marginBottom:12 }}>
+                    Super Over Challenge
+                  </div>
+                  <div style={{ fontSize:14, color:"rgba(255,255,255,.7)", lineHeight:1.6, marginBottom:16 }}>
+                    Play 3 bonus questions to decide the winner. If you both agree, winner takes the prize. Otherwise, entry fees are refunded.
+                  </div>
+                  <div style={{ display:"flex", gap:8, marginTop:4 }}>
+                    {[0,1,2].map(i => (
+                      <div key={i} style={{ 
+                        flex:1, 
+                        padding:"8px 0", 
+                        borderRadius:8, 
+                        background:"rgba(34,211,238,.08)", 
+                        border:"1px solid rgba(34,211,238,.2)",
+                        fontSize:11,
+                        color:"rgba(34,211,238,.8)"
+                      }}>Q{i+1}</div>
+                    ))}
+                  </div>
+                </div>
+
+                <div style={{ display:"flex", gap:12, width:"100%", maxWidth:360 }}>
+                  <button
+                    onClick={() => handleSuperOverDecision(false)}
+                    style={{
+                      flex:1,
+                      padding:"16px 0",
+                      borderRadius:"var(--r2)",
+                      background:"rgba(255,255,255,.05)",
+                      border:"1px solid rgba(255,255,255,.15)",
+                      color:"rgba(255,255,255,.6)",
+                      fontFamily:"var(--fh)",
+                      fontSize:15,
+                      fontWeight:700,
+                      cursor:"pointer",
+                    }}>
+                    ❌ Decline
+                  </button>
+                  <button
+                    onClick={() => handleSuperOverDecision(true)}
+                    style={{
+                      flex:1,
+                      padding:"16px 0",
+                      borderRadius:"var(--r2)",
+                      background:"linear-gradient(135deg,var(--amber),var(--amber2))",
+                      border:"none",
+                      color:"#fff",
+                      fontFamily:"var(--fh)",
+                      fontSize:15,
+                      fontWeight:700,
+                      cursor:"pointer",
+                      boxShadow:"0 4px 16px rgba(180,83,9,.35)"
+                    }}>
+                    ⚡ Play Super Over
+                  </button>
+                </div>
+              </>
+            ) : (
+              // Player has decided, waiting for opponent
+              <>
+                <div style={{ 
+                  background:"rgba(255,255,255,.05)", 
+                  border:"1px solid rgba(255,255,255,.1)",
+                  borderRadius:"var(--r2)", 
+                  padding:"20px 24px", 
+                  maxWidth:360,
+                  textAlign:"center"
+                }}>
+                  <div style={{ fontSize:14, color:"rgba(255,255,255,.7)", marginBottom:16 }}>
+                    ✅ You {soPlayerDecision ? "accepted" : "declined"} the Super Over
+                  </div>
+                  <div style={{ fontSize:13, color:"rgba(255,255,255,.5)" }}>
+                    {soOppDecision === null ? (
+                      <div style={{ display:"flex", alignItems:"center", justifyContent:"center", gap:8 }}>
+                        <div style={{ animation:"pulse 1s infinite" }}>●</div>
+                        Waiting for {opp?.name}...
+                      </div>
+                    ) : (
+                      <>
+                        {opp?.flag} {opp?.name} {soOppDecision ? "accepted" : "declined"}
+                      </>
+                    )}
+                  </div>
+                </div>
+              </>
+            )}
+          </div>
+        )}
+
+        {/* ══════ SUPER OVER DECLINED SCREEN ══════ */}
+        {inSuperOver && soPhase === "declined" && (
+          <div style={{
+            position:"fixed", inset:0, zIndex:300,
+            background:"linear-gradient(160deg,#1a1a2a,#2a2a3a,#1c1917)",
+            display:"flex", flexDirection:"column", alignItems:"center",
+            justifyContent:"center", gap:16, animation:"scaleIn .3s both", padding:"0 24px",
+          }}>
+            <div style={{ fontSize:56 }}>💰</div>
+            <div style={{ fontFamily:"var(--fd)", fontSize:28, fontWeight:800, color:"#fff", textAlign:"center" }}>
+              Super Over Declined
+            </div>
+            <div style={{ fontSize:14, color:"rgba(255,255,255,.6)", textAlign:"center", maxWidth:320, lineHeight:1.6 }}>
+              {!soPlayerDecision && !soOppDecision
+                ? "Both players declined the Super Over"
+                : !soPlayerDecision
+                ? "You declined the Super Over"
+                : "Your opponent declined the Super Over"}
+            </div>
+            <div style={{
+              background:"rgba(255,255,255,.05)",
+              border:"1px solid rgba(255,255,255,.1)",
+              borderRadius:"var(--r2)",
+              padding:"16px 24px",
+              textAlign:"center",
+              marginTop:8
+            }}>
+              <div style={{ fontFamily:"var(--fm)", fontSize:9, letterSpacing:2, color:"rgba(255,255,255,.4)", textTransform:"uppercase", marginBottom:8 }}>
+                Entry Refunded
+              </div>
+              <div style={{ fontFamily:"var(--fd)", fontSize:36, fontWeight:700, color:"var(--amber3)" }}>
+                ₹{entryFee.entry}
+              </div>
+              <div style={{ fontSize:11, color:"rgba(255,255,255,.4)", marginTop:6 }}>
+                Returning to your wallet
+              </div>
+            </div>
+          </div>
+        )}
+
+        {/* ══════ SUPER OVER INTRO ══════ */}
         {inSuperOver && soPhase === "intro" && (
           <div style={{
             position:"fixed", inset:0, zIndex:300,
@@ -6426,7 +6704,7 @@ export default function App() {
             </div>
 
             {/* Super Over scorecard */}
-            <div style={{ background:"rgba(255,255,255,.06)", border:"1px solid rgba(34,211,238,.2)", borderRadius:"var(--r2)", padding:"16px 24px", width:"100%", maxWidth:320 }}>
+            <div style={{ background:"rgba(255,255,255,.06)", border:"1px solid rgba(34,211,238,.2)", borderRadius:"var(--r2)", padding:"16px 24px", width:"100%", maxWidth:380 }}>
               <div style={{ fontFamily:"var(--fm)", fontSize:9, letterSpacing:2, color:"rgba(255,255,255,.35)", textTransform:"uppercase", textAlign:"center", marginBottom:12 }}>Super Over Scores</div>
               <div style={{ display:"flex", justifyContent:"space-around", alignItems:"center" }}>
                 <div style={{ textAlign:"center" }}>
@@ -6446,6 +6724,91 @@ export default function App() {
               )}
             </div>
 
+            {/* Response Time Analytics */}
+            <div style={{ 
+              background:"rgba(255,255,255,.04)", 
+              border:"1px solid rgba(255,255,255,.08)",
+              borderRadius:"var(--r2)", 
+              padding:"16px 20px", 
+              width:"100%", 
+              maxWidth:380 
+            }}>
+              <div style={{ fontFamily:"var(--fm)", fontSize:9, letterSpacing:2, color:"rgba(255,255,255,.35)", textTransform:"uppercase", marginBottom:14 }}>
+                📊 Response Time Analytics
+              </div>
+              
+              {/* Individual question times */}
+              <div style={{ display:"flex", flexDirection:"column", gap:10, marginBottom:14 }}>
+                {soTimes.map((time, i) => {
+                  const oppTime = soOppTimes[i];
+                  const playerFaster = time <= oppTime;
+                  return (
+                    <div key={i} style={{ 
+                      background:"rgba(255,255,255,.02)", 
+                      borderRadius:8, 
+                      padding:"10px 12px",
+                      border:"1px solid rgba(255,255,255,.05)"
+                    }}>
+                      <div style={{ fontSize:10, color:"rgba(255,255,255,.4)", marginBottom:6, fontFamily:"var(--fm)", letterSpacing:1 }}>
+                        Q{i+1}
+                      </div>
+                      <div style={{ display:"flex", justifyContent:"space-between", alignItems:"center", gap:12 }}>
+                        <div style={{ flex:1, textAlign:"left" }}>
+                          <div style={{ fontSize:13, color: playerFaster ? "#22d3ee" : "rgba(255,255,255,.5)", fontWeight: playerFaster ? 700 : 400 }}>
+                            {(time / 1000).toFixed(2)}s
+                          </div>
+                          <div style={{ fontSize:9, color:"rgba(255,255,255,.3)", marginTop:2 }}>
+                            {nick || "You"} {playerFaster ? "✓" : ""}
+                          </div>
+                        </div>
+                        <div style={{ fontSize:11, color:"rgba(255,255,255,.2)" }}>vs</div>
+                        <div style={{ flex:1, textAlign:"right" }}>
+                          <div style={{ fontSize:13, color: !playerFaster ? "#22d3ee" : "rgba(255,255,255,.5)", fontWeight: !playerFaster ? 700 : 400 }}>
+                            {(oppTime / 1000).toFixed(2)}s
+                          </div>
+                          <div style={{ fontSize:9, color:"rgba(255,255,255,.3)", marginTop:2 }}>
+                            {opp?.name} {!playerFaster ? "✓" : ""}
+                          </div>
+                        </div>
+                      </div>
+                    </div>
+                  );
+                })}
+              </div>
+
+              {/* Total time comparison */}
+              <div style={{ 
+                borderTop:"1px solid rgba(255,255,255,.08)", 
+                paddingTop:12,
+                display:"flex",
+                justifyContent:"space-between",
+                alignItems:"center"
+              }}>
+                <div style={{ textAlign:"left" }}>
+                  <div style={{ fontSize:10, color:"rgba(255,255,255,.4)", marginBottom:4, fontFamily:"var(--fm)", letterSpacing:1 }}>
+                    YOUR TOTAL
+                  </div>
+                  <div style={{ fontSize:18, fontWeight:700, color: soWinner === "player" ? "#22d3ee" : "rgba(255,255,255,.5)" }}>
+                    {(soTimes.reduce((a,b) => a+b, 0) / 1000).toFixed(2)}s
+                  </div>
+                  <div style={{ fontSize:9, color:"rgba(255,255,255,.3)", marginTop:2 }}>
+                    Avg: {(soTimes.reduce((a,b) => a+b, 0) / soTimes.length / 1000).toFixed(2)}s
+                  </div>
+                </div>
+                <div style={{ textAlign:"right" }}>
+                  <div style={{ fontSize:10, color:"rgba(255,255,255,.4)", marginBottom:4, fontFamily:"var(--fm)", letterSpacing:1 }}>
+                    OPP TOTAL
+                  </div>
+                  <div style={{ fontSize:18, fontWeight:700, color: soWinner === "opp" ? "#22d3ee" : "rgba(255,255,255,.5)" }}>
+                    {(soOppTimes.reduce((a,b) => a+b, 0) / 1000).toFixed(2)}s
+                  </div>
+                  <div style={{ fontSize:9, color:"rgba(255,255,255,.3)", marginTop:2 }}>
+                    Avg: {(soOppTimes.reduce((a,b) => a+b, 0) / soOppTimes.length / 1000).toFixed(2)}s
+                  </div>
+                </div>
+              </div>
+            </div>
+
             <div style={{ fontSize:12, color:"rgba(255,255,255,.4)", textAlign:"center" }}>
               {soWinner === "player"
                 ? soMyScore > soOppScore ? "You outscored the opponent in the Super Over!" : "You answered faster — tiebreak win!"
@@ -6455,8 +6818,31 @@ export default function App() {
             <button
               className="btn btn-amber"
               style={{ width:"100%", maxWidth:320 }}
-              onClick={() => {
+              onClick={async () => {
                 setSuperOverWinner(soWinner); // persist SO result into result screen
+                
+                // Complete match in backend with Super Over result
+                if (matchId && loggedIn) {
+                  try {
+                    await api(`/matches/${matchId}/complete`, {
+                      method: "POST",
+                      body: {
+                        player_score: myScore,
+                        opp_score:    oppScore,
+                        winner:       soWinner === "player" ? "player" : "opp",
+                        super_over:   true,
+                      },
+                    });
+                    // Refresh wallet balance from backend
+                    const walletData = await api("/wallet");
+                    if (walletData?.wallet?.balance !== undefined) {
+                      setWallet(walletData.wallet.balance);
+                    }
+                  } catch (err) {
+                    console.error("Match finalization error:", err);
+                  }
+                }
+                
                 setInSuperOver(false);
                 setScreen("result");
                 setFcMyScore(myScore);
