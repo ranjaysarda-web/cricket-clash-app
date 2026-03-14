@@ -2486,15 +2486,15 @@ html,body{background:var(--bg);color:var(--txt);font-family:var(--fh);-webkit-fo
 .toss-screen{flex:1;display:flex;flex-direction:column;align-items:stretch;position:relative;overflow:hidden;background:#000}
 
 /* Stadium background layers */
-.ts-stadium-bg{position:absolute;inset:0;z-index:0;background:radial-gradient(ellipse 120% 60% at 50% 80%,#1a3a0a 0%,#0d1f06 40%,#000 100%)}
+.ts-stadium-bg{position:absolute;inset:0;z-index:0;background:linear-gradient(180deg, #091929 0%, #0f2844 40%, #1a3a5a 75%, #0a1f3a 100%)}
 .ts-floodlights{position:absolute;inset:0;z-index:1;pointer-events:none}
-.ts-fl{position:absolute;width:180px;height:180px;border-radius:50%;filter:blur(60px);opacity:.22}
-.ts-fl.left{top:-40px;left:-40px;background:radial-gradient(#fff9c4,transparent)}
-.ts-fl.right{top:-40px;right:-40px;background:radial-gradient(#fff9c4,transparent)}
-.ts-fl.center{top:20%;left:50%;transform:translateX(-50%);width:300px;height:200px;background:radial-gradient(#ffffee,transparent);opacity:.08}
-.ts-grass{position:absolute;bottom:0;left:0;right:0;height:35%;z-index:1;background:linear-gradient(180deg,transparent,#0a1f04 60%,#050f02)}
-.ts-pitch{position:absolute;bottom:28%;left:50%;transform:translateX(-50%);width:40px;height:110px;z-index:2;background:linear-gradient(180deg,#c8b97a,#b8a568,#a08952);border-radius:4px;opacity:.5;box-shadow:0 0 30px rgba(200,185,122,.2)}
-.ts-crowd-line{position:absolute;bottom:32%;left:0;right:0;height:2px;z-index:2;background:linear-gradient(90deg,transparent,rgba(255,255,220,.04),rgba(255,255,220,.08),rgba(255,255,220,.04),transparent)}
+.ts-fl{position:absolute;width:200px;height:200px;border-radius:50%;filter:blur(70px);opacity:.28}
+.ts-fl.left{top:-50px;left:-50px;background:radial-gradient(rgba(255,255,255,0.6),transparent)}
+.ts-fl.right{top:-50px;right:-50px;background:radial-gradient(rgba(255,255,255,0.6),transparent)}
+.ts-fl.center{top:15%;left:50%;transform:translateX(-50%);width:350px;height:220px;background:radial-gradient(rgba(255,255,255,0.15),transparent);opacity:.12}
+.ts-grass{position:absolute;bottom:0;left:0;right:0;height:38%;z-index:1;background:radial-gradient(ellipse 140% 60% at 50% 100%, rgba(30,100,60,0.12) 0%, rgba(15,60,35,0.08) 55%, transparent 100%)}
+.ts-pitch{position:absolute;bottom:30%;left:50%;transform:translateX(-50%);width:45px;height:115px;z-index:2;background:linear-gradient(180deg,rgba(200,185,122,0.09),rgba(184,165,104,0.06));border-radius:5px;opacity:.35;box-shadow:0 0 35px rgba(200,185,122,.1)}
+.ts-crowd-line{position:absolute;bottom:33%;left:0;right:0;height:2px;z-index:2;background:linear-gradient(90deg,transparent,rgba(100,180,120,.06),rgba(120,200,140,.1),rgba(100,180,120,.06),transparent)}
 
 /* Scan lines overlay */
 .ts-scanlines{position:absolute;inset:0;z-index:3;pointer-events:none;background:repeating-linear-gradient(0deg,transparent,transparent 2px,rgba(0,0,0,.03) 2px,rgba(0,0,0,.03) 4px)}
@@ -2558,21 +2558,21 @@ html,body{background:var(--bg);color:var(--txt);font-family:var(--fh);-webkit-fo
 @keyframes tsConfettiFall{0%{transform:translateY(-20px) rotate(0deg);opacity:1}100%{transform:translateY(160px) rotate(var(--rot,360deg)) translateX(var(--dx,0px));opacity:0}}
 
 /* Choice cards — broadcast style */
-.ts-choice-grid{display:grid;grid-template-columns:1fr 1fr;gap:10px;width:100%;animation:tsFadeUp .4s .05s cubic-bezier(.22,1,.36,1) both}
-.ts-choice{border-radius:12px;padding:18px 12px;cursor:pointer;display:flex;flex-direction:column;align-items:center;gap:8px;transition:transform .18s,box-shadow .18s;position:relative;overflow:hidden;border:1.5px solid transparent}
-.ts-choice::before{content:"";position:absolute;inset:0;opacity:0;transition:opacity .18s;border-radius:inherit}
-.ts-choice:active{transform:scale(.96)}
-.ts-choice.bat-card{background:linear-gradient(145deg,rgba(180,83,9,.22),rgba(120,53,15,.15));border-color:rgba(251,191,36,.25);box-shadow:0 4px 20px rgba(180,83,9,.2)}
-.ts-choice.bat-card:hover{transform:translateY(-3px);box-shadow:0 10px 40px rgba(180,83,9,.35)}
-.ts-choice.bat-card::before{background:radial-gradient(ellipse at 50% 0%,rgba(251,191,36,.12),transparent)}
+.ts-choice-grid{display:grid;grid-template-columns:1fr 1fr;gap:12px;width:100%;padding:0 10px;animation:tsFadeUp .4s .05s cubic-bezier(.22,1,.36,1) both}
+.ts-choice{border-radius:16px;padding:20px 14px;cursor:pointer;display:flex;flex-direction:column;align-items:center;gap:10px;transition:transform .2s,box-shadow .2s;position:relative;overflow:hidden;border:2px solid transparent;backdrop-filter:blur(10px)}
+.ts-choice::before{content:"";position:absolute;inset:0;opacity:0;transition:opacity .2s;border-radius:inherit}
+.ts-choice:active{transform:scale(.97)}
+.ts-choice.bat-card{background:linear-gradient(165deg,rgba(180,83,9,.28) 0%,rgba(120,53,15,.18) 100%);border-color:rgba(251,191,36,.35);box-shadow:0 6px 24px rgba(180,83,9,.25),inset 0 1px 0 rgba(251,191,36,.15)}
+.ts-choice.bat-card:hover{transform:translateY(-2px);box-shadow:0 12px 44px rgba(180,83,9,.4),inset 0 1px 0 rgba(251,191,36,.2)}
+.ts-choice.bat-card::before{background:radial-gradient(ellipse at 50% 0%,rgba(251,191,36,.15),transparent)}
 .ts-choice.bat-card:hover::before{opacity:1}
-.ts-choice.chase-card{background:linear-gradient(145deg,rgba(3,105,161,.22),rgba(7,89,133,.15));border-color:rgba(56,189,248,.2);box-shadow:0 4px 20px rgba(3,105,161,.2)}
-.ts-choice.chase-card:hover{transform:translateY(-3px);box-shadow:0 10px 40px rgba(3,105,161,.35)}
-.ts-choice.chase-card::before{background:radial-gradient(ellipse at 50% 0%,rgba(56,189,248,.1),transparent)}
+.ts-choice.chase-card{background:linear-gradient(165deg,rgba(3,105,161,.28) 0%,rgba(7,89,133,.18) 100%);border-color:rgba(56,189,248,.3);box-shadow:0 6px 24px rgba(3,105,161,.25),inset 0 1px 0 rgba(56,189,248,.12)}
+.ts-choice.chase-card:hover{transform:translateY(-2px);box-shadow:0 12px 44px rgba(3,105,161,.4),inset 0 1px 0 rgba(56,189,248,.18)}
+.ts-choice.chase-card::before{background:radial-gradient(ellipse at 50% 0%,rgba(56,189,248,.12),transparent)}
 .ts-choice.chase-card:hover::before{opacity:1}
-.ts-choice-icon{font-size:36px;filter:drop-shadow(0 2px 8px rgba(0,0,0,.4))}
-.ts-choice-label{font-family:var(--fd);font-size:17px;font-weight:900;letter-spacing:-.2px}
-.ts-choice-desc{font-family:var(--fm);font-size:9px;color:rgba(255,255,255,.45);text-align:center;line-height:1.4;letter-spacing:.3px}
+.ts-choice-icon{font-size:44px;filter:drop-shadow(0 3px 12px rgba(0,0,0,.5))}
+.ts-choice-label{font-family:var(--fd);font-size:20px;font-weight:900;letter-spacing:.5px;text-transform:uppercase}
+.ts-choice-desc{font-family:var(--fm);font-size:10px;color:rgba(255,255,255,.5);text-align:center;line-height:1.45;letter-spacing:.4px;font-weight:500}
 .ts-choice-tag{position:absolute;top:8px;right:8px;font-family:var(--fm);font-size:7px;font-weight:700;letter-spacing:1.5px;text-transform:uppercase;padding:2px 6px;border-radius:4px}
 
 /* Opponent won — single CTA */
@@ -5681,20 +5681,20 @@ export default function App() {
             {/* TV Top Bar */}
             <div className="ts-topbar">
               <div className="ts-live-badge"><div className="ts-live-dot"/>LIVE</div>
-              <div className="ts-channel">🏏 CRICKET CLASH</div>
+              <div className="ts-channel">⚡ CRICKET CLASH</div>
               <div style={{display:"flex",alignItems:"center",gap:6}}>
                 <div style={{background:"rgba(255,255,255,.07)",borderRadius:4,padding:"2px 7px",fontFamily:"var(--fm)",fontSize:9,fontWeight:700,letterSpacing:1,color:"rgba(255,255,255,.4)",textTransform:"uppercase"}}>
-                  {matchType === "pvp" ? "⚡ LIVE PvP" : "🤖 VS AI"}
+                  {matchType === "pvp" ? "LIVE PvP" : "VS AI"}
                 </div>
               </div>
             </div>
-
+            
             {/* Main body */}
             <div className="ts-body">
               {/* Match title */}
               <div className="ts-title-strip">
-                <div className="ts-match-label">MATCH TOSS</div>
-                <div className="ts-match-title">Who Wins The Toss?</div>
+                <div className="ts-match-label">LIVE | CRICKET CLASH PRE-MATCH</div>
+                <div className="ts-match-title" style={{fontSize:28,fontWeight:900,letterSpacing:1,marginTop:4}}>WHO WINS THE TOSS?</div>
               </div>
 
               {/* Players row */}
@@ -5705,18 +5705,32 @@ export default function App() {
                     const pal = JERSEY_PALETTES.find(p => p.id === avatarPalette) || JERSEY_PALETTES[0];
                     const jCol = pal.primary || career.jerseyColor;
                     return (
-                      <div style={{display:"flex",flexDirection:"column",alignItems:"center",gap:4}}>
-                        <div style={{width:20,height:16,borderRadius:"10px 10px 3px 3px",background:career.helmetColor,boxShadow:"0 2px 8px rgba(0,0,0,.5)"}}/>
-                        <div className="ts-player-card" style={{width:62,height:78,background:jCol,display:"flex",flexDirection:"column",alignItems:"center",justifyContent:"center",position:"relative",overflow:"hidden"}}>
-                          <div style={{position:"absolute",left:"50%",top:0,bottom:0,width:10,transform:"translateX(-50%)",background:"rgba(0,0,0,.18)"}}/>
-                          <div style={{fontFamily:"var(--fd)",fontSize:30,fontWeight:900,color:"rgba(255,255,255,.92)",lineHeight:1,zIndex:1,textShadow:"0 2px 8px rgba(0,0,0,.4)"}}>{avatarNum}</div>
-                          <div style={{fontFamily:"var(--fm)",fontSize:5,fontWeight:700,letterSpacing:1.5,color:"rgba(255,255,255,.6)",textTransform:"uppercase",zIndex:1}}>{nick?.slice(0,8)||"YOU"}</div>
+                      <div style={{display:"flex",flexDirection:"column",alignItems:"center",gap:8}}>
+                        {/* Enhanced 3D-style player avatar */}
+                        <div style={{position:"relative"}}>
+                          <div style={{width:26,height:20,borderRadius:"12px 12px 4px 4px",background:career.helmetColor,boxShadow:"0 4px 16px rgba(0,0,0,.6)",marginBottom:-4,zIndex:2,position:"relative"}}/>
+                          <div className="ts-player-card" style={{width:90,height:110,background:`linear-gradient(165deg, ${jCol} 0%, ${jCol}dd 100%)`,display:"flex",flexDirection:"column",alignItems:"center",justifyContent:"center",position:"relative",overflow:"hidden",border:"2px solid rgba(255,255,255,0.15)",boxShadow:"0 8px 32px rgba(0,0,0,.7), inset 0 1px 0 rgba(255,255,255,0.2)"}}>
+                            <div style={{position:"absolute",left:"50%",top:0,bottom:0,width:14,transform:"translateX(-50%)",background:"rgba(0,0,0,.25)",boxShadow:"0 0 20px rgba(0,0,0,.3)"}}/>
+                            <div style={{fontFamily:"var(--fd)",fontSize:44,fontWeight:900,color:"rgba(255,255,255,.95)",lineHeight:1,zIndex:1,textShadow:"0 3px 12px rgba(0,0,0,.6)"}}>{avatarNum}</div>
+                            <div style={{fontFamily:"var(--fm)",fontSize:7,fontWeight:700,letterSpacing:2,color:"rgba(255,255,255,.7)",textTransform:"uppercase",zIndex:1,marginTop:4}}>{nick?.slice(0,8)||"YOU"}</div>
+                          </div>
+                        </div>
+                        <div className="ts-player-name" style={{fontSize:13,fontWeight:800,color:"#fff"}}>{nick||"You"}</div>
+                        {/* Stats card */}
+                        <div style={{background:"rgba(20,40,60,0.6)",border:"1px solid rgba(80,200,120,0.3)",borderRadius:8,padding:"6px 12px",display:"flex",gap:12,backdropFilter:"blur(10px)"}}>
+                          <div style={{textAlign:"center"}}>
+                            <div style={{fontSize:8,color:"rgba(255,255,255,0.5)",fontWeight:600,letterSpacing:1}}>RANK</div>
+                            <div style={{fontSize:16,color:"#fbbf24",fontWeight:800,fontFamily:"var(--fd)"}}>{Math.floor(Math.random()*200)+25}</div>
+                          </div>
+                          <div style={{width:1,background:"rgba(255,255,255,0.1)"}}/>
+                          <div style={{textAlign:"center"}}>
+                            <div style={{fontSize:8,color:"rgba(255,255,255,0.5)",fontWeight:600,letterSpacing:1}}>SKILL RATING</div>
+                            <div style={{fontSize:16,color:"#4ade80",fontWeight:800,fontFamily:"var(--fd)"}}>{850 + Math.floor(career.rank/10)}</div>
+                          </div>
                         </div>
                       </div>
                     );
                   })()}
-                  <div className="ts-player-name">{nick||"You"}</div>
-                  <div className="ts-player-elo" style={{color:"rgba(255,220,100,.45)",fontSize:9}}>{career.badge}</div>
                 </div>
 
                 {/* VS */}
@@ -5728,9 +5742,22 @@ export default function App() {
 
                 {/* Opponent */}
                 <div className="ts-player" style={{animation:"tsFadeUp .5s .2s cubic-bezier(.22,1,.36,1) both"}}>
-                  <div style={{fontSize:44,lineHeight:1,filter:"drop-shadow(0 4px 12px rgba(0,0,0,.5))",animation:"floatBob 2.8s ease-in-out infinite"}}>{opp?.flag}</div>
-                  <div className="ts-player-name">{opp?.name}</div>
-                  <div className="ts-player-elo">{opp?.elo} ELO</div>
+                  <div style={{display:"flex",flexDirection:"column",alignItems:"center",gap:8}}>
+                    <div style={{fontSize:64,lineHeight:1,filter:"drop-shadow(0 6px 20px rgba(0,0,0,.7))",animation:"floatBob 2.8s ease-in-out infinite",marginTop:18}}>{opp?.flag}</div>
+                    <div className="ts-player-name" style={{fontSize:13,fontWeight:800,color:"#fff"}}>{opp?.name}</div>
+                    {/* Opponent stats */}
+                    <div style={{background:"rgba(60,30,80,0.5)",border:"1px solid rgba(167,139,250,0.3)",borderRadius:8,padding:"6px 12px",display:"flex",gap:12,backdropFilter:"blur(10px)"}}>
+                      <div style={{textAlign:"center"}}>
+                        <div style={{fontSize:8,color:"rgba(255,255,255,0.5)",fontWeight:600,letterSpacing:1}}>RANK</div>
+                        <div style={{fontSize:16,color:"#a78bfa",fontWeight:800,fontFamily:"var(--fd)"}}>{Math.floor(Math.random()*200)+200}</div>
+                      </div>
+                      <div style={{width:1,background:"rgba(255,255,255,0.1)"}}/>
+                      <div style={{textAlign:"center"}}>
+                        <div style={{fontSize:8,color:"rgba(255,255,255,0.5)",fontWeight:600,letterSpacing:1}}>SKILL RATING</div>
+                        <div style={{fontSize:16,color:"#38bdf8",fontWeight:800,fontFamily:"var(--fd)"}}>{opp?.elo || 920}</div>
+                      </div>
+                    </div>
+                  </div>
                 </div>
               </div>
 
@@ -5756,24 +5783,20 @@ export default function App() {
 
               {/* Result — toss won by player */}
               {tossState === "result" && tossWinner === "player" && (
-                <div style={{width:"100%",display:"flex",flexDirection:"column",gap:10,animation:"tsFadeUp .4s cubic-bezier(.22,1,.36,1) both"}}>
-                  <div className="ts-result-won">
-                    <div className="ts-result-eyebrow" style={{color:"#4ade80"}}>🎉 TOSS WON</div>
-                    <div className="ts-result-headline" style={{color:"#fff"}}>Your Call, Captain</div>
-                    <div className="ts-result-sub">Choose how you want to play</div>
+                <div style={{width:"100%",display:"flex",flexDirection:"column",gap:14,animation:"tsFadeUp .4s cubic-bezier(.22,1,.36,1) both"}}>
+                  <div style={{textAlign:"center",marginBottom:4}}>
+                    <div style={{fontFamily:"var(--fm)",fontSize:32,fontWeight:900,color:"#fff",letterSpacing:2,textTransform:"uppercase",lineHeight:1.1,textShadow:"0 4px 20px rgba(0,0,0,.6)"}}>YOUR CALL, CAPTAIN</div>
                   </div>
                   <div className="ts-choice-grid">
                     <div className="ts-choice bat-card" onClick={() => chooseBatOrChase("bat")}>
-                      <div className="ts-choice-tag" style={{background:"rgba(251,191,36,.15)",color:"#fbbf24"}}>FIRST</div>
                       <div className="ts-choice-icon">🏏</div>
-                      <div className="ts-choice-label" style={{color:"#fbbf24"}}>Bat First</div>
-                      <div className="ts-choice-desc">Set the target. Make them chase you down.</div>
+                      <div className="ts-choice-label" style={{color:"#fbbf24"}}>BAT FIRST</div>
+                      <div className="ts-choice-desc" style={{textTransform:"uppercase",fontWeight:600,letterSpacing:.8}}>SET THE TARGET. MAKE THEM CHASE.</div>
                     </div>
                     <div className="ts-choice chase-card" onClick={() => chooseBatOrChase("chase")}>
-                      <div className="ts-choice-tag" style={{background:"rgba(56,189,248,.12)",color:"#38bdf8"}}>CHASE</div>
                       <div className="ts-choice-icon">🎯</div>
-                      <div className="ts-choice-label" style={{color:"#38bdf8"}}>Chase</div>
-                      <div className="ts-choice-desc">Know the target. Hunt it down ball by ball.</div>
+                      <div className="ts-choice-label" style={{color:"#38bdf8"}}>CHASE</div>
+                      <div className="ts-choice-desc" style={{textTransform:"uppercase",fontWeight:600,letterSpacing:.8}}>KNOW THE TARGET. HUNT IT DOWN.</div>
                     </div>
                   </div>
                 </div>
@@ -7496,6 +7519,45 @@ export default function App() {
               </div>
             )}
 
+            {/* Low Balance Alert */}
+            {wallet < 50 && (
+              <div style={{
+                background: "linear-gradient(135deg, rgba(220,38,38,0.1) 0%, rgba(239,68,68,0.05) 100%)",
+                border: "1px solid rgba(220,38,38,0.2)",
+                borderRadius: 12,
+                padding: 14,
+                marginTop: 12,
+                marginBottom: 8,
+                display: "flex",
+                alignItems: "center",
+                gap: 12
+              }}>
+                <div style={{ fontSize: 28 }}>💰</div>
+                <div style={{ flex: 1 }}>
+                  <div style={{ fontFamily: "var(--fm)", fontSize: 13, fontWeight: 700, color: "#dc2626", marginBottom: 2 }}>
+                    Low Wallet Balance
+                  </div>
+                  <div style={{ fontSize: 11, color: "rgba(220,38,38,0.7)", lineHeight: 1.4 }}>
+                    Add ₹50 or more to play real-money matches
+                  </div>
+                </div>
+                <button 
+                  className="btn btn-sm"
+                  style={{ 
+                    background: "#dc2626", 
+                    color: "#fff", 
+                    border: "none",
+                    fontSize: 12,
+                    padding: "8px 14px",
+                    whiteSpace: "nowrap"
+                  }}
+                  onClick={() => { setNavTab("wallet"); goTo("wallet-connect"); }}
+                >
+                  Add Money
+                </button>
+              </div>
+            )}
+
             {/* ══ FRIEND CHALLENGE RESULT PANEL ══ */}
             {friendChallenge && (friendChallenge.mode === "chase" || friendChallenge.mode === "playing") && (() => {
               const APP_URL   = "https://play.cricketclash.in";
@@ -7629,11 +7691,14 @@ export default function App() {
             })()}
 
             <div className="result-btns">
-              <button className="btn btn-amber" onClick={() => goTo("setup")}>Play Again →</button>
-              <div style={{ display: "flex", gap: 8 }}>
+              <button className="btn btn-amber" onClick={() => goTo("setup")} style={{fontSize:16,fontWeight:700}}>Play Again →</button>
+              <div style={{ display: "flex", gap: 8, marginTop: 8 }}>
+                <button className="btn btn-outline btn-sm" style={{ flex: 1 }} onClick={() => { setNavTab("play"); goTo("landing"); }}>🏠 Home</button>
+                <button className="btn btn-outline btn-sm" style={{ flex: 1 }} onClick={() => { setNavTab("wallet"); goTo("wallet"); }}>💰 Wallet</button>
+              </div>
+              <div style={{ display: "flex", gap: 8, marginTop: 6 }}>
                 <button className="btn btn-outline btn-sm" style={{ flex: 1 }} onClick={() => { setNavTab("profile"); goTo("profile"); }}>🌟 Career</button>
                 <button className="btn btn-outline btn-sm" style={{ flex: 1 }} onClick={() => { setNavTab("leaderboard"); goTo("leaderboard"); }}>🏆 Rankings</button>
-                <button className="btn btn-outline btn-sm" style={{ flex: 1 }} onClick={() => goTo("wallet")}>💰 Wallet</button>
               </div>
             </div>
           </div>
