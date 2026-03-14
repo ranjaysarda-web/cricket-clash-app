@@ -1967,7 +1967,7 @@ const COMMENTARY = {
 // Wrong answer                           → Wicket + lose 5 runs (min 0)
 // Timeout                                → Run out + lose 3 runs
 // Free Hit active on wrong               → No wicket, no run loss
-const runsForTime = tLeft => tLeft >= 11 ? 6 : tLeft >= 6 ? 4 : 2;
+const runsForTime = tLeft => tLeft >= 13 ? 6 : tLeft >= 6 ? 4 : 2;
 const runLabel = runs => runs === 6 ? "SIX! 💥" : runs === 4 ? "FOUR! 🔥" : "TWO RUNS ✅";
 
 // ─── LEADERBOARD ───────────────────────────────────────────────────────────────
@@ -2266,15 +2266,11 @@ function playIplSting() {
 
 function stopIplSting() {
   try {
-    if (_iplStingAudio && !_iplStingAudio.paused) {
-      const fadeOut = setInterval(() => {
-        if (_iplStingAudio && _iplStingAudio.volume > 0.06) {
-          _iplStingAudio.volume = Math.max(0, _iplStingAudio.volume - 0.06);
-        } else {
-          if (_iplStingAudio) { _iplStingAudio.pause(); _iplStingAudio.currentTime = 0; }
-          clearInterval(fadeOut);
-        }
-      }, 40);
+    if (_iplStingAudio) {
+      // Aggressive stop for iOS - no fade
+      _iplStingAudio.pause();
+      _iplStingAudio.currentTime = 0;
+      _iplStingAudio.volume = 0.5; // Reset volume for next play
     }
   } catch {}
 }
@@ -2404,15 +2400,15 @@ const G = `
   --sh-red:0 6px 24px rgba(190,18,60,.18);
 }
 html,body,#root{height:100%;width:100%;margin:0;padding:0;overflow:hidden;}
-html,body{background:var(--bg);color:var(--txt);font-family:var(--fh);-webkit-font-smoothing:antialiased;overflow-x:hidden;font-size:16px}
+html,body{background:var(--bg);color:var(--txt);font-family:var(--fh);-webkit-font-smoothing:antialiased;overflow-x:hidden;font-size:18px}
 #root{height:100dvh;overflow:hidden;display:flex;justify-content:center;align-items:flex-start;background:var(--bg)}
 .app{width:100%;max-width:480px;height:100dvh;max-height:100dvh;display:flex;flex-direction:column;background:var(--bg);position:relative;overflow:hidden;margin:0 auto}
 @media(min-width:600px){
   #root{align-items:center;padding:20px 0}
   .app{height:min(100dvh,860px);max-height:min(100dvh,860px);border-radius:28px;box-shadow:0 32px 80px rgba(0,0,0,.6),0 0 0 1px rgba(255,255,255,.06);overflow:hidden}
-  html,body{font-size:17px}
+  html,body{font-size:19px}
 }
-@media(min-width:900px){html,body{font-size:18px}}
+@media(min-width:900px){html,body{font-size:20px}}
 .screen{flex:1;display:flex;flex-direction:column;animation:fadeUp .28s cubic-bezier(.22,1,.36,1);min-height:0;overflow-y:auto;overflow-x:hidden;-webkit-overflow-scrolling:touch}
 
 /* ══════ HERO ══════ */
@@ -2668,8 +2664,8 @@ html,body{background:var(--bg);color:var(--txt);font-family:var(--fh);-webkit-fo
 .sb-p{display:flex;flex-direction:column;gap:1px}
 .sb-p.r{align-items:flex-end}
 .sb-flag{font-size:16px;line-height:1}
-.sb-name{font-size:10px;font-weight:600;color:rgba(255,255,255,.6);max-width:90px;overflow:hidden;text-overflow:ellipsis;white-space:nowrap;margin-top:1px}
-.sb-score{font-family:var(--fd);font-size:30px;font-weight:700;letter-spacing:-.5px;transition:color .25s,transform .3s;line-height:1.05;color:rgba(255,255,255,.9)}
+.sb-name{font-size:12px;font-weight:700;color:rgba(255,255,255,.6);max-width:90px;overflow:hidden;text-overflow:ellipsis;white-space:nowrap;margin-top:1px}
+.sb-score{font-family:var(--fd);font-size:36px;font-weight:800;letter-spacing:-.5px;transition:color .25s,transform .3s;line-height:1.05;color:rgba(255,255,255,.9)}
 .sb-score.batting{color:#fbbf24;text-shadow:0 0 20px rgba(251,191,36,.4)}
 .sb-score.pop{animation:scoreFlash .35s cubic-bezier(.34,1.56,.64,1)}
 .sb-mid{display:flex;flex-direction:column;align-items:center;gap:3px}
@@ -2746,8 +2742,8 @@ html,body{background:var(--bg);color:var(--txt);font-family:var(--fh);-webkit-fo
 .t-bar{height:100%;border-radius:999px;transition:width 1s linear,background .4s;position:relative;overflow:hidden}
 .t-bar::after{content:'';position:absolute;top:0;left:-60%;width:40%;height:100%;background:linear-gradient(90deg,transparent,rgba(255,255,255,.65),transparent);animation:shimmer 1.8s linear infinite}
 .t-row{display:flex;align-items:center;justify-content:space-between;margin-top:7px}
-.t-num{font-family:var(--fm);font-size:clamp(18px,5vw,22px);font-weight:600;transition:color .35s;line-height:1}
-.t-lbl{font-family:var(--fm);font-size:9px;font-weight:600;letter-spacing:2px;text-transform:uppercase;color:var(--sub)}
+.t-num{font-family:var(--fm);font-size:clamp(24px,5vw,28px);font-weight:700;transition:color .35s;line-height:1}
+.t-lbl{font-family:var(--fm);font-size:11px;font-weight:700;letter-spacing:2px;text-transform:uppercase;color:var(--sub)}
 .x2-tag{font-family:var(--fm);font-size:10px;font-weight:600;color:#fff;background:var(--amber);border-radius:6px;padding:2px 9px}
 
 /* Power-ups */
@@ -2799,7 +2795,7 @@ html,body{background:var(--bg);color:var(--txt);font-family:var(--fh);-webkit-fo
 
 /* Options */
 .opts{display:grid;grid-template-columns:1fr 1fr;gap:8px;flex:1;min-height:0;padding-bottom:40px;overflow-y:auto}
-.opt{background:var(--s0);border:1.5px solid var(--rim2);border-radius:var(--r2);padding:clamp(10px,2.5vw,15px) clamp(10px,2.5vw,14px);font-family:var(--fh);font-size:clamp(13px,3.8vw,15px);font-weight:500;color:var(--txt);cursor:pointer;transition:all .18s;display:flex;align-items:flex-start;gap:8px;text-align:left;line-height:1.35;position:relative;overflow:hidden;box-shadow:var(--sh-sm)}
+.opt{background:var(--s0);border:1.5px solid var(--rim2);border-radius:var(--r2);padding:clamp(10px,2.5vw,15px) clamp(10px,2.5vw,14px);font-family:var(--fh);font-size:clamp(15px,3.8vw,17px);font-weight:500;color:var(--txt);cursor:pointer;transition:all .18s;display:flex;align-items:flex-start;gap:8px;text-align:left;line-height:1.35;position:relative;overflow:hidden;box-shadow:var(--sh-sm)}
 .opt-ltr{width:26px;height:26px;min-width:26px;border-radius:8px;background:var(--s2);display:flex;align-items:center;justify-content:center;font-family:var(--fm);font-size:9px;font-weight:700;color:var(--sub);border:1.5px solid var(--dim);transition:all .18s;flex-shrink:0;margin-top:1px}
 .opt:hover:not(:disabled){border-color:rgba(180,83,9,.4);background:var(--amberBg);transform:translateY(-1px);box-shadow:var(--sh)}
 .opt:hover:not(:disabled) .opt-ltr{background:var(--amber);color:#fff;border-color:var(--amber)}
@@ -2809,6 +2805,7 @@ html,body{background:var(--bg);color:var(--txt);font-family:var(--fh);-webkit-fo
 .opt.wrong .opt-ltr{background:var(--red2);color:#fff;border-color:var(--red)}
 .opt.fade{opacity:.22}
 .opt:disabled{cursor:not-allowed}
+.opt:focus{outline:none!important;border-color:var(--rim2)!important;background:var(--s0)!important}
 
 /* Loading spinner */
 .load-q{flex:1;display:flex;flex-direction:column;align-items:center;justify-content:center;gap:14px;padding:40px}
@@ -3345,7 +3342,7 @@ export default function App() {
   const [qi, setQi] = useState(0);
   const [wickets, setWickets] = useState(0);
   const [done, setDone] = useState([]); // array of "ok"|"bad"
-  const [tLeft, setTLeft] = useState(15);
+  const [tLeft, setTLeft] = useState(20);
   const [sel, setSel] = useState(null);
   const [rev, setRev] = useState(false);
   const [cStreak, setCStreak] = useState(0);
@@ -3401,7 +3398,7 @@ export default function App() {
   const [soQs, setSoQs] = useState([]);
   const [soSel, setSoSel] = useState(null);
   const [soRev, setSoRev] = useState(false);
-  const [soTLeft, setSoTLeft] = useState(15);
+  const [soTLeft, setSoTLeft] = useState(20);
   const [soTimes, setSoTimes] = useState([]);  // response times for tiebreak
   const [soOppTimes] = useState(() => [
     Math.random() * 10000 + 2000,
@@ -3675,7 +3672,7 @@ export default function App() {
     const o    = rnd(OPPS);
     setCondition(cond); setOpp(o);
     setMyScore(0); setOppScore(0); setWickets(0);
-    setQi(0); setDone([]); setTLeft(15);
+    setQi(0); setDone([]); setTLeft(20);
     setSel(null); setRev(false); setCStreak(0); setMaxStreak(0);
     setPuFF(true); setPuTF(true); setPuFH(true);
     setFrozen(false); setFreeHit(false); setHidden([]);
@@ -3705,7 +3702,7 @@ export default function App() {
     const o    = rnd(OPPS);
     setCondition(cond); setOpp(o);
     setMyScore(0); setOppScore(0); setWickets(0);
-    setQi(0); setDone([]); setTLeft(15);
+    setQi(0); setDone([]); setTLeft(20);
     setSel(null); setRev(false); setCStreak(0); setMaxStreak(0);
     setPuFF(true); setPuTF(true); setPuFH(true);
     setFrozen(false); setFreeHit(false); setHidden([]);
@@ -3745,7 +3742,7 @@ export default function App() {
       setCondition(cond);
       setOpp(o);
       setMyScore(0); setOppScore(0); setWickets(0);
-      setQi(0); setDone([]); setTLeft(15);
+      setQi(0); setDone([]); setTLeft(20);
       setSel(null); setRev(false); setCStreak(0); setMaxStreak(0);
       setPuFF(true); setPuTF(true); setPuFH(true);
       setFrozen(false); setFreeHit(false); setHidden([]);
@@ -3772,7 +3769,7 @@ export default function App() {
         setCondition(fbCond);
         setOpp(fbOpp);
         setMyScore(0); setOppScore(0); setWickets(0);
-        setQi(0); setDone([]); setTLeft(15);
+        setQi(0); setDone([]); setTLeft(20);
         setSel(null); setRev(false); setCStreak(0); setMaxStreak(0);
         setPuFF(true); setPuTF(true); setPuFH(true);
         setFrozen(false); setFreeHit(false); setHidden([]);
@@ -3841,7 +3838,7 @@ export default function App() {
     setCondition(cond);
     setOpp(o);
     setMyScore(0); setOppScore(0); setWickets(0);
-    setQi(0); setDone([]); setTLeft(15);
+    setQi(0); setDone([]); setTLeft(20);
     setSel(null); setRev(false); setCStreak(0); setMaxStreak(0);
     setPuFF(true); setPuTF(true); setPuFH(true);
     setFrozen(false); setFreeHit(false); setHidden([]);
@@ -3916,7 +3913,7 @@ export default function App() {
       // Explicitly re-set condition to ensure it persists
       setCondition(currentCondition);
       setInnings(2); inningsRef.current = 2;
-      setQi(0); setTLeft(15); setSel(null); setRev(false); setDone([]);
+      setQi(0); setTLeft(20); setSel(null); setRev(false); setDone([]);
       setCStreak(0); setWickets(0);
       setPuFF(true); setPuTF(true); setPuFH(true);
       setFrozen(false); setFreeHit(false); setHidden([]);
@@ -3980,7 +3977,7 @@ export default function App() {
             // Explicitly re-set condition to ensure it persists in innings 2
             setCondition(cond);
             setInnings(2); inningsRef.current = 2;
-            setQi(0); setTLeft(15); setSel(null); setRev(false); setDone([]);
+            setQi(0); setTLeft(20); setSel(null); setRev(false); setDone([]);
             setCStreak(0); setWickets(0);
             setPuFF(true); setPuTF(true); setPuFH(true);
             setFrozen(false); setFreeHit(false); setHidden([]);
@@ -3998,12 +3995,18 @@ export default function App() {
           qStartRef.current = Date.now();
         }
       } else {
-        // Player bats first — build fresh questions now
-        let questions = null;
-        try { questions = buildQuestionSet(null, cond); } catch(e) { questions = null; }
-        if (!questions || questions.length === 0) questions = [...ALL_QUESTIONS].sort(() => Math.random() - .5).slice(0, 6);
-        qsRef.current = questions;
-        setQs(questions);
+        // Player bats first
+        // Check if we already have seeded questions (from friend challenge or PvP)
+        let questions = qsRef.current && qsRef.current.length > 0 ? qsRef.current : null;
+        
+        // Only build fresh questions if we don't have seeded ones
+        if (!questions || questions.length === 0) {
+          try { questions = buildQuestionSet(null, cond); } catch(e) { questions = null; }
+          if (!questions || questions.length === 0) questions = [...ALL_QUESTIONS].sort(() => Math.random() - .5).slice(0, 6);
+          qsRef.current = questions;
+          setQs(questions);
+        }
+        
         setScreen("match");
         qStartRef.current = Date.now();
       }
@@ -4033,19 +4036,27 @@ export default function App() {
 
   useEffect(() => {
     if (!audioUnlockedRef.current) return; // wait for first tap
-    if (!sfxOn) { stopBgMusic(); return; }
+    if (!sfxOn) { stopBgMusic(); stopIplSting(); return; }
     if (screen === "conditions") {
       setBgMusicVolume(0.07);
       playIplSting();
-      setTimeout(() => setBgMusicVolume(0.18), 5500);
+      const timeout = setTimeout(() => setBgMusicVolume(0.18), 5500);
+      return () => {
+        clearTimeout(timeout);
+        stopIplSting(); // Stop IPL music when leaving conditions screen
+      };
     } else if (["auth","landing","setup","finding","toss"].includes(screen)) {
+      stopIplSting(); // Ensure IPL music is stopped
       startBgMusic();
       setBgMusicVolume(0.18);
     } else if (screen === "match") {
+      stopIplSting(); // Ensure IPL music is stopped
       setBgMusicVolume(0.06);
     } else if (screen === "result") {
+      stopIplSting(); // Ensure IPL music is stopped
       stopBgMusic();
     } else {
+      stopIplSting(); // Ensure IPL music is stopped
       setBgMusicVolume(0.12);
     }
   }, [screen, sfxOn]);
@@ -4062,7 +4073,7 @@ export default function App() {
         qsRef.current = freshQs;
       }
       setQs([...freshQs]);
-      setTLeft(15); // reset timer so player gets full time
+      setTLeft(20); // reset timer so player gets full time
     }
   }, [screen, qi]);
 
@@ -4139,13 +4150,13 @@ export default function App() {
       setTimeout(() => {
         setShowPressure(false);
         setQi(nextQi);
-        setTLeft(15); setSel(null); setRev(false);
+        setTLeft(20); setSel(null); setRev(false);
         setFrozen(false); setCmntLine(""); setHidden([]);
       }, 3200);
       return;
     }
     setQi(nextQi);
-    setTLeft(15); setSel(null); setRev(false);
+    setTLeft(20); setSel(null); setRev(false);
     setFrozen(false); setCmntLine(""); setHidden([]);
   }, [qi, innings]);
 
@@ -4173,7 +4184,7 @@ export default function App() {
         setSoQi(0);
         setSoSel(null);
         setSoRev(false);
-        setSoTLeft(15);
+        setSoTLeft(20);
         setSoTimes([]);
         setSuperOverWinner(null);
         
@@ -4224,7 +4235,7 @@ export default function App() {
     setSoQi(0);
     setSoSel(null);
     setSoRev(false);
-    setSoTLeft(15);
+    setSoTLeft(20);
     setSoTimes([]);
     setSuperOverWinner(null);
     
@@ -4359,7 +4370,7 @@ export default function App() {
       simulateSoOpp();
     } else {
       setSoQi(next);
-      setSoSel(null); setSoRev(false); setSoTLeft(15);
+      setSoSel(null); setSoRev(false); setSoTLeft(20);
       soStartRef.current = Date.now();
     }
   }, [soQi]);
@@ -4688,7 +4699,7 @@ export default function App() {
     }
   }, [screen, loading, showBetween, q, innings, condition]);
   
-  const tPct = (tLeft / 15) * 100;
+  const tPct = (tLeft / 20) * 100;
   const tCol = frozen ? "#7c3aed" : tLeft > 8 ? "#0369a1" : tLeft > 4 ? "#d97706" : "#dc2626";
   const rawWon   = myScore > oppScore;
   const rawTie   = myScore === oppScore;
@@ -4869,9 +4880,9 @@ export default function App() {
                   <table className="rt">
                     <thead><tr><th>Answer Speed</th><th>Result</th><th>Runs</th></tr></thead>
                     <tbody>
-                      <tr><td>1–5 seconds left</td><td>⚡ Blazing fast</td><td><span className="run-badge" style={{background:"rgba(21,128,61,.12)",color:"var(--green)"}}>SIX — 6 runs</span></td></tr>
-                      <tr><td>6–10 seconds left</td><td>🔥 Quick</td><td><span className="run-badge" style={{background:"rgba(3,105,161,.12)",color:"var(--blue)"}}>FOUR — 4 runs</span></td></tr>
-                      <tr><td>11–14 seconds left</td><td>✅ Answered</td><td><span className="run-badge" style={{background:"rgba(180,83,9,.1)",color:"var(--amber)"}}>TWO — 2 runs</span></td></tr>
+                      <tr><td>13–20 seconds left</td><td>⚡ Blazing fast</td><td><span className="run-badge" style={{background:"rgba(21,128,61,.12)",color:"var(--green)"}}>SIX — 6 runs</span></td></tr>
+                      <tr><td>6–12 seconds left</td><td>🔥 Quick</td><td><span className="run-badge" style={{background:"rgba(3,105,161,.12)",color:"var(--blue)"}}>FOUR — 4 runs</span></td></tr>
+                      <tr><td>0–5 seconds left</td><td>✅ Answered</td><td><span className="run-badge" style={{background:"rgba(180,83,9,.1)",color:"var(--amber)"}}>TWO — 2 runs</span></td></tr>
                       <tr><td>Wrong answer</td><td>❌ Wicket!</td><td><span className="run-badge" style={{background:"rgba(220,38,38,.1)",color:"var(--red)"}}>–5 runs</span></td></tr>
                       <tr><td>Timeout</td><td>🏃 Run out</td><td><span className="run-badge" style={{background:"rgba(220,38,38,.08)",color:"var(--red)"}}>–3 runs</span></td></tr>
                     </tbody>
@@ -5957,6 +5968,184 @@ export default function App() {
           );
         })()}
 
+        {/* ══════ CHASE TARGET SCREEN ══════ */}
+        {screen === "chase_target" && (() => {
+          const [countdown, setCountdown] = useState(5);
+          const target = oppScore + 1;
+          
+          useEffect(() => {
+            const timer = setInterval(() => {
+              setCountdown(c => {
+                if (c <= 1) {
+                  clearInterval(timer);
+                  // Start player's chase innings
+                  setInnings(2);
+                  inningsRef.current = 2;
+                  setQi(0);
+                  setTLeft(20);
+                  setSel(null);
+                  setRev(false);
+                  setDone([]);
+                  setMyScore(0);
+                  setWickets(0);
+                  setCStreak(0);
+                  setMaxStreak(0);
+                  setResponseTimes([]);
+                  setHidden([]);
+                  setFrozen(false);
+                  setShowBetween(false);
+                  setScreen("match");
+                  qStartRef.current = Date.now();
+                  return 0;
+                }
+                return c - 1;
+              });
+            }, 1000);
+            return () => clearInterval(timer);
+          }, []);
+          
+          return (
+            <div style={{
+              flex: 1,
+              display: "flex",
+              flexDirection: "column",
+              alignItems: "center",
+              justifyContent: "center",
+              padding: "40px 24px",
+              background: "linear-gradient(160deg, #0f172a 0%, #1e293b 100%)",
+              gap: 24
+            }}>
+              {/* Target Info */}
+              <div style={{
+                textAlign: "center",
+                animation: "scaleIn 0.4s ease-out"
+              }}>
+                <div style={{
+                  fontFamily: "var(--fm)",
+                  fontSize: 11,
+                  letterSpacing: 3,
+                  textTransform: "uppercase",
+                  color: "rgba(255,255,255,0.5)",
+                  fontWeight: 700,
+                  marginBottom: 16
+                }}>
+                  Chase Target
+                </div>
+                
+                <div style={{
+                  fontFamily: "var(--fd)",
+                  fontSize: 72,
+                  fontWeight: 800,
+                  color: "#fff",
+                  lineHeight: 1,
+                  marginBottom: 12,
+                  textShadow: "0 4px 20px rgba(0,0,0,0.3)"
+                }}>
+                  {target}
+                </div>
+                
+                <div style={{
+                  fontFamily: "var(--fm)",
+                  fontSize: 14,
+                  color: "rgba(255,255,255,0.6)",
+                  marginBottom: 32
+                }}>
+                  runs to win
+                </div>
+              </div>
+
+              {/* Balls Available */}
+              <div style={{
+                background: "rgba(255,255,255,0.05)",
+                border: "1px solid rgba(255,255,255,0.1)",
+                borderRadius: 16,
+                padding: "20px 32px",
+                textAlign: "center"
+              }}>
+                <div style={{
+                  fontFamily: "var(--fm)",
+                  fontSize: 11,
+                  letterSpacing: 2,
+                  textTransform: "uppercase",
+                  color: "rgba(255,255,255,0.5)",
+                  fontWeight: 700,
+                  marginBottom: 12
+                }}>
+                  You Have
+                </div>
+                <div style={{
+                  fontFamily: "var(--fd)",
+                  fontSize: 48,
+                  fontWeight: 800,
+                  color: "#22d3ee",
+                  lineHeight: 1,
+                  marginBottom: 8
+                }}>
+                  6
+                </div>
+                <div style={{
+                  fontFamily: "var(--fm)",
+                  fontSize: 13,
+                  color: "rgba(255,255,255,0.6)"
+                }}>
+                  balls to score {target} runs
+                </div>
+              </div>
+
+              {/* Countdown */}
+              <div style={{
+                marginTop: 24,
+                textAlign: "center"
+              }}>
+                <div style={{
+                  fontFamily: "var(--fm)",
+                  fontSize: 13,
+                  color: "#fbbf24",
+                  fontWeight: 700,
+                  marginBottom: 16
+                }}>
+                  🏏 Ready to bat in {countdown}s...
+                </div>
+                <button
+                  onClick={() => {
+                    setInnings(2);
+                    inningsRef.current = 2;
+                    setQi(0);
+                    setTLeft(20);
+                    setSel(null);
+                    setRev(false);
+                    setDone([]);
+                    setMyScore(0);
+                    setWickets(0);
+                    setCStreak(0);
+                    setMaxStreak(0);
+                    setResponseTimes([]);
+                    setHidden([]);
+                    setFrozen(false);
+                    setShowBetween(false);
+                    setScreen("match");
+                    qStartRef.current = Date.now();
+                  }}
+                  style={{
+                    padding: "16px 40px",
+                    borderRadius: 12,
+                    background: "linear-gradient(135deg, #f59e0b, #d97706)",
+                    border: "none",
+                    color: "#fff",
+                    fontFamily: "var(--fh)",
+                    fontSize: 16,
+                    fontWeight: 700,
+                    cursor: "pointer",
+                    boxShadow: "0 4px 20px rgba(245,158,11,0.4)"
+                  }}
+                >
+                  🏏 Start Batting Now
+                </button>
+              </div>
+            </div>
+          );
+        })()}
+
         {/* ══════ WATCHING — OPP BATS FIRST or CHASES ══════ */}
         {(screen === "watching" || screen === "watching_chase") && (
           <WatchingScreen
@@ -5968,17 +6157,8 @@ export default function App() {
             isPvp={matchType === "pvp"}
             onProceed={() => {
               if (screen === "watching_chase") {
-                // For chase scenario, go directly to result/Super Over
-                const playerScore = myScoreRef.current;
-                const oppFinalScore = oppScore;
-                console.log("🏁 Chase complete button clicked - Player:", playerScore, "Opponent:", oppFinalScore);
-                if (playerScore === oppFinalScore) {
-                  console.log("🎯 Tie! Starting Super Over...");
-                  startSuperOver();
-                } else {
-                  console.log("📊 Going to result screen...");
-                  setScreen("result");
-                }
+                // Show chase target screen first
+                setScreen("chase_target");
               } else if (watchProceedRef.current) {
                 // For innings 1 scenario, use the ref callback
                 watchProceedRef.current();
@@ -6161,11 +6341,11 @@ export default function App() {
                     <span className="t-num" style={{ color: tCol }}>{frozen ? "⏱" : tLeft}</span>
                     <span className="t-lbl">{frozen ? "paused" : "sec"}</span>
                     <div className="runs-preview" style={{
-                        background: tLeft >= 11 ? "rgba(21,128,61,.12)" : tLeft >= 6 ? "rgba(3,105,161,.12)" : "rgba(180,83,9,.12)",
-                        color: tLeft >= 11 ? "var(--green)" : tLeft >= 6 ? "var(--blue)" : "var(--amber)",
-                        border: `1px solid ${tLeft >= 11 ? "rgba(21,128,61,.25)" : tLeft >= 6 ? "rgba(3,105,161,.25)" : "rgba(180,83,9,.25)"}`,
+                        background: tLeft >= 13 ? "rgba(21,128,61,.12)" : tLeft >= 6 ? "rgba(3,105,161,.12)" : "rgba(180,83,9,.12)",
+                        color: tLeft >= 13 ? "var(--green)" : tLeft >= 6 ? "var(--blue)" : "var(--amber)",
+                        border: `1px solid ${tLeft >= 13 ? "rgba(21,128,61,.25)" : tLeft >= 6 ? "rgba(3,105,161,.25)" : "rgba(180,83,9,.25)"}`,
                       }}>
-                        {tLeft >= 11 ? "⚡ SIX" : tLeft >= 6 ? "🔥 FOUR" : "✅ TWO"}
+                        {tLeft >= 13 ? "⚡ SIX" : tLeft >= 6 ? "🔥 FOUR" : "✅ TWO"}
                         {freeHit && <span style={{marginLeft:5,color:"var(--amber)"}}>🛡</span>}
                       </div>
                   </div>
@@ -6199,7 +6379,7 @@ export default function App() {
                         "--qColorBorder": sc.border,
                       }}>
                         <div className="q-badge">{sc.label}</div>
-                        <div style={{ fontSize: 14, fontWeight: 500, lineHeight: 1.6 }}>{q.q}</div>
+                        <div style={{ fontSize: 16, fontWeight: 500, lineHeight: 1.6 }}>{q.q}</div>
                       </div>
                     );
                   })()}
@@ -6653,7 +6833,7 @@ export default function App() {
 
         {inSuperOver && soPhase === "batting" && soQs[soQi] && (() => {
           const q = soQs[soQi];
-          const tPctSo = (soTLeft / 15) * 100;
+          const tPctSo = (soTLeft / 20) * 100;
           const tColSo = soTLeft > 8 ? "#0369a1" : soTLeft > 4 ? "#d97706" : "#dc2626";
           return (
             <div style={{ position:"fixed", inset:0, zIndex:300, background:"linear-gradient(180deg,#0a1a0a 0%,#1c1917 100%)", display:"flex", flexDirection:"column", overflow:"hidden" }}>
@@ -7385,9 +7565,13 @@ export default function App() {
               const margin  = won ? (entryFee.prize - entryFee.entry) : null;
               const scoreEmoji = won ? "🏆" : "🏏";
               const scoreLabel = `${myScore} runs`;
-              // Encode challenge: score|condition|opp_accuracy so friend chases this score
-              const challengeCode = btoa(`${myScore}|${condition?.id || "flat"}|${opp?.acc || 0.6}`).replace(/=/g,'');
-              const challengeUrl  = `${APP_URL}?challenge=${challengeCode}`;
+              
+              // NEW: Use seeded friend challenge format (fc=) for fair competition
+              // Generate a new seed for this challenge so both players get same questions
+              const challengeSeed = Date.now() & 0x7FFFFFFF;
+              // Format: nick|seed|conditionId|score
+              const fcCode = btoa(`${nick || "Player"}|${challengeSeed}|${condition?.id || "flat"}|${myScore}`).replace(/=/g,'');
+              const challengeUrl = `${APP_URL}?fc=${fcCode}`;
 
               const shareText = won
                 ? `${scoreEmoji} I scored ${myScore} runs & won${entryFee.entry > 0 ? ` ₹${margin}` : ""} on Cricket Clash!\n🏏 vs ${opp?.name} · ${condition?.name}\n\nCan you beat my score? Chase it 👇\n${challengeUrl}`
