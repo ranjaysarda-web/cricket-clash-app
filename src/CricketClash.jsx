@@ -3096,8 +3096,8 @@ const CRICKET_FACTS = [
 
 // WatchingScreen countdown panel component (hoisted to prevent recreation)
 const ProceedPanel = ({ label, onProceed }) => {
-  const [secs, setSecs] = React.useState(5);
-  React.useEffect(() => {
+  const [secs, setSecs] = useState(5);
+  useEffect(() => {
     const t = setInterval(() => {
       setSecs(s => {
         if (s <= 1) { clearInterval(t); if (onProceed) onProceed(); return 0; }
@@ -3166,43 +3166,8 @@ function WatchingScreen({ opp, feed, finalScore, label, target, isPvp, onProceed
 
   const visibleFeed = feed.slice(0, visibleCount);
 
-  // DEBUGGING: Add visual indicator
-  console.log("🎬 WatchingScreen rendering:", { 
-    screen: "watching_chase", 
-    opp: opp?.name, 
-    feedLength: feed?.length, 
-    visibleCount,
-    label,
-    target 
-  });
-
   return (
-    <div className="screen watch-scr" style={{
-      position: "relative",
-      zIndex: 100, // Force above everything
-      background: "#1c1917", // Ensure background is set
-      minHeight: "100vh"
-    }}>
-      {/* DEBUG BANNER */}
-      <div style={{
-        position: "fixed",
-        top: 0,
-        left: 0,
-        right: 0,
-        background: "red",
-        color: "white",
-        padding: "10px",
-        zIndex: 9999,
-        fontSize: 12,
-        fontWeight: "bold",
-        textAlign: "center"
-      }}>
-        🔴 WATCHING SCREEN ACTIVE - If you see this, component is rendering!
-        <div style={{ fontSize: 10, marginTop: 4 }}>
-          Label: {label} | Feed: {feed?.length} balls | Visible: {visibleCount}
-        </div>
-      </div>
-
+    <div className="screen watch-scr">
       <div style={{ fontFamily:"var(--fm)", fontSize:9, fontWeight:700, letterSpacing:3, color:"rgba(255,255,255,.45)", textTransform:"uppercase" }}>
         {isPvp ? "🔴 Live" : "Live"} — Opponent's {label}
       </div>
