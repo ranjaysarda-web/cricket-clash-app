@@ -3166,8 +3166,43 @@ function WatchingScreen({ opp, feed, finalScore, label, target, isPvp, onProceed
 
   const visibleFeed = feed.slice(0, visibleCount);
 
+  // DEBUGGING: Add visual indicator
+  console.log("🎬 WatchingScreen rendering:", { 
+    screen: "watching_chase", 
+    opp: opp?.name, 
+    feedLength: feed?.length, 
+    visibleCount,
+    label,
+    target 
+  });
+
   return (
-    <div className="screen watch-scr">
+    <div className="screen watch-scr" style={{
+      position: "relative",
+      zIndex: 100, // Force above everything
+      background: "#1c1917", // Ensure background is set
+      minHeight: "100vh"
+    }}>
+      {/* DEBUG BANNER */}
+      <div style={{
+        position: "fixed",
+        top: 0,
+        left: 0,
+        right: 0,
+        background: "red",
+        color: "white",
+        padding: "10px",
+        zIndex: 9999,
+        fontSize: 12,
+        fontWeight: "bold",
+        textAlign: "center"
+      }}>
+        🔴 WATCHING SCREEN ACTIVE - If you see this, component is rendering!
+        <div style={{ fontSize: 10, marginTop: 4 }}>
+          Label: {label} | Feed: {feed?.length} balls | Visible: {visibleCount}
+        </div>
+      </div>
+
       <div style={{ fontFamily:"var(--fm)", fontSize:9, fontWeight:700, letterSpacing:3, color:"rgba(255,255,255,.45)", textTransform:"uppercase" }}>
         {isPvp ? "🔴 Live" : "Live"} — Opponent's {label}
       </div>
@@ -4215,14 +4250,19 @@ export default function App() {
 
   // Handle Super Over opt-in decision
   const handleSuperOverDecision = useCallback((playerAccepts) => {
+    console.log("🎮 Player decision:", playerAccepts ? "ACCEPT" : "DECLINE");
     setSoPlayerDecision(playerAccepts);
     
     // Simulate opponent decision (70% accept rate for competitive AI)
     const oppAccepts = Math.random() < 0.7;
+    console.log("🤖 Opponent decision:", oppAccepts ? "ACCEPT" : "DECLINE");
     setSoOppDecision(oppAccepts);
     
     // Show "waiting for opponent" briefly
+    console.log("⏳ Starting 1.5s wait timer...");
     setTimeout(() => {
+      console.log("⏰ Wait timer complete. Player:", playerAccepts, "Opponent:", oppAccepts);
+      
       if (playerAccepts && oppAccepts) {
         // Both accepted → Start Super Over
         console.log("✅ Both players accepted Super Over!");
@@ -4237,12 +4277,17 @@ export default function App() {
         const soQsPicked = fresh.slice(0, 3).map(q => ({
           ...q, cat: q.cat || "TRIVIA", coachNote: q.coachNote || "", skill: q.skill || "history"
         }));
+        console.log("📝 Picked", soQsPicked.length, "questions for Super Over");
         setSoQs(soQsPicked);
         
         // Start Super Over intro
+        console.log("🎬 Setting phase to 'intro'");
         setSoPhase("intro");
         snd("suspense");
+        
+        console.log("⏳ Starting 2.8s intro timer...");
         setTimeout(() => {
+          console.log("⏰ Intro complete. Setting phase to 'batting'");
           setSoPhase("batting");
           soStartRef.current = Date.now();
         }, 2800);
@@ -4253,6 +4298,7 @@ export default function App() {
         
         // Refund entry fee via backend
         if (matchId && loggedIn && entryFee.entry > 0) {
+          console.log("💰 Calling backend to refund entry fee...");
           api(`/matches/${matchId}/complete`, {
             method: "POST",
             body: {
@@ -4262,25 +4308,29 @@ export default function App() {
               super_over_declined: true,
             },
           }).then(() => {
+            console.log("✅ Backend refund successful");
             // Refresh wallet
             return api("/wallet");
           }).then(walletData => {
             if (walletData?.wallet?.balance !== undefined) {
+              console.log("💳 Wallet updated:", walletData.wallet.balance);
               setWallet(walletData.wallet.balance);
             }
           }).catch(err => {
-            console.error("Match finalization error:", err);
+            console.error("❌ Match finalization error:", err);
           });
         }
         
         // Show declined message briefly then go to result
+        console.log("⏳ Starting 3s declined screen timer...");
         setTimeout(() => {
+          console.log("⏰ Declined timer complete. Going to result screen");
           setInSuperOver(false);
           setScreen("result");
         }, 3000);
       }
     }, 1500); // 1.5s to show "opponent is deciding..."
-  }, [matchId, loggedIn, entryFee, myScore, oppScore]);
+  }, [matchId, loggedIn, entryFee, myScore, oppScore, snd]);
 
 
   // Super Over timer
