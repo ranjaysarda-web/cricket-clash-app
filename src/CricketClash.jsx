@@ -162,7 +162,7 @@ const BADGE_DEFS = [
   { id:"streak_10",     icon:"🌋", title:"Unstoppable",         desc:"10 match win streak",                   rarity:"epic"    },
   { id:"legend_rank",   icon:"👑", title:"Cricket Legend",      desc:"Reach Cricket Legend career stage",     rarity:"legendary"},
   { id:"coin_spender",  icon:"🪙", title:"High Roller",         desc:"Spend 500 CricCoins",                   rarity:"rare"    },
-  { id:"power_play",    icon:"🛡", title:"Power Play Master",   desc:"Use Power Play in 10 matches",          rarity:"common"  },
+  { id:"free_hit",       icon:"🛡", title:"Free Hit Master",      desc:"Use Free Hit in 10 matches",          rarity:"common"  },
   { id:"all_skills",    icon:"🌈", title:"All-Rounder",         desc:"Reach Level 5 in all 5 skills",         rarity:"legendary"},
   { id:"first_match",   icon:"🎮", title:"Debut",               desc:"Play your first match",                 rarity:"common"  },
 ];
@@ -177,8 +177,8 @@ const STORE_ITEMS = [
   { id:"coins_400",  category:"coins",   label:"Pro Pack",        desc:"400 CricCoins + 60 bonus",  price:"₹199",  coins:460,  icon:"💎" },
   { id:"coins_1000", category:"coins",   label:"Legend Pack",     desc:"1000 CricCoins + 200 bonus",price:"₹399",  coins:1200, icon:"👑" },
   { id:"pu_timeout", category:"powerups",label:"Timeout Pack",    desc:"5 extra Timeouts",          price:30,      coins:0,    icon:"⏱" },
-  { id:"pu_5050",    category:"powerups",label:"50/50 Pack",      desc:"5 extra 50/50s",            price:30,      coins:0,    icon:"⚡" },
-  { id:"pu_pp",      category:"powerups",label:"Power Play Pack", desc:"5 extra Power Plays",       price:30,      coins:0,    icon:"🏏" },
+  { id:"pu_third_umpire", category:"powerups",label:"Third Umpire Pack", desc:"5 extra Third Umpires",     price:30,      coins:0,    icon:"⚡" },
+  { id:"pu_fh",           category:"powerups",label:"Free Hit Pack",     desc:"5 extra Free Hits",          price:30,      coins:0,    icon:"🏏" },
   { id:"xp_boost",   category:"boosts",  label:"XP Booster",      desc:"2× XP for 3 matches",       price:40,      coins:0,    icon:"🚀" },
   { id:"streak_shld",category:"boosts",  label:"Streak Shield",   desc:"Protect streak from 1 loss",price:25,      coins:0,    icon:"🛡" },
   { id:"gold_name",  category:"cosmetic",label:"Gold Name",        desc:"Golden username on leaderboard",price:100, coins:0,    icon:"✨" },
@@ -2798,7 +2798,7 @@ html,body{background:var(--bg);color:var(--txt);font-family:var(--fh);-webkit-fo
 .s-val{font-family:var(--fd);font-size:21px;font-weight:700;letter-spacing:-.3px}
 
 /* Options */
-.opts{display:grid;grid-template-columns:1fr 1fr;gap:8px;flex:1;min-height:0}
+.opts{display:grid;grid-template-columns:1fr 1fr;gap:8px;flex:1;min-height:0;padding-bottom:40px;overflow-y:auto}
 .opt{background:var(--s0);border:1.5px solid var(--rim2);border-radius:var(--r2);padding:clamp(10px,2.5vw,15px) clamp(10px,2.5vw,14px);font-family:var(--fh);font-size:clamp(13px,3.8vw,15px);font-weight:500;color:var(--txt);cursor:pointer;transition:all .18s;display:flex;align-items:flex-start;gap:8px;text-align:left;line-height:1.35;position:relative;overflow:hidden;box-shadow:var(--sh-sm)}
 .opt-ltr{width:26px;height:26px;min-width:26px;border-radius:8px;background:var(--s2);display:flex;align-items:center;justify-content:center;font-family:var(--fm);font-size:9px;font-weight:700;color:var(--sub);border:1.5px solid var(--dim);transition:all .18s;flex-shrink:0;margin-top:1px}
 .opt:hover:not(:disabled){border-color:rgba(180,83,9,.4);background:var(--amberBg);transform:translateY(-1px);box-shadow:var(--sh)}
@@ -3954,10 +3954,13 @@ export default function App() {
             const ok = Math.random() < oppAcc;
             // Generate valid runs only: 2, 4, or 6 (matching player's scoring system)
             const runs = ok ? (Math.random() < 0.3 ? 6 : Math.random() < 0.5 ? 4 : 2) : 0;
-            if (ok) score += runs; else score = Math.max(0, score - 5);
-            feed.push({ qi: i, score: Math.max(0, score), ok });
+            if (ok) {
+              score += runs;
+            } else {
+              score = Math.max(0, score - 5); // Wrong answer: -5 runs
+            }
+            feed.push({ qi: i, score: score, ok });
           }
-          score = Math.max(0, score);
           setOppScore(score);
           setOppLiveFeed(feed);
           setScreen("watching");
@@ -4377,23 +4380,26 @@ export default function App() {
       const ok = Math.random() < oppAcc;
       const fakeT = Math.floor(Math.random() * 15) + 1;
       const runs = ok ? runsForTime(fakeT) : 0;
-      if (ok) score += runs;
-      else score = Math.max(0, score - 5);
-      feed.push({ qi: i, score: Math.max(0, score), ok });
+      if (ok) {
+        score += runs;
+      } else {
+        score = Math.max(0, score - 5); // Wrong answer: -5 runs
+      }
+      feed.push({ qi: i, score: score, ok });
     }
-    const finalOppScore = Math.max(0, score);
-    setOppScore(finalOppScore);
+    setOppScore(score);
     setOppLiveFeed(feed);
     setScreen("watching_chase");
     
-    console.log("🏏 Opponent chase complete. Player:", myScoreRef.current, "Opponent:", finalOppScore);
+    const oppFinalScore = score; // Capture score for use in setTimeout
+    console.log("🏏 Opponent chase complete. Player:", myScoreRef.current, "Opponent:", oppFinalScore);
     
     setTimeout(() => {
       // Use ref to get current score (avoid stale closure)
       const playerScore = myScoreRef.current;
-      console.log("⏰ Timeout fired. Checking result - Player:", playerScore, "Opponent:", finalOppScore);
+      console.log("⏰ Timeout fired. Checking result - Player:", playerScore, "Opponent:", oppFinalScore);
       
-      if (playerScore === finalOppScore) {
+      if (playerScore === oppFinalScore) {
         // TIE → start Super Over
         console.log("🎯 Opponent chase resulted in tie! Starting Super Over...");
         setTimeout(() => startSuperOver(), 100);
@@ -4508,7 +4514,7 @@ export default function App() {
     if (!puFF || rev) return;
     const q = qsRef.current[qi];
     const bad = [0,1,2,3].filter(i => i !== q?.ans).sort(() => Math.random() - .5).slice(0, 2);
-    setHidden(bad); setPuFF(false); snd("pu"); showToast("⚡ 50/50 — two answers removed");
+    setHidden(bad); setPuFF(false); snd("pu"); showToast("⚡ Third Umpire — two answers removed");
   }, [puFF, rev, qi, snd, showToast]);
 
   const doFreeze = useCallback(() => {
@@ -4524,7 +4530,7 @@ export default function App() {
       if (next >= 10) setBadges(b => { const n = new Set(b); n.add("power_play"); return n; });
       return next;
     });
-    setFreeHit(true); setPuFH(false); snd("pu"); showToast("🏏 Power Play active — next wrong: no wicket!");
+    setFreeHit(true); setPuFH(false); snd("pu"); showToast("🏏 Free Hit active — next wrong: no wicket!");
   }, [puFH, rev, freeHit, snd, showToast]);
 
   // ── Store purchase handler ───────────────────────────────────────────────
@@ -4540,8 +4546,8 @@ export default function App() {
     setCoinsSpent(newSpent);
     if (newSpent >= 500) setBadges(b => { const n = new Set(b); n.add("coin_spender"); return n; });
     if (item.id === "pu_timeout") { setExtraPowerUps(p => ({...p, timeout: p.timeout+5})); showToast("⏱ 5 Timeouts added!"); }
-    else if (item.id === "pu_5050") { setExtraPowerUps(p => ({...p, ff: p.ff+5})); showToast("⚡ 5 × 50/50s added!"); }
-    else if (item.id === "pu_pp")   { setExtraPowerUps(p => ({...p, pp: p.pp+5})); showToast("🏏 5 Power Plays added!"); }
+    else if (item.id === "pu_third_umpire") { setExtraPowerUps(p => ({...p, ff: p.ff+5})); showToast("⚡ 5 × Third Umpires added!"); }
+    else if (item.id === "pu_fh")           { setExtraPowerUps(p => ({...p, pp: p.pp+5})); showToast("🏏 5 Free Hits added!"); }
     else if (item.id === "xp_boost")   { setXpBoostLeft(3); showToast("🚀 2× XP for your next 3 matches!"); }
     else if (item.id === "streak_shld"){ showToast("🛡 Streak Shield active — your streak is protected!"); }
     else if (item.id === "gold_name")  { setGoldName(true); showToast("✨ Golden username unlocked!"); }
@@ -4858,9 +4864,9 @@ export default function App() {
                 <div className="rules-sec-lbl">Power-Ups (one per match)</div>
                 <div className="rule-card">
                   {[
-                    ["⚡","50/50","Eliminates two wrong options, leaving just the correct answer and one decoy. Perfect when you've narrowed it down but can't decide."],
+                    ["⚡","Third Umpire","Eliminates two wrong options, leaving just the correct answer and one decoy. Like the third umpire reviewing a close decision."],
                     ["⏱","Timeout","Stops the countdown for 10 seconds so you can think without pressure. Use it on a question you know but need a moment to recall."],
-                    ["🏏","Power Play","Your free hit — activate before answering and a wrong answer costs no wicket and no run penalty. Like the Power Play in cricket, it's your one chance to attack without consequence."],
+                    ["🏏","Free Hit","Your free hit — activate before answering and a wrong answer costs no wicket and no run penalty. Like the Free Hit in cricket, it's your one chance to attack without consequence."],
                   ].map(([icon,title,desc]) => (
                     <div key={title} className="rule-row">
                       <div className="ri">{icon}</div>
@@ -6149,9 +6155,9 @@ export default function App() {
                 {/* Power-ups */}
                 <div className="pu-strip">
                   <span className="pu-lbl">Lifelines</span>
-                  <button className="pu" disabled={!puFF || rev} onClick={doFF}>⚡ 50/50</button>
+                  <button className="pu" disabled={!puFF || rev} onClick={doFF}>📺 DRS</button>
                   <button className="pu" disabled={!puTF || rev} onClick={doFreeze}>⏱ Timeout</button>
-                  <button className="pu" disabled={!puFH || rev || freeHit} onClick={doFreeHit} style={freeHit ? {borderColor:"var(--amber)",background:"var(--amberBg)"} : {}}>🏏 Power Play</button>
+                  <button className="pu" disabled={!puFH || rev || freeHit} onClick={doFreeHit} style={freeHit ? {borderColor:"var(--amber)",background:"var(--amberBg)"} : {}}>🛡 Free Hit</button>
                 </div>
 
                 {/* Question */}
@@ -6872,15 +6878,16 @@ export default function App() {
           <div className="screen" style={{ 
             display: "flex", 
             flexDirection: "column", 
-            background: won ? "linear-gradient(160deg, #f0fdf4 0%, #ecfdf5 100%)" : isTie ? "linear-gradient(160deg, #eff6ff 0%, #dbeafe 100%)" : "linear-gradient(160deg, #fef2f2 0%, #fef2f2 100%)",
-            padding: "24px 20px",
-            gap: 20,
-            overflowY: "auto"
+            background: won ? "linear-gradient(160deg, #f0fdf4 0%, #ecfdf5 100%)" : isTie ? "linear-gradient(160deg, #eff6ff 0%, #dbeafe 100%)" : "linear-gradient(160deg, #fef2f2 0%, #fee2e2 100%)",
+            padding: "32px 20px 24px",
+            gap: 24,
+            overflowY: "auto",
+            minHeight: "100vh"
           }}>
             {won && <Confetti />}
             
-            {/* Trophy icon - cleaner */}
-            <div style={{ fontSize: 64, textAlign: "center", margin: "8px 0" }}>
+            {/* Trophy icon */}
+            <div style={{ fontSize: 72, textAlign: "center", marginTop: 8 }}>
               {isTie ? "⚡" : won ? "🏆" : "💪"}
             </div>
 
@@ -6888,44 +6895,46 @@ export default function App() {
             {superOverWinner && (
               <div style={{ 
                 fontFamily: "var(--fm)", 
-                fontSize: 9, 
+                fontSize: 10, 
                 letterSpacing: 2, 
                 color: "#0ea5e9", 
                 textTransform: "uppercase", 
                 textAlign: "center",
-                fontWeight: 700
+                fontWeight: 700,
+                marginTop: -12
               }}>
-                ⚡ Via Super Over
+                ⚡ Super Over Victory
               </div>
             )}
 
-            {/* Result title - cleaner */}
+            {/* Result title */}
             <div style={{ 
               fontFamily: "var(--fd)", 
-              fontSize: 32, 
+              fontSize: 36, 
               fontWeight: 800, 
               textAlign: "center",
               color: isTie ? "#0284c7" : won ? "#15803d" : "#374151",
               letterSpacing: "-0.5px",
-              lineHeight: 1
+              lineHeight: 1,
+              marginTop: -8
             }}>
               {isTie ? "It's a Tie!" : won ? "Victory!" : "Good Try!"}
             </div>
 
-            {/* Subtitle - cleaner */}
+            {/* Subtitle */}
             <div style={{ 
-              fontSize: 13, 
+              fontSize: 14, 
               color: "#6b7280", 
               textAlign: "center",
               fontFamily: "var(--fm)",
-              lineHeight: 1.5,
-              maxWidth: 320,
-              margin: "-8px auto 0"
+              lineHeight: 1.6,
+              maxWidth: 340,
+              margin: "-12px auto 0"
             }}>
               {superOverWinner
                 ? superOverWinner === "player"
                   ? "You won the Super Over! Full match scores were level."
-                  : "Opponent won the Super Over. Full match scores were level."
+                  : `${opp?.name} won the Super Over. Full match scores were level.`
                 : isTie
                   ? `Scores level at ${myScore} runs — what a match!`
                   : won
@@ -6935,7 +6944,7 @@ export default function App() {
                     : `${opp?.name} wins. Study up and come back stronger!`}
             </div>
 
-            {/* Score comparison - cleaner card */}
+            {/* Score comparison - REDESIGNED */}
             {(() => {
               const pBatFirst = batFirst === "player";
               const leftFlag  = pBatFirst ? (country?.flag || "🏏") : opp?.flag;
@@ -6945,12 +6954,15 @@ export default function App() {
               const rightName  = pBatFirst ? opp?.name : (nick || "You");
               const rightScore = pBatFirst ? oppScore : myScore;
               const tied       = leftScore === rightScore;
+              const leftWon    = leftScore > rightScore;
+              const rightWon   = rightScore > leftScore;
+              
               return (
                 <div style={{
                   background: "#fff",
-                  borderRadius: 16,
-                  padding: "20px",
-                  boxShadow: "0 4px 12px rgba(0,0,0,.08)",
+                  borderRadius: 20,
+                  padding: "28px 24px",
+                  boxShadow: "0 8px 24px rgba(0,0,0,.12)",
                   position: "relative",
                   overflow: "hidden"
                 }}>
@@ -6960,29 +6972,48 @@ export default function App() {
                     top: 0, 
                     left: 0, 
                     right: 0, 
-                    height: 3, 
+                    height: 4, 
                     background: tied ? "#0ea5e9" : won ? "linear-gradient(90deg, #15803d, #22c55e)" : "linear-gradient(90deg, #dc2626, #f87171)" 
                   }} />
 
-                  <div style={{ display: "flex", alignItems: "center", justifyContent: "space-around", gap: 16 }}>
+                  {/* Match Type Label */}
+                  <div style={{
+                    fontFamily: "var(--fm)",
+                    fontSize: 9,
+                    letterSpacing: 2,
+                    textTransform: "uppercase",
+                    color: "#9ca3af",
+                    textAlign: "center",
+                    fontWeight: 700,
+                    marginBottom: 20
+                  }}>
+                    Final Score
+                  </div>
+
+                  <div style={{ display: "flex", alignItems: "center", justifyContent: "space-between", gap: 20 }}>
                     {/* Left player */}
-                    <div style={{ flex: 1, textAlign: "center" }}>
-                      <div style={{ fontSize: 32, marginBottom: 6 }}>{leftFlag}</div>
+                    <div style={{ 
+                      flex: 1, 
+                      textAlign: "center",
+                      opacity: leftWon || tied ? 1 : 0.5,
+                      transition: "opacity 0.3s"
+                    }}>
+                      <div style={{ fontSize: 40, marginBottom: 10 }}>{leftFlag}</div>
                       <div style={{ 
-                        fontFamily: "var(--fm)", 
-                        fontSize: 11, 
-                        color: "#6b7280",
-                        marginBottom: 8,
-                        fontWeight: 600
+                        fontFamily: "var(--fd)", 
+                        fontSize: 13, 
+                        color: "#374151",
+                        marginBottom: 12,
+                        fontWeight: 700
                       }}>
                         {leftName}
                       </div>
                       <div style={{ 
-                        fontSize: 8, 
+                        fontSize: 9, 
                         color: "#9ca3af", 
                         letterSpacing: 1,
                         textTransform: "uppercase",
-                        marginBottom: 6,
+                        marginBottom: 10,
                         fontFamily: "var(--fm)",
                         fontWeight: 600
                       }}>
@@ -6990,46 +7021,55 @@ export default function App() {
                       </div>
                       <div style={{ 
                         fontFamily: "var(--fd)", 
-                        fontSize: 36, 
+                        fontSize: 48, 
                         fontWeight: 800,
-                        color: leftScore >= rightScore ? (tied ? "#0ea5e9" : "#15803d") : "#d1d5db",
-                        lineHeight: 1
+                        color: leftWon ? "#15803d" : tied ? "#0ea5e9" : "#d1d5db",
+                        lineHeight: 1,
+                        marginBottom: 8
                       }}>
                         {leftScore}
                       </div>
-                      {leftScore > rightScore && <div style={{ fontSize: 20, marginTop: 6 }}>👑</div>}
-                      {tied && <div style={{ fontSize: 20, marginTop: 6 }}>⚡</div>}
+                      <div style={{ fontSize: 24, minHeight: 30 }}>
+                        {leftWon && "👑"}
+                        {tied && "⚡"}
+                      </div>
                     </div>
 
                     {/* VS divider */}
                     <div style={{ 
                       fontFamily: "var(--fm)", 
-                      fontSize: 10, 
+                      fontSize: 11, 
                       color: "#d1d5db",
-                      fontWeight: 700,
-                      letterSpacing: 1
+                      fontWeight: 800,
+                      letterSpacing: 1.5,
+                      padding: "0 8px"
                     }}>
                       VS
                     </div>
 
                     {/* Right player */}
-                    <div style={{ flex: 1, textAlign: "center" }}>
-                      <div style={{ fontSize: 32, marginBottom: 6 }}>{rightFlag}</div>
+                    <div style={{ 
+                      flex: 1, 
+                      textAlign: "center",
+                      opacity: rightWon || tied ? 1 : 0.5,
+                      transition: "opacity 0.3s"
+                    }}>
+                      <div style={{ fontSize: 40, marginBottom: 10 }}>{rightFlag}</div>
                       <div style={{ 
-                        fontFamily: "var(--fm)", 
-                        fontSize: 11, 
-                        color: "#6b7280",
-                        marginBottom: 8,
-                        fontWeight: 600
+                        fontFamily: "var(--fd)", 
+                        fontSize: 13, 
+                        color: "#374151",
+                        marginBottom: 12,
+                        fontWeight: 700
                       }}>
                         {rightName}
                       </div>
                       <div style={{ 
-                        fontSize: 8, 
+                        fontSize: 9, 
                         color: "#9ca3af", 
                         letterSpacing: 1,
                         textTransform: "uppercase",
-                        marginBottom: 6,
+                        marginBottom: 10,
                         fontFamily: "var(--fm)",
                         fontWeight: 600
                       }}>
@@ -7037,40 +7077,44 @@ export default function App() {
                       </div>
                       <div style={{ 
                         fontFamily: "var(--fd)", 
-                        fontSize: 36, 
+                        fontSize: 48, 
                         fontWeight: 800,
-                        color: rightScore >= leftScore ? (tied ? "#0ea5e9" : "#15803d") : "#d1d5db",
-                        lineHeight: 1
+                        color: rightWon ? "#15803d" : tied ? "#0ea5e9" : "#d1d5db",
+                        lineHeight: 1,
+                        marginBottom: 8
                       }}>
                         {rightScore}
                       </div>
-                      {rightScore > leftScore && <div style={{ fontSize: 20, marginTop: 6 }}>👑</div>}
-                      {tied && <div style={{ fontSize: 20, marginTop: 6 }}>⚡</div>}
+                      <div style={{ fontSize: 24, minHeight: 30 }}>
+                        {rightWon && "👑"}
+                        {tied && "⚡"}
+                      </div>
                     </div>
                   </div>
                 </div>
               );
             })()}
 
-            {/* Stats grid - cleaner */}
+            {/* Stats grid */}
             <div style={{ 
               display: "grid", 
               gridTemplateColumns: "repeat(4, 1fr)", 
-              gap: 10 
+              gap: 12 
             }}>
               <div style={{ 
                 background: "#fff", 
-                borderRadius: 12, 
-                padding: "14px 8px", 
+                borderRadius: 16, 
+                padding: "18px 10px", 
                 textAlign: "center",
-                boxShadow: "0 2px 6px rgba(0,0,0,.06)"
+                boxShadow: "0 4px 12px rgba(0,0,0,.08)"
               }}>
                 <div style={{ 
                   fontFamily: "var(--fd)", 
-                  fontSize: 24, 
+                  fontSize: 28, 
                   fontWeight: 800, 
                   color: "#15803d",
-                  lineHeight: 1
+                  lineHeight: 1,
+                  marginBottom: 8
                 }}>
                   {done.filter(a => a === "ok").length}
                 </div>
@@ -7078,10 +7122,9 @@ export default function App() {
                   fontFamily: "var(--fm)", 
                   fontSize: 9, 
                   color: "#9ca3af", 
-                  marginTop: 4,
                   textTransform: "uppercase",
                   letterSpacing: 0.5,
-                  fontWeight: 600
+                  fontWeight: 700
                 }}>
                   Correct
                 </div>
@@ -7089,17 +7132,18 @@ export default function App() {
 
               <div style={{ 
                 background: "#fff", 
-                borderRadius: 12, 
-                padding: "14px 8px", 
+                borderRadius: 16, 
+                padding: "18px 10px", 
                 textAlign: "center",
-                boxShadow: "0 2px 6px rgba(0,0,0,.06)"
+                boxShadow: "0 4px 12px rgba(0,0,0,.08)"
               }}>
                 <div style={{ 
                   fontFamily: "var(--fd)", 
-                  fontSize: 24, 
+                  fontSize: 28, 
                   fontWeight: 800, 
                   color: "#dc2626",
-                  lineHeight: 1
+                  lineHeight: 1,
+                  marginBottom: 8
                 }}>
                   {wickets}
                 </div>
@@ -7107,10 +7151,9 @@ export default function App() {
                   fontFamily: "var(--fm)", 
                   fontSize: 9, 
                   color: "#9ca3af", 
-                  marginTop: 4,
                   textTransform: "uppercase",
                   letterSpacing: 0.5,
-                  fontWeight: 600
+                  fontWeight: 700
                 }}>
                   Wickets
                 </div>
@@ -7118,17 +7161,18 @@ export default function App() {
 
               <div style={{ 
                 background: "#fff", 
-                borderRadius: 12, 
-                padding: "14px 8px", 
+                borderRadius: 16, 
+                padding: "18px 10px", 
                 textAlign: "center",
-                boxShadow: "0 2px 6px rgba(0,0,0,.06)"
+                boxShadow: "0 4px 12px rgba(0,0,0,.08)"
               }}>
                 <div style={{ 
                   fontFamily: "var(--fd)", 
-                  fontSize: 24, 
+                  fontSize: 28, 
                   fontWeight: 800, 
                   color: "#d97706",
-                  lineHeight: 1
+                  lineHeight: 1,
+                  marginBottom: 8
                 }}>
                   {maxStreak}🔥
                 </div>
@@ -7136,10 +7180,9 @@ export default function App() {
                   fontFamily: "var(--fm)", 
                   fontSize: 9, 
                   color: "#9ca3af", 
-                  marginTop: 4,
                   textTransform: "uppercase",
                   letterSpacing: 0.5,
-                  fontWeight: 600
+                  fontWeight: 700
                 }}>
                   Best Run
                 </div>
@@ -7147,17 +7190,18 @@ export default function App() {
 
               <div style={{ 
                 background: "#fff", 
-                borderRadius: 12, 
-                padding: "14px 8px", 
+                borderRadius: 16, 
+                padding: "18px 10px", 
                 textAlign: "center",
-                boxShadow: "0 2px 6px rgba(0,0,0,.06)"
+                boxShadow: "0 4px 12px rgba(0,0,0,.08)"
               }}>
                 <div style={{ 
                   fontFamily: "var(--fd)", 
-                  fontSize: 24, 
+                  fontSize: 28, 
                   fontWeight: 800, 
                   color: "#0369a1",
-                  lineHeight: 1
+                  lineHeight: 1,
+                  marginBottom: 8
                 }}>
                   {Math.round((done.filter(a => a === "ok").length / Math.max(1, done.length)) * 100)}%
                 </div>
@@ -7165,73 +7209,73 @@ export default function App() {
                   fontFamily: "var(--fm)", 
                   fontSize: 9, 
                   color: "#9ca3af", 
-                  marginTop: 4,
                   textTransform: "uppercase",
                   letterSpacing: 0.5,
-                  fontWeight: 600
+                  fontWeight: 700
                 }}>
                   Accuracy
                 </div>
               </div>
             </div>
 
-            {/* Prize card - cleaner */}
+            {/* Prize card */}
             {entryFee.entry > 0 ? (
               <div style={{
                 background: isTie ? "#eff6ff" : won ? "#f0fdf4" : "#fef2f2",
                 border: `2px solid ${isTie ? "#bfdbfe" : won ? "#bbf7d0" : "#fecaca"}`,
-                borderRadius: 16,
-                padding: "18px 20px",
+                borderRadius: 20,
+                padding: "24px",
                 display: "flex",
                 justifyContent: "space-between",
-                alignItems: "center"
+                alignItems: "center",
+                boxShadow: "0 4px 16px rgba(0,0,0,.08)"
               }}>
-                <div>
+                <div style={{ flex: 1 }}>
                   <div style={{ 
                     fontFamily: "var(--fm)", 
-                    fontSize: 9, 
+                    fontSize: 10, 
                     fontWeight: 700, 
-                    letterSpacing: 1.5, 
+                    letterSpacing: 2, 
                     textTransform: "uppercase", 
                     color: isTie ? "#1e40af" : won ? "#15803d" : "#991b1b",
-                    marginBottom: 6
+                    marginBottom: 10
                   }}>
                     {isTie ? "Entry Refunded ⚡" : won ? "Prize Won 🏆" : "Entry Fee"}
                   </div>
                   <div style={{ 
                     fontFamily: "var(--fd)", 
-                    fontSize: 32, 
+                    fontSize: 40, 
                     fontWeight: 800, 
                     color: isTie ? "#1e40af" : won ? "#15803d" : "#dc2626",
                     letterSpacing: -1, 
                     lineHeight: 1,
-                    marginBottom: 4
+                    marginBottom: 6
                   }}>
                     {isTie ? `₹${entryFee.entry}` : won ? `+₹${entryFee.prize - entryFee.entry}` : `-₹${entryFee.entry}`}
                   </div>
                   <div style={{ 
                     fontFamily: "var(--fm)", 
-                    fontSize: 10, 
+                    fontSize: 11, 
                     color: "#6b7280"
                   }}>
                     {isTie ? "Your entry fee is returned" : won ? `Prize ₹${entryFee.prize} won` : "Try again!"}
                   </div>
                 </div>
-                <div style={{ textAlign: "right" }}>
+                <div style={{ textAlign: "right", paddingLeft: 16 }}>
                   <div style={{ 
                     fontFamily: "var(--fm)", 
-                    fontSize: 9, 
+                    fontSize: 10, 
                     color: "#9ca3af", 
-                    letterSpacing: 1, 
-                    marginBottom: 4,
-                    fontWeight: 600
+                    letterSpacing: 1.5, 
+                    marginBottom: 6,
+                    fontWeight: 700
                   }}>
                     WALLET
                   </div>
                   <div style={{ 
                     fontFamily: "var(--fd)", 
-                    fontSize: 22, 
-                    fontWeight: 700,
+                    fontSize: 28, 
+                    fontWeight: 800,
                     color: "#374151"
                   }}>
                     ₹{wallet.toFixed(0)}
@@ -7241,12 +7285,13 @@ export default function App() {
             ) : (
               <div style={{ 
                 background: "#fff", 
-                border: "1px solid #e5e7eb", 
-                borderRadius: 12, 
-                padding: 14, 
+                border: "2px solid #e5e7eb", 
+                borderRadius: 16, 
+                padding: 18, 
                 textAlign: "center", 
-                fontSize: 13, 
-                color: "#6b7280"
+                fontSize: 14, 
+                color: "#6b7280",
+                boxShadow: "0 2px 8px rgba(0,0,0,.06)"
               }}>
                 Free match · <strong style={{ color: isTie ? "#0ea5e9" : "#d97706" }}>+{xpEarned + (isTie ? 30 : won ? 60 : 10)} XP</strong> earned
               </div>
