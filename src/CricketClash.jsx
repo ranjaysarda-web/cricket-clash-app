@@ -4163,7 +4163,26 @@ export default function App() {
       // TIE → Super Over instead of result screen
       if (isTie) {
         console.log("🎯 Match tied! Starting Super Over...");
-        startSuperOver();
+        
+        // Reset all Super Over state
+        clearTimeout(soTimerRef.current);
+        setSoPlayerDecision(null);
+        setSoOppDecision(null);
+        setSoMyScore(0);
+        setSoOppScore(0);
+        setSoQi(0);
+        setSoSel(null);
+        setSoRev(false);
+        setSoTLeft(15);
+        setSoTimes([]);
+        setSuperOverWinner(null);
+        
+        // Show opt-in screen
+        setInSuperOver(true);
+        setSoPhase("opt-in");
+        setScreen("match");
+        snd("suspense");
+        
         return; // CRITICAL: Exit early - do NOT complete match in backend yet
       }
 
@@ -4192,7 +4211,7 @@ export default function App() {
       // Capture score for friend challenge comparison
       setFcMyScore(myScore);
     }
-  }, [innings, batFirst, myScore, oppScore, matchId, loggedIn]);
+  }, [innings, batFirst, myScore, oppScore, matchId, loggedIn, snd]);
 
   // ── SUPER OVER ────────────────────────────────────────────────────────────────
   const startSuperOver = useCallback(() => {
