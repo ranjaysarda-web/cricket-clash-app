@@ -3720,8 +3720,10 @@ export default function App() {
     }
     screenHistoryRef.current = [...screenHistoryRef.current, "toss"];
     window.history.pushState({ screen: "toss" }, "", "");
-    const stadium = getRandomStadium();
-    setSelectedStadium(stadium);
+    if (!selectedStadium) {
+      const stadium = getRandomStadium();
+      setSelectedStadium(stadium);
+    }
     setScreen("conditions");
   }, [fetchInBackground]);
 
@@ -3743,8 +3745,10 @@ export default function App() {
     fetchInBackground(cond);
     screenHistoryRef.current = [...screenHistoryRef.current, "toss"];
     window.history.pushState({ screen: "toss" }, "", "");
-    const stadium = getRandomStadium();
-    setSelectedStadium(stadium);
+    if (!selectedStadium) {
+      const stadium = getRandomStadium();
+      setSelectedStadium(stadium);
+    }
     setScreen("conditions");
   }, [fetchInBackground]);
 
@@ -3785,8 +3789,10 @@ export default function App() {
       qsRef.current = []; qsReadyRef.current = null;
       screenHistoryRef.current = [...screenHistoryRef.current, "toss"];
       window.history.pushState({ screen: "toss" }, "", "");
+      if (!selectedStadium) {
       const stadium = getRandomStadium();
-    setSelectedStadium(stadium);
+      setSelectedStadium(stadium);
+    }
     setScreen("conditions");
     };
 
@@ -3813,8 +3819,10 @@ export default function App() {
         setInSuperOver(false); setSoPhase("intro"); setSuperOverWinner(null);
         screenHistoryRef.current = [...screenHistoryRef.current, "toss"];
         window.history.pushState({ screen: "toss" }, "", "");
-        const stadium = getRandomStadium();
-    setSelectedStadium(stadium);
+        if (!selectedStadium) {
+      const stadium = getRandomStadium();
+      setSelectedStadium(stadium);
+    }
     setScreen("conditions");
       }
     }, 10000);
@@ -5539,16 +5547,13 @@ export default function App() {
         
   {/* CONDITIONS SCREEN */}
   {screen === "conditions" && selectedStadium && (
-    <div style={{
-      position: 'fixed',
-      inset: 0,
-      zIndex: 9999,
-      flex: 1,
+    <div className="screen" style={{
       display: 'flex',
       flexDirection: 'column',
       alignItems: 'center',
       justifyContent: 'center',
       background: '#0a0a0a',
+      position: 'relative',
       overflow: 'hidden'
     }}>
       {/* Stadium Background */}
