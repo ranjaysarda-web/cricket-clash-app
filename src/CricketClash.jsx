@@ -3,6 +3,40 @@ import { useState, useEffect, useRef, useCallback, useMemo } from "react";
 // ─── BACKEND CONFIG ───────────────────────────────────────────────────────────
 // In the Claude artifact: runs fully offline (demo mode)
 // In your real app: set these to your Supabase + Render URLs
+
+// ─── STADIUM IMAGES (LOCAL PATHS) ──────────────────────────────────────────────
+const STADIUM_IMAGES = {
+  wankhede: "/stadium_wankhede.png",
+  chepauk: "/stadium_cheapuk.png",
+  modi: "/stadium_modi.png",
+  jaitley: "/stadium_jaitley.png",
+  dubai: "/stadium_dubai.png",
+  oval: "/stadium_oval.png",
+  mcg: "/stadium_mcg.png",
+  eden: "/stadium_eden.png",
+  chinnaswamy: "/stadium_chinnaswamy.png",
+  lords: "/stadium_lords.png",
+  dharamsala: "/stadium_dharamsala.png",
+};
+
+// ─── STADIUM DATA ──────────────────────────────────────────────────────────────
+const STADIUMS = [
+  { id: "dharamsala", name: "DHARAMSALA", location: "Himachal Pradesh, India 🇮🇳", pitchType: "Green Seamer", avgScore: 26, battingRating: 3, bowlingRating: 5 },
+  { id: "chepauk", name: "CHEPAUK", location: "Chennai, India 🇮🇳", pitchType: "Dusty Turner", avgScore: 27, battingRating: 3, bowlingRating: 4 },
+  { id: "modi", name: "MODI STADIUM", location: "Ahmedabad, India 🇮🇳", pitchType: "Flat Track", avgScore: 33, battingRating: 5, bowlingRating: 2 },
+  { id: "jaitley", name: "ARUN JAITLEY", location: "Delhi, India 🇮🇳", pitchType: "Flat Track", avgScore: 31, battingRating: 4, bowlingRating: 3 },
+  { id: "dubai", name: "DUBAI INTERNATIONAL", location: "Dubai, UAE 🇦🇪", pitchType: "Slow & Low", avgScore: 29, battingRating: 4, bowlingRating: 4 },
+  { id: "oval", name: "THE OVAL", location: "London, England 🏴󠁧󠁢󠁥󠁮󠁧󠁿", pitchType: "Green Seamer", avgScore: 28, battingRating: 3, bowlingRating: 4 },
+  { id: "mcg", name: "MCG", location: "Melbourne, Australia 🇦🇺", pitchType: "Fast & Bouncy", avgScore: 30, battingRating: 4, bowlingRating: 4 },
+  { id: "eden", name: "EDEN GARDENS", location: "Kolkata, India 🇮🇳", pitchType: "Dusty Turner", avgScore: 28, battingRating: 3, bowlingRating: 4 },
+  { id: "chinnaswamy", name: "CHINNASWAMY", location: "Bangalore, India 🇮🇳", pitchType: "Flat Track", avgScore: 34, battingRating: 5, bowlingRating: 2 },
+  { id: "lords", name: "LORD'S", location: "London, England 🏴󠁧󠁢󠁥󠁮󠁧󠁿", pitchType: "Green Seamer", avgScore: 25, battingRating: 2, bowlingRating: 5 },
+  { id: "wankhede", name: "WANKHEDE", location: "Mumbai, India 🇮🇳", pitchType: "Flat Track", avgScore: 32, battingRating: 5, bowlingRating: 3 }
+];
+
+const getRandomStadium = () => STADIUMS[Math.floor(Math.random() * STADIUMS.length)];
+const getStarRating = (rating) => '⭐'.repeat(rating) + '☆'.repeat(5 - rating);
+
 const API_BASE = typeof window !== "undefined" && window.__CRICKET_API__
   ? window.__CRICKET_API__
   : "https://cricket-clash-api.onrender.com"; // live backend
@@ -142,127 +176,6 @@ const JERSEY_PALETTES = [
 ];
 
 // ─── BADGES ────────────────────────────────────────────────────────────────────
-
-// ─── PLAYER AVATARS (LOCAL PATHS) ──────────────────────────────────────────────
-const PLAYER_AVATARS = {
-  gully: "/images/avatars/avatar_gully.png",
-  club: "/images/avatars/avatar_club.png",
-  state: "/images/avatars/avatar_state.png",
-  national: "/images/avatars/avatar_national.png",
-  legend: "/images/avatars/avatar_legend.png",
-  immortal: "/images/avatars/avatar_immortal.png",
-};
-
-// Map career stage to avatar image
-const getPlayerAvatar = (careerStage) => {
-  if (careerStage <= 1) return PLAYER_AVATARS.gully;
-  if (careerStage === 2) return PLAYER_AVATARS.club;
-  if (careerStage === 3 || careerStage === 4) return PLAYER_AVATARS.state;
-  if (careerStage === 5 || careerStage === 6) return PLAYER_AVATARS.national;
-  if (careerStage === 7) return PLAYER_AVATARS.legend;
-  return PLAYER_AVATARS.immortal;
-};
-
-// ─── STADIUM IMAGES (LOCAL PATHS) ──────────────────────────────────────────────
-const STADIUM_IMAGES = {
-  wankhede: "/images/stadiums/stadium_wankhede.png",
-  chepauk: "/images/stadiums/stadium_chepauk.png",
-  modi: "/images/stadiums/stadium_modi.png",
-  jaitley: "/images/stadiums/stadium_jaitley.png",
-  dubai: "/images/stadiums/stadium_dubai.png",
-  oval: "/images/stadiums/stadium_oval.png",
-  mcg: "/images/stadiums/stadium_mcg.png",
-  eden: "/images/stadiums/stadium_eden.png",
-  chinnaswamy: "/images/stadiums/stadium_chinnaswamy.png",
-  lords: "/images/stadiums/stadium_lords.png",
-  dharamsala: "/images/stadiums/stadium_dharamsala.png",
-};
-
-// ─── STADIUM DATA ──────────────────────────────────────────────────────────────
-const STADIUMS = [
-  {
-    id: "dharamsala", name: "DHARAMSALA", fullName: "HPCA Stadium", location: "Himachal Pradesh, India", flag: "🇮🇳",
-    skyGradient: "linear-gradient(180deg, #1e3a8a 0%, #3b82f6 40%, #60a5fa 100%)",
-    atmosphere: "Clear Skies | Mountain Air | 18°C", wind: "Cool breeze 15 km/h", weatherIcon: "⛰️",
-    pitchType: "Green Seamer", avgScore: 26, battingRating: 3, bowlingRating: 5, difficulty: "Hard",
-    capacity: "23,000", famousFor: "Scenic mountain backdrop",
-  },
-  {
-    id: "chepauk", name: "CHEPAUK", fullName: "M. A. Chidambaram Stadium", location: "Chennai, India", flag: "🇮🇳",
-    skyGradient: "linear-gradient(180deg, #f59e0b 0%, #fb923c 40%, #fbbf24 100%)",
-    atmosphere: "Hot & Humid | 34°C", wind: "Sea breeze 18 km/h", weatherIcon: "🌊",
-    pitchType: "Dusty Turner", avgScore: 27, battingRating: 3, bowlingRating: 4, difficulty: "Hard",
-    capacity: "50,000", famousFor: "Spin-friendly wicket",
-  },
-  {
-    id: "modi", name: "NARENDRA MODI STADIUM", fullName: "Narendra Modi Stadium", location: "Ahmedabad, India", flag: "🇮🇳",
-    skyGradient: "linear-gradient(180deg, #dc2626 0%, #ef4444 40%, #f87171 100%)",
-    atmosphere: "Hot & Dry | 38°C", wind: "Hot wind 12 km/h", weatherIcon: "☀️",
-    pitchType: "Flat Track", avgScore: 33, battingRating: 5, bowlingRating: 2, difficulty: "Easy",
-    capacity: "132,000", famousFor: "World's largest stadium",
-  },
-  {
-    id: "jaitley", name: "ARUN JAITLEY STADIUM", fullName: "Arun Jaitley Stadium", location: "New Delhi, India", flag: "🇮🇳",
-    skyGradient: "linear-gradient(180deg, #7c3aed 0%, #8b5cf6 40%, #a78bfa 100%)",
-    atmosphere: "Clear | Cool Evening | 22°C", wind: "Gentle breeze 10 km/h", weatherIcon: "🌆",
-    pitchType: "Flat Track", avgScore: 31, battingRating: 4, bowlingRating: 3, difficulty: "Medium",
-    capacity: "41,820", famousFor: "Historic venue",
-  },
-  {
-    id: "dubai", name: "DUBAI INTERNATIONAL", fullName: "Dubai International Cricket Stadium", location: "Dubai, UAE", flag: "🇦🇪",
-    skyGradient: "linear-gradient(180deg, #0891b2 0%, #06b6d4 40%, #22d3ee 100%)",
-    atmosphere: "Clear Night | 28°C", wind: "Desert wind 14 km/h", weatherIcon: "🌙",
-    pitchType: "Slow & Low", avgScore: 29, battingRating: 4, bowlingRating: 4, difficulty: "Medium",
-    capacity: "25,000", famousFor: "IPL venue",
-  },
-  {
-    id: "oval", name: "THE OVAL", fullName: "The Kia Oval", location: "London, England", flag: "🏴󠁧󠁢󠁥󠁮󠁧󠁿",
-    skyGradient: "linear-gradient(180deg, #475569 0%, #64748b 40%, #94a3b8 100%)",
-    atmosphere: "Overcast | Cool | 16°C", wind: "Breezy 20 km/h", weatherIcon: "☁️",
-    pitchType: "Green Seamer", avgScore: 28, battingRating: 3, bowlingRating: 4, difficulty: "Hard",
-    capacity: "27,500", famousFor: "Historic Ashes venue",
-  },
-  {
-    id: "mcg", name: "MCG", fullName: "Melbourne Cricket Ground", location: "Melbourne, Australia", flag: "🇦🇺",
-    skyGradient: "linear-gradient(180deg, #14532d 0%, #166534 40%, #16a34a 100%)",
-    atmosphere: "Sunny | Warm | 26°C", wind: "Light breeze 12 km/h", weatherIcon: "🦘",
-    pitchType: "Fast & Bouncy", avgScore: 30, battingRating: 4, bowlingRating: 4, difficulty: "Medium",
-    capacity: "100,024", famousFor: "Boxing Day Test venue",
-  },
-  {
-    id: "eden", name: "EDEN GARDENS", fullName: "Eden Gardens", location: "Kolkata, India", flag: "🇮🇳",
-    skyGradient: "linear-gradient(180deg, #831843 0%, #9f1239 40%, #be123c 100%)",
-    atmosphere: "Humid Evening | 30°C", wind: "Humid breeze 16 km/h", weatherIcon: "🌃",
-    pitchType: "Dusty Turner", avgScore: 28, battingRating: 3, bowlingRating: 4, difficulty: "Hard",
-    capacity: "68,000", famousFor: "Cricket's colosseum",
-  },
-  {
-    id: "chinnaswamy", name: "CHINNASWAMY", fullName: "M. Chinnaswamy Stadium", location: "Bangalore, India", flag: "🇮🇳",
-    skyGradient: "linear-gradient(180deg, #b45309 0%, #d97706 40%, #f59e0b 100%)",
-    atmosphere: "Pleasant Evening | 24°C", wind: "Mild breeze 10 km/h", weatherIcon: "🌆",
-    pitchType: "Flat Track", avgScore: 34, battingRating: 5, bowlingRating: 2, difficulty: "Easy",
-    capacity: "40,000", famousFor: "High-scoring IPL venue",
-  },
-  {
-    id: "lords", name: "LORD'S", fullName: "Lord's Cricket Ground", location: "London, England", flag: "🏴󠁧󠁢󠁥󠁮󠁧󠁿",
-    skyGradient: "linear-gradient(180deg, #0c4a6e 0%, #075985 40%, #0284c7 100%)",
-    atmosphere: "Overcast | Cool | 18°C", wind: "Strong wind 22 km/h", weatherIcon: "🌧️",
-    pitchType: "Green Seamer", avgScore: 25, battingRating: 2, bowlingRating: 5, difficulty: "Very Hard",
-    capacity: "31,100", famousFor: "Home of cricket",
-  },
-  {
-    id: "wankhede", name: "WANKHEDE", fullName: "Wankhede Stadium", location: "Mumbai, India", flag: "🇮🇳",
-    skyGradient: "linear-gradient(180deg, #0369a1 0%, #0891b2 40%, #06b6d4 100%)",
-    atmosphere: "Clear Night | Sea Breeze | 26°C", wind: "Sea breeze 18 km/h", weatherIcon: "🌊",
-    pitchType: "Flat Track", avgScore: 32, battingRating: 5, bowlingRating: 3, difficulty: "Medium",
-    capacity: "33,108", famousFor: "2011 World Cup final",
-  }
-];
-
-const getRandomStadium = () => STADIUMS[Math.floor(Math.random() * STADIUMS.length)];
-const getStadiumById = (id) => STADIUMS.find(s => s.id === id);
-const getStarRating = (rating) => '⭐'.repeat(rating) + '☆'.repeat(5 - rating);
-
 const BADGE_DEFS = [
   { id:"first_win",     icon:"🏆", title:"First Victory",      desc:"Win your first match",                  rarity:"common"  },
   { id:"first_six",     icon:"6️⃣", title:"First Six",          desc:"Score 6 off a single ball",             rarity:"common"  },
@@ -3215,39 +3128,6 @@ const CRICKET_FACTS = [
   "🌟 Virat Kohli scored centuries in all three formats before he turned 25.",
 ];
 
-// WatchingScreen countdown panel component (hoisted to prevent recreation)
-const ProceedPanel = ({ label, onProceed }) => {
-  const [secs, setSecs] = React.useState(5);
-  React.useEffect(() => {
-    const t = setInterval(() => {
-      setSecs(s => {
-        if (s <= 1) { clearInterval(t); if (onProceed) onProceed(); return 0; }
-        return s - 1;
-      });
-    }, 1000);
-    return () => clearInterval(t);
-  }, [onProceed]);
-  
-  return (
-    <div style={{ display:"flex", flexDirection:"column", alignItems:"center", gap:10, animation:"fadeUp .4s both", width:"100%" }}>
-      <div style={{ fontFamily:"var(--fm)", fontSize:12, color:"var(--amber3)", fontWeight:700, textAlign:"center" }}>
-        {label === "1st Innings" ? `🏏 Your turn to bat in ${secs}s…` : `🏆 Result in ${secs}s…`}
-      </div>
-      <button
-        onClick={() => { if (onProceed) onProceed(); }}
-        style={{
-          width:"100%", padding:"14px 0", borderRadius:"var(--r2)",
-          background:"linear-gradient(135deg,var(--amber),var(--amber2))",
-          border:"none", color:"#fff", fontFamily:"var(--fh)", fontSize:15,
-          fontWeight:700, cursor:"pointer", letterSpacing:0.5,
-          boxShadow:"0 4px 16px rgba(180,83,9,.35)"
-        }}>
-        {label === "1st Innings" ? "🏏 Start Batting Now" : "🏆 See Result"}
-      </button>
-    </div>
-  );
-};
-
 function WatchingScreen({ opp, feed, finalScore, label, target, isPvp, onProceed }) {
   const [visibleCount, setVisibleCount] = useState(0);
   const [displayScore, setDisplayScore] = useState(0);
@@ -3287,43 +3167,8 @@ function WatchingScreen({ opp, feed, finalScore, label, target, isPvp, onProceed
 
   const visibleFeed = feed.slice(0, visibleCount);
 
-  // DEBUGGING: Add visual indicator
-  console.log("🎬 WatchingScreen rendering:", { 
-    screen: "watching_chase", 
-    opp: opp?.name, 
-    feedLength: feed?.length, 
-    visibleCount,
-    label,
-    target 
-  });
-
   return (
-    <div className="screen watch-scr" style={{
-      position: "relative",
-      zIndex: 100, // Force above everything
-      background: "#1c1917", // Ensure background is set
-      minHeight: "100vh"
-    }}>
-      {/* DEBUG BANNER */}
-      <div style={{
-        position: "fixed",
-        top: 0,
-        left: 0,
-        right: 0,
-        background: "red",
-        color: "white",
-        padding: "10px",
-        zIndex: 9999,
-        fontSize: 12,
-        fontWeight: "bold",
-        textAlign: "center"
-      }}>
-        🔴 WATCHING SCREEN ACTIVE - If you see this, component is rendering!
-        <div style={{ fontSize: 10, marginTop: 4 }}>
-          Label: {label} | Feed: {feed?.length} balls | Visible: {visibleCount}
-        </div>
-      </div>
-
+    <div className="screen watch-scr">
       <div style={{ fontFamily:"var(--fm)", fontSize:9, fontWeight:700, letterSpacing:3, color:"rgba(255,255,255,.45)", textTransform:"uppercase" }}>
         {isPvp ? "🔴 Live" : "Live"} — Opponent's {label}
       </div>
@@ -3381,9 +3226,39 @@ function WatchingScreen({ opp, feed, finalScore, label, target, isPvp, onProceed
         )}
       </div>
 
-      {visibleCount === feed.length && (
-        <ProceedPanel label={label} onProceed={onProceed} />
-      )}
+      {visibleCount === feed.length && (() => {
+        const ProceedPanel = () => {
+          const [secs, setSecs] = React.useState(5);
+          React.useEffect(() => {
+            const t = setInterval(() => {
+              setSecs(s => {
+                if (s <= 1) { clearInterval(t); if (onProceed) onProceed(); return 0; }
+                return s - 1;
+              });
+            }, 1000);
+            return () => clearInterval(t);
+          }, []);
+          return (
+            <div style={{ display:"flex", flexDirection:"column", alignItems:"center", gap:10, animation:"fadeUp .4s both", width:"100%" }}>
+              <div style={{ fontFamily:"var(--fm)", fontSize:12, color:"var(--amber3)", fontWeight:700, textAlign:"center" }}>
+                {label === "1st Innings" ? `🏏 Your turn to bat in ${secs}s…` : `🏆 Result in ${secs}s…`}
+              </div>
+              <button
+                onClick={() => { if (onProceed) onProceed(); }}
+                style={{
+                  width:"100%", padding:"14px 0", borderRadius:"var(--r2)",
+                  background:"linear-gradient(135deg,var(--amber),var(--amber2))",
+                  border:"none", color:"#fff", fontFamily:"var(--fh)", fontSize:15,
+                  fontWeight:700, cursor:"pointer", letterSpacing:0.5,
+                  boxShadow:"0 4px 16px rgba(180,83,9,.35)"
+                }}>
+                {label === "1st Innings" ? "🏏 Start Batting Now" : "🏆 See Result"}
+              </button>
+            </div>
+          );
+        };
+        return <ProceedPanel />;
+      })()}
     </div>
   );
 }
@@ -3548,9 +3423,7 @@ export default function App() {
 
   // Super Over state
   const [inSuperOver, setInSuperOver] = useState(false);
-  const [soPhase, setSoPhase] = useState("intro"); // opt-in | intro | batting | watching | result | declined
-  const [soPlayerDecision, setSoPlayerDecision] = useState(null); // true | false | null
-  const [soOppDecision, setSoOppDecision] = useState(null); // true | false | null
+  const [soPhase, setSoPhase] = useState("intro"); // intro | batting | watching | result
   const [superOverWinner, setSuperOverWinner] = useState(null); // "player" | "opp" — persists into result screen
   const [soMyScore, setSoMyScore] = useState(0);
   const [soOppScore, setSoOppScore] = useState(0);
@@ -3576,15 +3449,9 @@ export default function App() {
   const betweenRef = useRef();
   const cleanRef = useRef(false);
   const qsRef = useRef([]); // keep qs accessible in callbacks
-  const myScoreRef = useRef(0); // track myScore for callbacks
   const watchProceedRef = useRef(null);
   const watchProceedFiredRef = useRef(false);
   const snd = useAudio(sfxOn);
-
-  // Keep myScoreRef in sync with myScore state
-  useEffect(() => {
-    myScoreRef.current = myScore;
-  }, [myScore]);
 
   // ── AUTH / LOGIN ──────────────────────────────────────────────────────────────
   // Check for challenge/friend-challenge link on mount
@@ -3853,7 +3720,9 @@ export default function App() {
     }
     screenHistoryRef.current = [...screenHistoryRef.current, "toss"];
     window.history.pushState({ screen: "toss" }, "", "");
-    setScreen("toss");
+    const stadium = getRandomStadium();
+    setSelectedStadium(stadium);
+    setScreen("conditions");
   }, [fetchInBackground]);
 
   // ── Launch a bot match immediately (guest or no real opponent) ─────────────
@@ -3916,7 +3785,9 @@ export default function App() {
       qsRef.current = []; qsReadyRef.current = null;
       screenHistoryRef.current = [...screenHistoryRef.current, "toss"];
       window.history.pushState({ screen: "toss" }, "", "");
-      setScreen("toss");
+      const stadium = getRandomStadium();
+    setSelectedStadium(stadium);
+    setScreen("conditions");
     };
 
     // Always fire bot after 10s — stored in ref so it survives re-renders
@@ -3942,7 +3813,9 @@ export default function App() {
         setInSuperOver(false); setSoPhase("intro"); setSuperOverWinner(null);
         screenHistoryRef.current = [...screenHistoryRef.current, "toss"];
         window.history.pushState({ screen: "toss" }, "", "");
-        setScreen("toss");
+        const stadium = getRandomStadium();
+    setSelectedStadium(stadium);
+    setScreen("conditions");
       }
     }, 10000);
 
@@ -4085,7 +3958,7 @@ export default function App() {
     };
     watchProceedFiredRef.current = false;
     watchProceedRef.current = doProceed;
-    // Let the WatchingScreen UI countdown control the timing (no hardcoded timeout)
+    setTimeout(doProceed, 11000);
   }, [opp]);
 
   // Toss winner chooses bat/chase
@@ -4146,7 +4019,7 @@ export default function App() {
           };
           watchProceedFiredRef.current = false;
           watchProceedRef.current = doProceed;
-          // Let the WatchingScreen UI countdown control the timing (no hardcoded timeout)
+          setTimeout(doProceed, 11000);
         } catch(e) {
           // If simulation fails, go straight to match as player batting first
           setBatFirst("player");
@@ -4318,12 +4191,10 @@ export default function App() {
 
       // TIE → Super Over instead of result screen
       if (isTie) {
-        console.log("🎯 Match tied! Starting Super Over...");
         startSuperOver();
-        return; // CRITICAL: Exit early - do NOT complete match in backend yet
+        return;
       }
 
-      // Only complete non-tie matches in backend
       if (matchId && loggedIn) {
         try {
           await api(`/matches/${matchId}/complete`, {
@@ -4353,109 +4224,31 @@ export default function App() {
   // ── SUPER OVER ────────────────────────────────────────────────────────────────
   const startSuperOver = useCallback(() => {
     clearTimeout(soTimerRef.current);
-    // Reset all Super Over state
-    setSoPlayerDecision(null);
-    setSoOppDecision(null);
-    setSoMyScore(0);
-    setSoOppScore(0);
-    setSoQi(0);
-    setSoSel(null);
-    setSoRev(false);
-    setSoTLeft(15);
-    setSoTimes([]);
-    setSuperOverWinner(null);
-    
-    // Show opt-in screen
+    // Pick 3 fresh questions from bank (avoid already-used ones)
+    const used = new Set(qsRef.current.map(q => q.q.slice(0, 30)));
+    const fresh = ALL_QUESTIONS.filter(q => !used.has(q.q.slice(0, 30)));
+    // Fisher-Yates shuffle
+    for (let i = fresh.length - 1; i > 0; i--) {
+      const j = Math.floor(Math.random() * (i + 1));
+      [fresh[i], fresh[j]] = [fresh[j], fresh[i]];
+    }
+    const soQsPicked = fresh.slice(0, 3).map(q => ({
+      ...q, cat: q.cat || "TRIVIA", coachNote: q.coachNote || "", skill: q.skill || "history"
+    }));
+    setSoQs(soQsPicked);
+    setSoQi(0); setSoMyScore(0); setSoOppScore(0);
+    setSoSel(null); setSoRev(false); setSoTLeft(15); setSoTimes([]);
     setInSuperOver(true);
-    setSoPhase("opt-in");
+    setSoPhase("intro");
+    // Move to a clean screen so nothing renders over Super Over
     setScreen("match");
     snd("suspense");
-  }, []);
-
-  // Handle Super Over opt-in decision
-  const handleSuperOverDecision = useCallback((playerAccepts) => {
-    console.log("🎮 Player decision:", playerAccepts ? "ACCEPT" : "DECLINE");
-    setSoPlayerDecision(playerAccepts);
-    
-    // Simulate opponent decision (70% accept rate for competitive AI)
-    const oppAccepts = Math.random() < 0.7;
-    console.log("🤖 Opponent decision:", oppAccepts ? "ACCEPT" : "DECLINE");
-    setSoOppDecision(oppAccepts);
-    
-    // Show "waiting for opponent" briefly
-    console.log("⏳ Starting 1.5s wait timer...");
+    // Auto-advance past intro
     setTimeout(() => {
-      console.log("⏰ Wait timer complete. Player:", playerAccepts, "Opponent:", oppAccepts);
-      
-      if (playerAccepts && oppAccepts) {
-        // Both accepted → Start Super Over
-        console.log("✅ Both players accepted Super Over!");
-        
-        // Pick 3 fresh questions
-        const used = new Set(qsRef.current.map(q => q.q.slice(0, 30)));
-        const fresh = ALL_QUESTIONS.filter(q => !used.has(q.q.slice(0, 30)));
-        for (let i = fresh.length - 1; i > 0; i--) {
-          const j = Math.floor(Math.random() * (i + 1));
-          [fresh[i], fresh[j]] = [fresh[j], fresh[i]];
-        }
-        const soQsPicked = fresh.slice(0, 3).map(q => ({
-          ...q, cat: q.cat || "TRIVIA", coachNote: q.coachNote || "", skill: q.skill || "history"
-        }));
-        console.log("📝 Picked", soQsPicked.length, "questions for Super Over");
-        setSoQs(soQsPicked);
-        
-        // Start Super Over intro
-        console.log("🎬 Setting phase to 'intro'");
-        setSoPhase("intro");
-        snd("suspense");
-        
-        console.log("⏳ Starting 2.8s intro timer...");
-        setTimeout(() => {
-          console.log("⏰ Intro complete. Setting phase to 'batting'");
-          setSoPhase("batting");
-          soStartRef.current = Date.now();
-        }, 2800);
-      } else {
-        // One or both declined → Refund and go to result
-        console.log("❌ Super Over declined");
-        setSoPhase("declined");
-        
-        // Refund entry fee via backend
-        if (matchId && loggedIn && entryFee.entry > 0) {
-          console.log("💰 Calling backend to refund entry fee...");
-          api(`/matches/${matchId}/complete`, {
-            method: "POST",
-            body: {
-              player_score: myScore,
-              opp_score: oppScore,
-              winner: "draw",
-              super_over_declined: true,
-            },
-          }).then(() => {
-            console.log("✅ Backend refund successful");
-            // Refresh wallet
-            return api("/wallet");
-          }).then(walletData => {
-            if (walletData?.wallet?.balance !== undefined) {
-              console.log("💳 Wallet updated:", walletData.wallet.balance);
-              setWallet(walletData.wallet.balance);
-            }
-          }).catch(err => {
-            console.error("❌ Match finalization error:", err);
-          });
-        }
-        
-        // Show declined message briefly then go to result
-        console.log("⏳ Starting 3s declined screen timer...");
-        setTimeout(() => {
-          console.log("⏰ Declined timer complete. Going to result screen");
-          setInSuperOver(false);
-          setScreen("result");
-        }, 3000);
-      }
-    }, 1500); // 1.5s to show "opponent is deciding..."
-  }, [matchId, loggedIn, entryFee, myScore, oppScore, snd]);
-
+      setSoPhase("batting");
+      soStartRef.current = Date.now();
+    }, 2800);
+  }, []);
 
   // Super Over timer
   useEffect(() => {
@@ -4544,24 +4337,20 @@ export default function App() {
     setOppScore(finalOppScore);
     setOppLiveFeed(feed);
     setScreen("watching_chase");
-    
-    console.log("🏏 Opponent chase complete. Player:", myScoreRef.current, "Opponent:", finalOppScore);
-    
     setTimeout(() => {
-      // Use ref to get current score (avoid stale closure)
-      const playerScore = myScoreRef.current;
-      console.log("⏰ Timeout fired. Checking result - Player:", playerScore, "Opponent:", finalOppScore);
-      
-      if (playerScore === finalOppScore) {
-        // TIE → start Super Over
-        console.log("🎯 Opponent chase resulted in tie! Starting Super Over...");
-        setTimeout(() => startSuperOver(), 100);
-      } else {
-        console.log("📊 Match complete. Going to result screen...");
-        setScreen("result");
-      }
+      // Must read myScore at callback time via ref to avoid stale closure
+      setMyScore(cur => {
+        if (cur === finalOppScore) {
+          // TIE → start Super Over
+          // Use setTimeout to ensure state is settled before Super Over kicks in
+          setTimeout(() => startSuperOver(), 50);
+        } else {
+          setScreen("result");
+        }
+        return cur; // don't modify myScore
+      });
     }, 4500);
-  }, [opp, startSuperOver]);
+  }, [opp]);
 
   // ── ANSWER ────────────────────────────────────────────────────────────────────
   const answer = useCallback(idx => {
@@ -5748,219 +5537,60 @@ export default function App() {
 
         {/* ══════ TOSS ══════ */}
         
-  {/* ═══════════════════════════════════════════════════════════════════════════
-      CONDITIONS SCREEN - Stadium Showcase Before Toss
-      ═══════════════════════════════════════════════════════════════════════════ */}
+  {/* CONDITIONS SCREEN */}
   {screen === "conditions" && selectedStadium && (
-    <div className="screen" style={{
-      background: selectedStadium.skyGradient,
-      position: 'relative',
+    <div style={{
+      position: 'fixed',
+      inset: 0,
+      zIndex: 9999,
+      flex: 1,
+      display: 'flex',
+      flexDirection: 'column',
+      alignItems: 'center',
+      justifyContent: 'center',
+      background: '#0a0a0a',
       overflow: 'hidden'
     }}>
-      
-      {/* Stadium Background Image */}
+      {/* Stadium Background */}
       <div style={{
         position: 'absolute',
         inset: 0,
         backgroundImage: 'url(' + STADIUM_IMAGES[selectedStadium.id] + ')',
         backgroundSize: 'cover',
         backgroundPosition: 'center',
-        filter: 'brightness(0.7)',
-        zIndex: 0
+        opacity: 0.4,
+        filter: 'brightness(0.6)'
       }} />
       
-      {/* Dark Overlay */}
-      <div style={{
-        position: 'absolute',
-        inset: 0,
-        background: 'linear-gradient(180deg, rgba(0,0,0,0.6) 0%, rgba(0,0,0,0.3) 50%, rgba(0,0,0,0.8) 100%)',
-        zIndex: 1
-      }} />
-
-      {/* Stadium Info Card */}
-      <div style={{
-        position: 'absolute',
-        top: '50%',
-        left: '50%',
-        transform: 'translate(-50%, -50%)',
-        zIndex: 20,
-        background: 'linear-gradient(145deg, rgba(10,15,25,0.95) 0%, rgba(5,10,15,0.92) 100%)',
-        border: '2px solid rgba(255,107,0,0.5)',
-        borderRadius: 24,
-        padding: '32px 24px',
-        width: '88%',
-        maxWidth: 340,
-        boxShadow: '0 24px 72px rgba(0,0,0,0.9)',
-        backdropFilter: 'blur(20px)'
-      }}>
-        
-        {/* Stadium Name */}
-        <div style={{
-          fontFamily: 'Impact, sans-serif',
-          fontSize: 28,
-          fontWeight: 900,
-          background: 'linear-gradient(135deg, #ffd700 0%, #ff6b00 100%)',
-          WebkitBackgroundClip: 'text',
-          WebkitTextFillColor: 'transparent',
-          textTransform: 'uppercase',
-          letterSpacing: 2,
-          marginBottom: 8,
-          textAlign: 'center',
-          lineHeight: 1.1
-        }}>
+      <div style={{ position: 'relative', zIndex: 10, textAlign: 'center', padding: 32 }}>
+        <div style={{ fontSize: 36, fontWeight: 900, color: '#ffd700', marginBottom: 16, textTransform: 'uppercase' }}>
           {selectedStadium.name}
         </div>
-        
-        {/* Location */}
-        <div style={{
-          fontSize: 12,
-          color: 'rgba(255,255,255,0.6)',
-          textAlign: 'center',
-          marginBottom: 24,
-          textTransform: 'uppercase',
-          letterSpacing: 2,
-          fontWeight: 600
-        }}>
+        <div style={{ fontSize: 14, color: 'rgba(255,255,255,0.7)', marginBottom: 24 }}>
           📍 {selectedStadium.location}
         </div>
-
-        {/* Condition Details */}
-        <div style={{ display: 'grid', gap: 12, marginBottom: 20 }}>
-          
-          {/* Weather */}
-          <div style={{
-            background: 'rgba(255,255,255,0.04)',
-            border: '1px solid rgba(255,255,255,0.12)',
-            borderRadius: 12,
-            padding: 14,
-            display: 'flex',
-            alignItems: 'center',
-            gap: 14
-          }}>
-            <div style={{
-              width: 48,
-              height: 48,
-              borderRadius: 12,
-              background: 'linear-gradient(135deg, rgba(255,107,0,0.25) 0%, rgba(255,61,0,0.15) 100%)',
-              display: 'flex',
-              alignItems: 'center',
-              justifyContent: 'center',
-              fontSize: 24,
-              border: '1.5px solid rgba(255,107,0,0.4)'
-            }}>
-              {selectedStadium.weatherIcon}
-            </div>
-            <div style={{ flex: 1 }}>
-              <div style={{
-                fontSize: 9,
-                color: 'rgba(255,255,255,0.5)',
-                textTransform: 'uppercase',
-                letterSpacing: 1.5,
-                marginBottom: 4,
-                fontWeight: 800
-              }}>
-                Pitch Type
-              </div>
-              <div style={{
-                fontFamily: 'Impact, sans-serif',
-                fontSize: 14,
-                fontWeight: 900,
-                color: '#ffd700',
-                textTransform: 'uppercase'
-              }}>
-                {selectedStadium.pitchType}
-              </div>
-            </div>
-          </div>
+        <div style={{ fontSize: 16, color: '#fff', marginBottom: 32 }}>
+          🏏 {selectedStadium.pitchType} • Avg: {selectedStadium.avgScore} runs
         </div>
-
-        {/* Impact Stats Grid */}
-        <div style={{
-          display: 'grid',
-          gridTemplateColumns: '1fr 1fr',
-          gap: 10,
-          marginBottom: 20
-        }}>
-          <div style={{
-            background: 'rgba(255,255,255,0.04)',
-            border: '1px solid rgba(255,107,0,0.25)',
-            borderRadius: 10,
-            padding: '12px 8px',
-            textAlign: 'center'
-          }}>
-            <div style={{
-              fontSize: 8,
-              color: 'rgba(255,255,255,0.5)',
-              textTransform: 'uppercase',
-              letterSpacing: 1.5,
-              marginBottom: 6,
-              fontWeight: 800
-            }}>
-              Batting
-            </div>
-            <div style={{
-              fontSize: 14,
-              fontWeight: 900,
-              color: '#ff6b00'
-            }}>
-              {getStarRating(selectedStadium.battingRating)}
-            </div>
-          </div>
-
-          <div style={{
-            background: 'rgba(255,255,255,0.04)',
-            border: '1px solid rgba(255,107,0,0.25)',
-            borderRadius: 10,
-            padding: '12px 8px',
-            textAlign: 'center'
-          }}>
-            <div style={{
-              fontSize: 8,
-              color: 'rgba(255,255,255,0.5)',
-              textTransform: 'uppercase',
-              letterSpacing: 1.5,
-              marginBottom: 6,
-              fontWeight: 800
-            }}>
-              Avg Score
-            </div>
-            <div style={{
-              fontFamily: 'Impact, sans-serif',
-              fontSize: 14,
-              fontWeight: 900,
-              color: '#ff6b00'
-            }}>
-              {selectedStadium.avgScore}
-            </div>
-          </div>
-        </div>
-
-        {/* Continue Button */}
         <button
           onClick={() => setScreen("toss")}
           style={{
-            width: '100%',
-            padding: 16,
-            background: 'linear-gradient(135deg, #ff6b00 0%, #ff3d00 100%)',
+            padding: '16px 48px',
+            background: 'linear-gradient(135deg, #ff6b00, #ff3d00)',
             border: 'none',
             borderRadius: 50,
             color: '#fff',
-            fontFamily: 'Impact, sans-serif',
-            fontSize: 14,
+            fontSize: 16,
             fontWeight: 900,
-            textTransform: 'uppercase',
-            letterSpacing: 2,
             cursor: 'pointer',
-            boxShadow: '0 10px 35px rgba(255,107,0,0.6)'
+            textTransform: 'uppercase'
           }}
         >
-          🏏 PROCEED TO TOSS
+          PROCEED TO TOSS →
         </button>
       </div>
-
     </div>
   )}
-
 
 
   {screen === "toss" && (() => {
@@ -6316,24 +5946,7 @@ export default function App() {
             label={screen === "watching" ? "1st Innings" : "Chase"}
             target={screen === "watching" ? null : myScore}
             isPvp={matchType === "pvp"}
-            onProceed={() => {
-              if (screen === "watching_chase") {
-                // For chase scenario, go directly to result/Super Over
-                const playerScore = myScoreRef.current;
-                const oppFinalScore = oppScore;
-                console.log("🏁 Chase complete button clicked - Player:", playerScore, "Opponent:", oppFinalScore);
-                if (playerScore === oppFinalScore) {
-                  console.log("🎯 Tie! Starting Super Over...");
-                  startSuperOver();
-                } else {
-                  console.log("📊 Going to result screen...");
-                  setScreen("result");
-                }
-              } else if (watchProceedRef.current) {
-                // For innings 1 scenario, use the ref callback
-                watchProceedRef.current();
-              }
-            }}
+            onProceed={() => { if (watchProceedRef.current) watchProceedRef.current(); }}
           />
         )}
 
@@ -6822,163 +6435,6 @@ export default function App() {
         )}
 
         {/* ══════ SUPER OVER ══════ */}
-        {/* ══════ SUPER OVER OPT-IN SCREEN ══════ */}
-        {inSuperOver && soPhase === "opt-in" && (
-          <div style={{
-            position:"fixed", inset:0, zIndex:300,
-            background:"linear-gradient(160deg,#1a1a0a,#2a2010,#1c1917)",
-            display:"flex", flexDirection:"column", alignItems:"center",
-            justifyContent:"center", gap:20, animation:"scaleIn .3s both", padding:"0 24px",
-          }}>
-            <div style={{ fontSize:56 }}>⚡</div>
-            <div style={{ fontFamily:"var(--fd)", fontSize:32, fontWeight:800, color:"#fff", textAlign:"center", lineHeight:1.1 }}>
-              It's a Tie!
-            </div>
-            <div style={{ fontFamily:"var(--fd)", fontSize:15, color:"rgba(255,255,255,.6)", textAlign:"center", maxWidth:340 }}>
-              Scores level at {myScore} runs — what a match!
-            </div>
-
-            {soPlayerDecision === null ? (
-              // Player hasn't decided yet
-              <>
-                <div style={{ 
-                  background:"rgba(255,255,255,.05)", 
-                  border:"1px solid rgba(255,255,255,.1)",
-                  borderRadius:"var(--r2)", 
-                  padding:"20px 24px", 
-                  maxWidth:360,
-                  textAlign:"center"
-                }}>
-                  <div style={{ fontFamily:"var(--fm)", fontSize:10, letterSpacing:2, color:"rgba(255,255,255,.4)", textTransform:"uppercase", marginBottom:12 }}>
-                    Super Over Challenge
-                  </div>
-                  <div style={{ fontSize:14, color:"rgba(255,255,255,.7)", lineHeight:1.6, marginBottom:16 }}>
-                    Play 3 bonus questions to decide the winner. If you both agree, winner takes the prize. Otherwise, entry fees are refunded.
-                  </div>
-                  <div style={{ display:"flex", gap:8, marginTop:4 }}>
-                    {[0,1,2].map(i => (
-                      <div key={i} style={{ 
-                        flex:1, 
-                        padding:"8px 0", 
-                        borderRadius:8, 
-                        background:"rgba(34,211,238,.08)", 
-                        border:"1px solid rgba(34,211,238,.2)",
-                        fontSize:11,
-                        color:"rgba(34,211,238,.8)"
-                      }}>Q{i+1}</div>
-                    ))}
-                  </div>
-                </div>
-
-                <div style={{ display:"flex", gap:12, width:"100%", maxWidth:360 }}>
-                  <button
-                    onClick={() => handleSuperOverDecision(false)}
-                    style={{
-                      flex:1,
-                      padding:"16px 0",
-                      borderRadius:"var(--r2)",
-                      background:"rgba(255,255,255,.05)",
-                      border:"1px solid rgba(255,255,255,.15)",
-                      color:"rgba(255,255,255,.6)",
-                      fontFamily:"var(--fh)",
-                      fontSize:15,
-                      fontWeight:700,
-                      cursor:"pointer",
-                    }}>
-                    ❌ Decline
-                  </button>
-                  <button
-                    onClick={() => handleSuperOverDecision(true)}
-                    style={{
-                      flex:1,
-                      padding:"16px 0",
-                      borderRadius:"var(--r2)",
-                      background:"linear-gradient(135deg,var(--amber),var(--amber2))",
-                      border:"none",
-                      color:"#fff",
-                      fontFamily:"var(--fh)",
-                      fontSize:15,
-                      fontWeight:700,
-                      cursor:"pointer",
-                      boxShadow:"0 4px 16px rgba(180,83,9,.35)"
-                    }}>
-                    ⚡ Play Super Over
-                  </button>
-                </div>
-              </>
-            ) : (
-              // Player has decided, waiting for opponent
-              <>
-                <div style={{ 
-                  background:"rgba(255,255,255,.05)", 
-                  border:"1px solid rgba(255,255,255,.1)",
-                  borderRadius:"var(--r2)", 
-                  padding:"20px 24px", 
-                  maxWidth:360,
-                  textAlign:"center"
-                }}>
-                  <div style={{ fontSize:14, color:"rgba(255,255,255,.7)", marginBottom:16 }}>
-                    ✅ You {soPlayerDecision ? "accepted" : "declined"} the Super Over
-                  </div>
-                  <div style={{ fontSize:13, color:"rgba(255,255,255,.5)" }}>
-                    {soOppDecision === null ? (
-                      <div style={{ display:"flex", alignItems:"center", justifyContent:"center", gap:8 }}>
-                        <div style={{ animation:"pulse 1s infinite" }}>●</div>
-                        Waiting for {opp?.name}...
-                      </div>
-                    ) : (
-                      <>
-                        {opp?.flag} {opp?.name} {soOppDecision ? "accepted" : "declined"}
-                      </>
-                    )}
-                  </div>
-                </div>
-              </>
-            )}
-          </div>
-        )}
-
-        {/* ══════ SUPER OVER DECLINED SCREEN ══════ */}
-        {inSuperOver && soPhase === "declined" && (
-          <div style={{
-            position:"fixed", inset:0, zIndex:300,
-            background:"linear-gradient(160deg,#1a1a2a,#2a2a3a,#1c1917)",
-            display:"flex", flexDirection:"column", alignItems:"center",
-            justifyContent:"center", gap:16, animation:"scaleIn .3s both", padding:"0 24px",
-          }}>
-            <div style={{ fontSize:56 }}>💰</div>
-            <div style={{ fontFamily:"var(--fd)", fontSize:28, fontWeight:800, color:"#fff", textAlign:"center" }}>
-              Super Over Declined
-            </div>
-            <div style={{ fontSize:14, color:"rgba(255,255,255,.6)", textAlign:"center", maxWidth:320, lineHeight:1.6 }}>
-              {!soPlayerDecision && !soOppDecision
-                ? "Both players declined the Super Over"
-                : !soPlayerDecision
-                ? "You declined the Super Over"
-                : "Your opponent declined the Super Over"}
-            </div>
-            <div style={{
-              background:"rgba(255,255,255,.05)",
-              border:"1px solid rgba(255,255,255,.1)",
-              borderRadius:"var(--r2)",
-              padding:"16px 24px",
-              textAlign:"center",
-              marginTop:8
-            }}>
-              <div style={{ fontFamily:"var(--fm)", fontSize:9, letterSpacing:2, color:"rgba(255,255,255,.4)", textTransform:"uppercase", marginBottom:8 }}>
-                Entry Refunded
-              </div>
-              <div style={{ fontFamily:"var(--fd)", fontSize:36, fontWeight:700, color:"var(--amber3)" }}>
-                ₹{entryFee.entry}
-              </div>
-              <div style={{ fontSize:11, color:"rgba(255,255,255,.4)", marginTop:6 }}>
-                Returning to your wallet
-              </div>
-            </div>
-          </div>
-        )}
-
-        {/* ══════ SUPER OVER INTRO ══════ */}
         {inSuperOver && soPhase === "intro" && (
           <div style={{
             position:"fixed", inset:0, zIndex:300,
@@ -7094,7 +6550,7 @@ export default function App() {
             </div>
 
             {/* Super Over scorecard */}
-            <div style={{ background:"rgba(255,255,255,.06)", border:"1px solid rgba(34,211,238,.2)", borderRadius:"var(--r2)", padding:"16px 24px", width:"100%", maxWidth:380 }}>
+            <div style={{ background:"rgba(255,255,255,.06)", border:"1px solid rgba(34,211,238,.2)", borderRadius:"var(--r2)", padding:"16px 24px", width:"100%", maxWidth:320 }}>
               <div style={{ fontFamily:"var(--fm)", fontSize:9, letterSpacing:2, color:"rgba(255,255,255,.35)", textTransform:"uppercase", textAlign:"center", marginBottom:12 }}>Super Over Scores</div>
               <div style={{ display:"flex", justifyContent:"space-around", alignItems:"center" }}>
                 <div style={{ textAlign:"center" }}>
@@ -7114,91 +6570,6 @@ export default function App() {
               )}
             </div>
 
-            {/* Response Time Analytics */}
-            <div style={{ 
-              background:"rgba(255,255,255,.04)", 
-              border:"1px solid rgba(255,255,255,.08)",
-              borderRadius:"var(--r2)", 
-              padding:"16px 20px", 
-              width:"100%", 
-              maxWidth:380 
-            }}>
-              <div style={{ fontFamily:"var(--fm)", fontSize:9, letterSpacing:2, color:"rgba(255,255,255,.35)", textTransform:"uppercase", marginBottom:14 }}>
-                📊 Response Time Analytics
-              </div>
-              
-              {/* Individual question times */}
-              <div style={{ display:"flex", flexDirection:"column", gap:10, marginBottom:14 }}>
-                {soTimes.map((time, i) => {
-                  const oppTime = soOppTimes[i];
-                  const playerFaster = time <= oppTime;
-                  return (
-                    <div key={i} style={{ 
-                      background:"rgba(255,255,255,.02)", 
-                      borderRadius:8, 
-                      padding:"10px 12px",
-                      border:"1px solid rgba(255,255,255,.05)"
-                    }}>
-                      <div style={{ fontSize:10, color:"rgba(255,255,255,.4)", marginBottom:6, fontFamily:"var(--fm)", letterSpacing:1 }}>
-                        Q{i+1}
-                      </div>
-                      <div style={{ display:"flex", justifyContent:"space-between", alignItems:"center", gap:12 }}>
-                        <div style={{ flex:1, textAlign:"left" }}>
-                          <div style={{ fontSize:13, color: playerFaster ? "#22d3ee" : "rgba(255,255,255,.5)", fontWeight: playerFaster ? 700 : 400 }}>
-                            {(time / 1000).toFixed(2)}s
-                          </div>
-                          <div style={{ fontSize:9, color:"rgba(255,255,255,.3)", marginTop:2 }}>
-                            {nick || "You"} {playerFaster ? "✓" : ""}
-                          </div>
-                        </div>
-                        <div style={{ fontSize:11, color:"rgba(255,255,255,.2)" }}>vs</div>
-                        <div style={{ flex:1, textAlign:"right" }}>
-                          <div style={{ fontSize:13, color: !playerFaster ? "#22d3ee" : "rgba(255,255,255,.5)", fontWeight: !playerFaster ? 700 : 400 }}>
-                            {(oppTime / 1000).toFixed(2)}s
-                          </div>
-                          <div style={{ fontSize:9, color:"rgba(255,255,255,.3)", marginTop:2 }}>
-                            {opp?.name} {!playerFaster ? "✓" : ""}
-                          </div>
-                        </div>
-                      </div>
-                    </div>
-                  );
-                })}
-              </div>
-
-              {/* Total time comparison */}
-              <div style={{ 
-                borderTop:"1px solid rgba(255,255,255,.08)", 
-                paddingTop:12,
-                display:"flex",
-                justifyContent:"space-between",
-                alignItems:"center"
-              }}>
-                <div style={{ textAlign:"left" }}>
-                  <div style={{ fontSize:10, color:"rgba(255,255,255,.4)", marginBottom:4, fontFamily:"var(--fm)", letterSpacing:1 }}>
-                    YOUR TOTAL
-                  </div>
-                  <div style={{ fontSize:18, fontWeight:700, color: soWinner === "player" ? "#22d3ee" : "rgba(255,255,255,.5)" }}>
-                    {(soTimes.reduce((a,b) => a+b, 0) / 1000).toFixed(2)}s
-                  </div>
-                  <div style={{ fontSize:9, color:"rgba(255,255,255,.3)", marginTop:2 }}>
-                    Avg: {(soTimes.reduce((a,b) => a+b, 0) / soTimes.length / 1000).toFixed(2)}s
-                  </div>
-                </div>
-                <div style={{ textAlign:"right" }}>
-                  <div style={{ fontSize:10, color:"rgba(255,255,255,.4)", marginBottom:4, fontFamily:"var(--fm)", letterSpacing:1 }}>
-                    OPP TOTAL
-                  </div>
-                  <div style={{ fontSize:18, fontWeight:700, color: soWinner === "opp" ? "#22d3ee" : "rgba(255,255,255,.5)" }}>
-                    {(soOppTimes.reduce((a,b) => a+b, 0) / 1000).toFixed(2)}s
-                  </div>
-                  <div style={{ fontSize:9, color:"rgba(255,255,255,.3)", marginTop:2 }}>
-                    Avg: {(soOppTimes.reduce((a,b) => a+b, 0) / soOppTimes.length / 1000).toFixed(2)}s
-                  </div>
-                </div>
-              </div>
-            </div>
-
             <div style={{ fontSize:12, color:"rgba(255,255,255,.4)", textAlign:"center" }}>
               {soWinner === "player"
                 ? soMyScore > soOppScore ? "You outscored the opponent in the Super Over!" : "You answered faster — tiebreak win!"
@@ -7208,31 +6579,8 @@ export default function App() {
             <button
               className="btn btn-amber"
               style={{ width:"100%", maxWidth:320 }}
-              onClick={async () => {
+              onClick={() => {
                 setSuperOverWinner(soWinner); // persist SO result into result screen
-                
-                // Complete match in backend with Super Over result
-                if (matchId && loggedIn) {
-                  try {
-                    await api(`/matches/${matchId}/complete`, {
-                      method: "POST",
-                      body: {
-                        player_score: myScore,
-                        opp_score:    oppScore,
-                        winner:       soWinner === "player" ? "player" : "opp",
-                        super_over:   true,
-                      },
-                    });
-                    // Refresh wallet balance from backend
-                    const walletData = await api("/wallet");
-                    if (walletData?.wallet?.balance !== undefined) {
-                      setWallet(walletData.wallet.balance);
-                    }
-                  } catch (err) {
-                    console.error("Match finalization error:", err);
-                  }
-                }
-                
                 setInSuperOver(false);
                 setScreen("result");
                 setFcMyScore(myScore);
