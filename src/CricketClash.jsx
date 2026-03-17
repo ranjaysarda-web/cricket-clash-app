@@ -4849,14 +4849,14 @@ export default function App() {
   // ═══════════════════════════════════════════════════════════════════════════════
   return (
     <>
-      <style>{G}
+      <style>{`${G}
 /* Avatar Display Styles */
 .avatar-img {
   width: 100%;
   height: 100%;
   object-fit: cover;
   border-radius: 12px;
-}
+}`}
 
 .avatar-container {
   position: relative;
@@ -4914,8 +4914,7 @@ export default function App() {
   width: 140px;
   height: 180px;
 }
-
-</style>
+`}</style>
       <div className="app">
         {toastMsg && <div className="toast">{toastMsg}</div>}
 
