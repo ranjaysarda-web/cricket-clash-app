@@ -141,43 +141,44 @@ const JERSEY_PALETTES = [
   { id:"purple",  label:"Royal Purple",price:200,  primary:"#6d28d9", stripe:"#5b21b6" },
 ];
 
-// ─── REALISTIC PLAYER AVATARS (AI-GENERATED) ────────────────────────────────────
+// ─── BADGES ────────────────────────────────────────────────────────────────────
+
+// ─── PLAYER AVATARS (LOCAL PATHS) ──────────────────────────────────────────────
 const PLAYER_AVATARS = {
-  gully: "data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' width='200' height='280'%3E%3Crect fill='%2364748b' width='200' height='280'/%3E%3Ctext x='50%25' y='50%25' text-anchor='middle' fill='white' font-size='20'%3EGULLY%3C/text%3E%3C/svg%3E",
-  club: "data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' width='200' height='280'%3E%3Crect fill='%233b82f6' width='200' height='280'/%3E%3Ctext x='50%25' y='50%25' text-anchor='middle' fill='white' font-size='20'%3ECLUB%3C/text%3E%3C/svg%3E",
-  state: "data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' width='200' height='280'%3E%3Crect fill='%238b5cf6' width='200' height='280'/%3E%3Ctext x='50%25' y='50%25' text-anchor='middle' fill='white' font-size='20'%3ESTATE%3C/text%3E%3C/svg%3E",
-  national: "data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' width='200' height='280'%3E%3Crect fill='%23f59e0b' width='200' height='280'/%3E%3Ctext x='50%25' y='50%25' text-anchor='middle' fill='white' font-size='20'%3ENATIONAL%3C/text%3E%3C/svg%3E",
-  legend: "data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' width='200' height='280'%3E%3Crect fill='%23ffd700' width='200' height='280'/%3E%3Ctext x='50%25' y='50%25' text-anchor='middle' fill='white' font-size='20'%3ELEGEND%3C/text%3E%3C/svg%3E",
-  immortal: "data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' width='200' height='280'%3E%3Crect fill='%23ff6b00' width='200' height='280'/%3E%3Ctext x='50%25' y='50%25' text-anchor='middle' fill='white' font-size='20'%3EIMMORTAL%3C/text%3E%3C/svg%3E",
+  gully: "/images/avatars/avatar_gully.png",
+  club: "/images/avatars/avatar_club.png",
+  state: "/images/avatars/avatar_state.png",
+  national: "/images/avatars/avatar_national.png",
+  legend: "/images/avatars/avatar_legend.png",
+  immortal: "/images/avatars/avatar_immortal.png",
 };
 
-// Map career stage to avatar image  
+// Map career stage to avatar image
 const getPlayerAvatar = (careerStage) => {
   if (careerStage <= 1) return PLAYER_AVATARS.gully;
   if (careerStage === 2) return PLAYER_AVATARS.club;
   if (careerStage === 3 || careerStage === 4) return PLAYER_AVATARS.state;
   if (careerStage === 5 || careerStage === 6) return PLAYER_AVATARS.national;
   if (careerStage === 7) return PLAYER_AVATARS.legend;
-  return PLAYER_AVATARS.immortal; // Stage 8+ (future-proof)
+  return PLAYER_AVATARS.immortal;
 };
 
-// ─── STADIUM BACKGROUND IMAGES (BASE64) ─────────────────────────────────────────
+// ─── STADIUM IMAGES (LOCAL PATHS) ──────────────────────────────────────────────
 const STADIUM_IMAGES = {
-  wankhede: "data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' width='1080' height='1920'%3E%3Crect fill='%230a0a0a' width='1080' height='1920'/%3E%3Ctext x='50%25' y='50%25' text-anchor='middle' fill='%23ff6b00' font-size='48' font-weight='900'%3EWANKHEDE%3C/text%3E%3C/svg%3E",
-  chepauk: "data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' width='1080' height='1920'%3E%3Crect fill='%230a0a0a' width='1080' height='1920'/%3E%3Ctext x='50%25' y='50%25' text-anchor='middle' fill='%23ff6b00' font-size='48' font-weight='900'%3ECHEPAUK%3C/text%3E%3C/svg%3E",
-  modi: "data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' width='1080' height='1920'%3E%3Crect fill='%230a0a0a' width='1080' height='1920'/%3E%3Ctext x='50%25' y='50%25' text-anchor='middle' fill='%23ff6b00' font-size='48' font-weight='900'%3EMODI%3C/text%3E%3C/svg%3E",
-  jaitley: "data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' width='1080' height='1920'%3E%3Crect fill='%230a0a0a' width='1080' height='1920'/%3E%3Ctext x='50%25' y='50%25' text-anchor='middle' fill='%23ff6b00' font-size='48' font-weight='900'%3EJAITLEY%3C/text%3E%3C/svg%3E",
-  dubai: "data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' width='1080' height='1920'%3E%3Crect fill='%230a0a0a' width='1080' height='1920'/%3E%3Ctext x='50%25' y='50%25' text-anchor='middle' fill='%23ff6b00' font-size='48' font-weight='900'%3EDUBAI%3C/text%3E%3C/svg%3E",
-  oval: "data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' width='1080' height='1920'%3E%3Crect fill='%230a0a0a' width='1080' height='1920'/%3E%3Ctext x='50%25' y='50%25' text-anchor='middle' fill='%23ff6b00' font-size='48' font-weight='900'%3EOVAL%3C/text%3E%3C/svg%3E",
-  mcg: "data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' width='1080' height='1920'%3E%3Crect fill='%230a0a0a' width='1080' height='1920'/%3E%3Ctext x='50%25' y='50%25' text-anchor='middle' fill='%23ff6b00' font-size='48' font-weight='900'%3EMCG%3C/text%3E%3C/svg%3E",
-  eden: "data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' width='1080' height='1920'%3E%3Crect fill='%230a0a0a' width='1080' height='1920'/%3E%3Ctext x='50%25' y='50%25' text-anchor='middle' fill='%23ff6b00' font-size='48' font-weight='900'%3EEDEN%3C/text%3E%3C/svg%3E",
-  chinnaswamy: "data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' width='1080' height='1920'%3E%3Crect fill='%230a0a0a' width='1080' height='1920'/%3E%3Ctext x='50%25' y='50%25' text-anchor='middle' fill='%23ff6b00' font-size='48' font-weight='900'%3ECHINNASWAMY%3C/text%3E%3C/svg%3E",
-  lords: "data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' width='1080' height='1920'%3E%3Crect fill='%230a0a0a' width='1080' height='1920'/%3E%3Ctext x='50%25' y='50%25' text-anchor='middle' fill='%23ff6b00' font-size='48' font-weight='900'%3ELORDS%3C/text%3E%3C/svg%3E",
-  dharamsala: "data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' width='1080' height='1920'%3E%3Crect fill='%230a0a0a' width='1080' height='1920'/%3E%3Ctext x='50%25' y='50%25' text-anchor='middle' fill='%23ff6b00' font-size='48' font-weight='900'%3EDHARAMSALA%3C/text%3E%3C/svg%3E",
+  wankhede: "/images/stadiums/stadium_wankhede.png",
+  chepauk: "/images/stadiums/stadium_chepauk.png",
+  modi: "/images/stadiums/stadium_modi.png",
+  jaitley: "/images/stadiums/stadium_jaitley.png",
+  dubai: "/images/stadiums/stadium_dubai.png",
+  oval: "/images/stadiums/stadium_oval.png",
+  mcg: "/images/stadiums/stadium_mcg.png",
+  eden: "/images/stadiums/stadium_eden.png",
+  chinnaswamy: "/images/stadiums/stadium_chinnaswamy.png",
+  lords: "/images/stadiums/stadium_lords.png",
+  dharamsala: "/images/stadiums/stadium_dharamsala.png",
 };
 
-
-// ─── STADIUM DATA ───────────────────────────────────────────────────────────────
+// ─── STADIUM DATA ──────────────────────────────────────────────────────────────
 const STADIUMS = [
   {
     id: "dharamsala", name: "DHARAMSALA", fullName: "HPCA Stadium", location: "Himachal Pradesh, India", flag: "🇮🇳",
@@ -262,7 +263,6 @@ const getRandomStadium = () => STADIUMS[Math.floor(Math.random() * STADIUMS.leng
 const getStadiumById = (id) => STADIUMS.find(s => s.id === id);
 const getStarRating = (rating) => '⭐'.repeat(rating) + '☆'.repeat(5 - rating);
 
-// ─── BADGES ────────────────────────────────────────────────────────────────────
 const BADGE_DEFS = [
   { id:"first_win",     icon:"🏆", title:"First Victory",      desc:"Win your first match",                  rarity:"common"  },
   { id:"first_six",     icon:"6️⃣", title:"First Six",          desc:"Score 6 off a single ball",             rarity:"common"  },
@@ -3851,12 +3851,9 @@ export default function App() {
     } else {
       fetchInBackground(cond);
     }
-    // Select random stadium and show conditions screen
-    const stadium = getRandomStadium();
-    setSelectedStadium(stadium);
-    screenHistoryRef.current = [...screenHistoryRef.current, "conditions"];
-    window.history.pushState({ screen: "conditions" }, "", "");
-    setScreen("conditions");
+    screenHistoryRef.current = [...screenHistoryRef.current, "toss"];
+    window.history.pushState({ screen: "toss" }, "", "");
+    setScreen("toss");
   }, [fetchInBackground]);
 
   // ── Launch a bot match immediately (guest or no real opponent) ─────────────
@@ -3875,11 +3872,10 @@ export default function App() {
     setMatchType("bot"); setMatchId(null); setLoading(false);
     setInSuperOver(false); setSoPhase("intro"); setSuperOverWinner(null);
     fetchInBackground(cond);
-    // Select random stadium and show conditions screen
+    screenHistoryRef.current = [...screenHistoryRef.current, "toss"];
+    window.history.pushState({ screen: "toss" }, "", "");
     const stadium = getRandomStadium();
     setSelectedStadium(stadium);
-    screenHistoryRef.current = [...screenHistoryRef.current, "conditions"];
-    window.history.pushState({ screen: "conditions" }, "", "");
     setScreen("conditions");
   }, [fetchInBackground]);
 
@@ -3918,12 +3914,9 @@ export default function App() {
       setMatchType("bot"); setMatchId(null); setLoading(false);
       setInSuperOver(false); setSoPhase("intro"); setSuperOverWinner(null);
       qsRef.current = []; qsReadyRef.current = null;
-      // Select random stadium and show conditions screen
-      const stadium = getRandomStadium();
-      setSelectedStadium(stadium);
-      screenHistoryRef.current = [...screenHistoryRef.current, "conditions"];
-      window.history.pushState({ screen: "conditions" }, "", "");
-      setScreen("conditions");
+      screenHistoryRef.current = [...screenHistoryRef.current, "toss"];
+      window.history.pushState({ screen: "toss" }, "", "");
+      setScreen("toss");
     };
 
     // Always fire bot after 10s — stored in ref so it survives re-renders
@@ -3947,12 +3940,9 @@ export default function App() {
         setTossState("idle"); setTossWinner(null); setBatFirst(null);
         setMatchType("bot"); setMatchId(null); setLoading(false);
         setInSuperOver(false); setSoPhase("intro"); setSuperOverWinner(null);
-        // Select random stadium and show conditions screen
-        const stadium = getRandomStadium();
-        setSelectedStadium(stadium);
-        screenHistoryRef.current = [...screenHistoryRef.current, "conditions"];
-        window.history.pushState({ screen: "conditions" }, "", "");
-        setScreen("conditions");
+        screenHistoryRef.current = [...screenHistoryRef.current, "toss"];
+        window.history.pushState({ screen: "toss" }, "", "");
+        setScreen("toss");
       }
     }, 10000);
 
@@ -4845,73 +4835,7 @@ export default function App() {
   // ═══════════════════════════════════════════════════════════════════════════════
   return (
     <>
-      <style>{G}
-/* Avatar Display Styles */
-.avatar-img {
-  width: 100%;
-  height: 100%;
-  object-fit: cover;
-  border-radius: 12px;
-}
-
-.avatar-container {
-  position: relative;
-  width: 120px;
-  height: 160px;
-  border-radius: 16px;
-  overflow: hidden;
-  box-shadow: 0 8px 32px rgba(0,0,0,0.4);
-  border: 3px solid rgba(255,255,255,0.1);
-}
-
-.avatar-glow-ring {
-  position: absolute;
-  inset: -4px;
-  border-radius: 20px;
-  background: linear-gradient(135deg, var(--career-color) 0%, transparent 100%);
-  opacity: 0.4;
-  filter: blur(8px);
-  z-index: -1;
-  animation: pulse-avatar 3s ease-in-out infinite;
-}
-
-@keyframes pulse-avatar {
-  0%, 100% { opacity: 0.3; transform: scale(1); }
-  50% { opacity: 0.6; transform: scale(1.05); }
-}
-
-.avatar-rank-badge {
-  position: absolute;
-  bottom: 8px;
-  left: 50%;
-  transform: translateX(-50%);
-  background: linear-gradient(135deg, rgba(0,0,0,0.9) 0%, rgba(0,0,0,0.7) 100%);
-  padding: 4px 12px;
-  border-radius: 12px;
-  font-size: 9px;
-  font-weight: 900;
-  letter-spacing: 1px;
-  color: var(--career-color);
-  border: 1px solid var(--career-color);
-  backdrop-filter: blur(10px);
-}
-
-.small-avatar {
-  width: 90px;
-  height: 110px;
-}
-
-.toss-avatar {
-  width: 90px;
-  height: 110px;
-}
-
-.result-avatar {
-  width: 140px;
-  height: 180px;
-}
-
-</style>
+      <style>{G}</style>
       <div className="app">
         {toastMsg && <div className="toast">{toastMsg}</div>}
 
@@ -5600,20 +5524,7 @@ export default function App() {
                 0%, 100% { opacity: .06; }
                 50% { opacity: .12; }
               }
-              @keyframes floodlight-flicker {
-                0%, 100% { opacity: 1; }
-                50% { opacity: 0.88; }
-              }
-              @keyframes btn-shine {
-                0% { transform: translateX(-100%) translateY(-100%) rotate(45deg); }
-                100% { transform: translateX(100%) translateY(100%) rotate(45deg); }
-              }
-              @keyframes slideUp {
-                0% { transform: translate(-50%, -40%); opacity: 0; }
-                100% { transform: translate(-50%, -50%); opacity: 1; }
-              }
-            `}
-</style>
+            `}</style>
           </div>
         )}
 
@@ -5865,51 +5776,6 @@ export default function App() {
         background: 'linear-gradient(180deg, rgba(0,0,0,0.6) 0%, rgba(0,0,0,0.3) 50%, rgba(0,0,0,0.8) 100%)',
         zIndex: 1
       }} />
-      
-      {/* Floodlights Effect */}
-      <div style={{
-        position: 'absolute',
-        top: '-20%',
-        left: '10%',
-        width: '80%',
-        height: '150px',
-        background: 'radial-gradient(ellipse at top, rgba(255,255,255,0.15) 0%, transparent 60%)',
-        filter: 'blur(30px)',
-        animation: 'floodlight-flicker 4s ease-in-out infinite',
-        zIndex: 2
-      }} />
-
-      {/* Screen Header */}
-      <div style={{
-        position: 'relative',
-        zIndex: 10,
-        padding: '20px',
-        background: 'linear-gradient(135deg, rgba(255,107,0,0.2) 0%, rgba(255,61,0,0.1) 100%)',
-        borderBottom: '2px solid rgba(255,107,0,0.4)',
-        textAlign: 'center'
-      }}>
-        <div style={{
-          fontFamily: 'var(--fd)',
-          fontSize: 14,
-          fontWeight: 900,
-          color: '#ffd700',
-          textTransform: 'uppercase',
-          letterSpacing: 3,
-          marginBottom: 5,
-          textShadow: '0 2px 8px rgba(0,0,0,0.5)'
-        }}>
-          Match Conditions
-        </div>
-        <div style={{
-          fontFamily: 'var(--fm)',
-          fontSize: 10,
-          color: 'rgba(255,255,255,0.5)',
-          textTransform: 'uppercase',
-          letterSpacing: 2
-        }}>
-          Pre-Match Analysis
-        </div>
-      </div>
 
       {/* Stadium Info Card */}
       <div style={{
@@ -5924,15 +5790,14 @@ export default function App() {
         padding: '32px 24px',
         width: '88%',
         maxWidth: 340,
-        boxShadow: '0 24px 72px rgba(0,0,0,0.9), 0 0 120px rgba(255,107,0,0.15)',
-        backdropFilter: 'blur(20px)',
-        animation: 'slideUp 0.5s ease-out'
+        boxShadow: '0 24px 72px rgba(0,0,0,0.9)',
+        backdropFilter: 'blur(20px)'
       }}>
         
         {/* Stadium Name */}
         <div style={{
-          fontFamily: 'var(--fd)',
-          fontSize: 32,
+          fontFamily: 'Impact, sans-serif',
+          fontSize: 28,
           fontWeight: 900,
           background: 'linear-gradient(135deg, #ffd700 0%, #ff6b00 100%)',
           WebkitBackgroundClip: 'text',
@@ -5941,19 +5806,17 @@ export default function App() {
           letterSpacing: 2,
           marginBottom: 8,
           textAlign: 'center',
-          lineHeight: 1.1,
-          textShadow: '0 0 40px rgba(255,215,0,0.3)'
+          lineHeight: 1.1
         }}>
           {selectedStadium.name}
         </div>
         
         {/* Location */}
         <div style={{
-          fontFamily: 'var(--fm)',
           fontSize: 12,
           color: 'rgba(255,255,255,0.6)',
           textAlign: 'center',
-          marginBottom: 28,
+          marginBottom: 24,
           textTransform: 'uppercase',
           letterSpacing: 2,
           fontWeight: 600
@@ -5962,152 +5825,50 @@ export default function App() {
         </div>
 
         {/* Condition Details */}
-        <div style={{ display: 'grid', gap: 14, marginBottom: 24 }}>
+        <div style={{ display: 'grid', gap: 12, marginBottom: 20 }}>
           
           {/* Weather */}
           <div style={{
             background: 'rgba(255,255,255,0.04)',
             border: '1px solid rgba(255,255,255,0.12)',
-            borderRadius: 14,
-            padding: 16,
+            borderRadius: 12,
+            padding: 14,
             display: 'flex',
             alignItems: 'center',
-            gap: 16,
-            transition: 'all 0.3s'
+            gap: 14
           }}>
             <div style={{
-              width: 52,
-              height: 52,
-              borderRadius: 13,
+              width: 48,
+              height: 48,
+              borderRadius: 12,
               background: 'linear-gradient(135deg, rgba(255,107,0,0.25) 0%, rgba(255,61,0,0.15) 100%)',
               display: 'flex',
               alignItems: 'center',
               justifyContent: 'center',
-              fontSize: 26,
-              border: '1.5px solid rgba(255,107,0,0.4)',
-              flexShrink: 0
+              fontSize: 24,
+              border: '1.5px solid rgba(255,107,0,0.4)'
             }}>
               {selectedStadium.weatherIcon}
             </div>
             <div style={{ flex: 1 }}>
               <div style={{
-                fontFamily: 'var(--fm)',
                 fontSize: 9,
                 color: 'rgba(255,255,255,0.5)',
                 textTransform: 'uppercase',
                 letterSpacing: 1.5,
-                marginBottom: 5,
-                fontWeight: 800
-              }}>
-                Weather
-              </div>
-              <div style={{
-                fontFamily: 'var(--fd)',
-                fontSize: 15,
-                fontWeight: 900,
-                color: '#ffd700',
-                textTransform: 'uppercase',
-                letterSpacing: 0.5
-              }}>
-                {selectedStadium.atmosphere.split('|')[0].trim()}
-              </div>
-            </div>
-          </div>
-
-          {/* Pitch Type */}
-          <div style={{
-            background: 'rgba(255,255,255,0.04)',
-            border: '1px solid rgba(255,255,255,0.12)',
-            borderRadius: 14,
-            padding: 16,
-            display: 'flex',
-            alignItems: 'center',
-            gap: 16
-          }}>
-            <div style={{
-              width: 52,
-              height: 52,
-              borderRadius: 13,
-              background: 'linear-gradient(135deg, rgba(255,107,0,0.25) 0%, rgba(255,61,0,0.15) 100%)',
-              display: 'flex',
-              alignItems: 'center',
-              justifyContent: 'center',
-              fontSize: 26,
-              border: '1.5px solid rgba(255,107,0,0.4)',
-              flexShrink: 0
-            }}>
-              🏏
-            </div>
-            <div style={{ flex: 1 }}>
-              <div style={{
-                fontFamily: 'var(--fm)',
-                fontSize: 9,
-                color: 'rgba(255,255,255,0.5)',
-                textTransform: 'uppercase',
-                letterSpacing: 1.5,
-                marginBottom: 5,
+                marginBottom: 4,
                 fontWeight: 800
               }}>
                 Pitch Type
               </div>
               <div style={{
-                fontFamily: 'var(--fd)',
-                fontSize: 15,
+                fontFamily: 'Impact, sans-serif',
+                fontSize: 14,
                 fontWeight: 900,
                 color: '#ffd700',
-                textTransform: 'uppercase',
-                letterSpacing: 0.5
+                textTransform: 'uppercase'
               }}>
                 {selectedStadium.pitchType}
-              </div>
-            </div>
-          </div>
-
-          {/* Wind */}
-          <div style={{
-            background: 'rgba(255,255,255,0.04)',
-            border: '1px solid rgba(255,255,255,0.12)',
-            borderRadius: 14,
-            padding: 16,
-            display: 'flex',
-            alignItems: 'center',
-            gap: 16
-          }}>
-            <div style={{
-              width: 52,
-              height: 52,
-              borderRadius: 13,
-              background: 'linear-gradient(135deg, rgba(255,107,0,0.25) 0%, rgba(255,61,0,0.15) 100%)',
-              display: 'flex',
-              alignItems: 'center',
-              justifyContent: 'center',
-              fontSize: 26,
-              border: '1.5px solid rgba(255,107,0,0.4)',
-              flexShrink: 0
-            }}>
-              💨
-            </div>
-            <div style={{ flex: 1 }}>
-              <div style={{
-                fontFamily: 'var(--fm)',
-                fontSize: 9,
-                color: 'rgba(255,255,255,0.5)',
-                textTransform: 'uppercase',
-                letterSpacing: 1.5,
-                marginBottom: 5,
-                fontWeight: 800
-              }}>
-                Wind Speed
-              </div>
-              <div style={{
-                fontFamily: 'var(--fd)',
-                fontSize: 15,
-                fontWeight: 900,
-                color: '#ffd700',
-                textTransform: 'uppercase',
-                letterSpacing: 0.5
-              }}>
-                {selectedStadium.wind.match(/\d+/)[0]} km/h
               </div>
             </div>
           </div>
@@ -6117,33 +5878,30 @@ export default function App() {
         <div style={{
           display: 'grid',
           gridTemplateColumns: '1fr 1fr',
-          gap: 12,
-          marginBottom: 24
+          gap: 10,
+          marginBottom: 20
         }}>
           <div style={{
             background: 'rgba(255,255,255,0.04)',
             border: '1px solid rgba(255,107,0,0.25)',
-            borderRadius: 12,
-            padding: '14px 10px',
+            borderRadius: 10,
+            padding: '12px 8px',
             textAlign: 'center'
           }}>
             <div style={{
-              fontFamily: 'var(--fm)',
               fontSize: 8,
               color: 'rgba(255,255,255,0.5)',
               textTransform: 'uppercase',
               letterSpacing: 1.5,
-              marginBottom: 8,
+              marginBottom: 6,
               fontWeight: 800
             }}>
               Batting
             </div>
             <div style={{
-              fontFamily: 'var(--fm)',
-              fontSize: 16,
+              fontSize: 14,
               fontWeight: 900,
-              color: '#ff6b00',
-              letterSpacing: 1
+              color: '#ff6b00'
             }}>
               {getStarRating(selectedStadium.battingRating)}
             </div>
@@ -6152,135 +5910,57 @@ export default function App() {
           <div style={{
             background: 'rgba(255,255,255,0.04)',
             border: '1px solid rgba(255,107,0,0.25)',
-            borderRadius: 12,
-            padding: '14px 10px',
+            borderRadius: 10,
+            padding: '12px 8px',
             textAlign: 'center'
           }}>
             <div style={{
-              fontFamily: 'var(--fm)',
               fontSize: 8,
               color: 'rgba(255,255,255,0.5)',
               textTransform: 'uppercase',
               letterSpacing: 1.5,
-              marginBottom: 8,
+              marginBottom: 6,
               fontWeight: 800
             }}>
-              Bowling
+              Avg Score
             </div>
             <div style={{
-              fontFamily: 'var(--fm)',
-              fontSize: 16,
-              fontWeight: 900,
-              color: '#ff6b00',
-              letterSpacing: 1
-            }}>
-              {getStarRating(selectedStadium.bowlingRating)}
-            </div>
-          </div>
-
-          <div style={{
-            background: 'rgba(255,255,255,0.04)',
-            border: '1px solid rgba(255,107,0,0.25)',
-            borderRadius: 12,
-            padding: '14px 10px',
-            textAlign: 'center'
-          }}>
-            <div style={{
-              fontFamily: 'var(--fm)',
-              fontSize: 8,
-              color: 'rgba(255,255,255,0.5)',
-              textTransform: 'uppercase',
-              letterSpacing: 1.5,
-              marginBottom: 8,
-              fontWeight: 800
-            }}>
-              Avg. Score
-            </div>
-            <div style={{
-              fontFamily: 'var(--fd)',
-              fontSize: 16,
+              fontFamily: 'Impact, sans-serif',
+              fontSize: 14,
               fontWeight: 900,
               color: '#ff6b00'
             }}>
               {selectedStadium.avgScore}
             </div>
           </div>
-
-          <div style={{
-            background: 'rgba(255,255,255,0.04)',
-            border: '1px solid rgba(255,107,0,0.25)',
-            borderRadius: 12,
-            padding: '14px 10px',
-            textAlign: 'center'
-          }}>
-            <div style={{
-              fontFamily: 'var(--fm)',
-              fontSize: 8,
-              color: 'rgba(255,255,255,0.5)',
-              textTransform: 'uppercase',
-              letterSpacing: 1.5,
-              marginBottom: 8,
-              fontWeight: 800
-            }}>
-              Difficulty
-            </div>
-            <div style={{
-              fontFamily: 'var(--fd)',
-              fontSize: 13,
-              fontWeight: 900,
-              color: '#ff6b00',
-              textTransform: 'uppercase',
-              letterSpacing: 0.5
-            }}>
-              {selectedStadium.difficulty}
-            </div>
-          </div>
         </div>
 
         {/* Continue Button */}
         <button
-          onClick={() => {
-            setScreen("toss");
-          }}
+          onClick={() => setScreen("toss")}
           style={{
             width: '100%',
-            padding: 18,
+            padding: 16,
             background: 'linear-gradient(135deg, #ff6b00 0%, #ff3d00 100%)',
             border: 'none',
             borderRadius: 50,
             color: '#fff',
-            fontFamily: 'var(--fd)',
-            fontSize: 15,
+            fontFamily: 'Impact, sans-serif',
+            fontSize: 14,
             fontWeight: 900,
             textTransform: 'uppercase',
-            letterSpacing: 2.5,
+            letterSpacing: 2,
             cursor: 'pointer',
-            boxShadow: '0 10px 35px rgba(255,107,0,0.6), inset 0 1px 0 rgba(255,255,255,0.3)',
-            position: 'relative',
-            overflow: 'hidden',
-            transition: 'all 0.3s'
+            boxShadow: '0 10px 35px rgba(255,107,0,0.6)'
           }}
-          onMouseDown={e => e.currentTarget.style.transform = 'scale(0.97)'}
-          onMouseUp={e => e.currentTarget.style.transform = 'scale(1)'}
         >
-          <span style={{ position: 'relative', zIndex: 2 }}>
-            🏏 PROCEED TO TOSS
-          </span>
-          <div style={{
-            position: 'absolute',
-            top: '-50%',
-            left: '-50%',
-            width: '200%',
-            height: '200%',
-            background: 'linear-gradient(45deg, transparent, rgba(255,255,255,0.15), transparent)',
-            animation: 'btn-shine 3s infinite',
-            pointerEvents: 'none'
-          }} />
+          🏏 PROCEED TO TOSS
         </button>
       </div>
 
     </div>
   )}
+
 
 
   {screen === "toss" && (() => {
