@@ -141,17 +141,15 @@ const JERSEY_PALETTES = [
   { id:"purple",  label:"Royal Purple",price:200,  primary:"#6d28d9", stripe:"#5b21b6" },
 ];
 
-
-// ─── REALISTIC PLAYER AVATARS (LOCAL PATHS) ─────────────────────────────────────
+// ─── REALISTIC PLAYER AVATARS (AI-GENERATED) ────────────────────────────────────
 const PLAYER_AVATARS = {
-  gully: "/images/avatars/avatar_gully.png",
-  club: "/images/avatars/avatar_club.png",
-  state: "/images/avatars/avatar_state.png",
-  national: "/images/avatars/avatar_national.png",
-  legend: "/images/avatars/avatar_legend.png",
-  immortal: "/images/avatars/avatar_immortal.png",
+  gully: "data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' width='200' height='280'%3E%3Crect fill='%2364748b' width='200' height='280'/%3E%3Ctext x='50%25' y='50%25' text-anchor='middle' fill='white' font-size='20'%3EGULLY%3C/text%3E%3C/svg%3E",
+  club: "data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' width='200' height='280'%3E%3Crect fill='%233b82f6' width='200' height='280'/%3E%3Ctext x='50%25' y='50%25' text-anchor='middle' fill='white' font-size='20'%3ECLUB%3C/text%3E%3C/svg%3E",
+  state: "data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' width='200' height='280'%3E%3Crect fill='%238b5cf6' width='200' height='280'/%3E%3Ctext x='50%25' y='50%25' text-anchor='middle' fill='white' font-size='20'%3ESTATE%3C/text%3E%3C/svg%3E",
+  national: "data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' width='200' height='280'%3E%3Crect fill='%23f59e0b' width='200' height='280'/%3E%3Ctext x='50%25' y='50%25' text-anchor='middle' fill='white' font-size='20'%3ENATIONAL%3C/text%3E%3C/svg%3E",
+  legend: "data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' width='200' height='280'%3E%3Crect fill='%23ffd700' width='200' height='280'/%3E%3Ctext x='50%25' y='50%25' text-anchor='middle' fill='white' font-size='20'%3ELEGEND%3C/text%3E%3C/svg%3E",
+  immortal: "data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' width='200' height='280'%3E%3Crect fill='%23ff6b00' width='200' height='280'/%3E%3Ctext x='50%25' y='50%25' text-anchor='middle' fill='white' font-size='20'%3EIMMORTAL%3C/text%3E%3C/svg%3E",
 };
-
 
 // Map career stage to avatar image  
 const getPlayerAvatar = (careerStage) => {
@@ -163,22 +161,20 @@ const getPlayerAvatar = (careerStage) => {
   return PLAYER_AVATARS.immortal; // Stage 8+ (future-proof)
 };
 
-
-// ─── STADIUM BACKGROUND IMAGES (LOCAL PATHS) ────────────────────────────────────
+// ─── STADIUM BACKGROUND IMAGES (BASE64) ─────────────────────────────────────────
 const STADIUM_IMAGES = {
-  wankhede: "/images/stadiums/stadium_wankhede.png",
-  chepauk: "/images/stadiums/stadium_chepauk.png",
-  modi: "/images/stadiums/stadium_modi.png",
-  jaitley: "/images/stadiums/stadium_jaitley.png",
-  dubai: "/images/stadiums/stadium_dubai.png",
-  oval: "/images/stadiums/stadium_oval.png",
-  mcg: "/images/stadiums/stadium_mcg.png",
-  eden: "/images/stadiums/stadium_eden.png",
-  chinnaswamy: "/images/stadiums/stadium_chinnaswamy.png",
-  lords: "/images/stadiums/stadium_lords.png",
-  dharamsala: "/images/stadiums/stadium_dharamsala.png",
+  wankhede: "data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' width='1080' height='1920'%3E%3Crect fill='%230a0a0a' width='1080' height='1920'/%3E%3Ctext x='50%25' y='50%25' text-anchor='middle' fill='%23ff6b00' font-size='48' font-weight='900'%3EWANKHEDE%3C/text%3E%3C/svg%3E",
+  chepauk: "data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' width='1080' height='1920'%3E%3Crect fill='%230a0a0a' width='1080' height='1920'/%3E%3Ctext x='50%25' y='50%25' text-anchor='middle' fill='%23ff6b00' font-size='48' font-weight='900'%3ECHEPAUK%3C/text%3E%3C/svg%3E",
+  modi: "data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' width='1080' height='1920'%3E%3Crect fill='%230a0a0a' width='1080' height='1920'/%3E%3Ctext x='50%25' y='50%25' text-anchor='middle' fill='%23ff6b00' font-size='48' font-weight='900'%3EMODI%3C/text%3E%3C/svg%3E",
+  jaitley: "data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' width='1080' height='1920'%3E%3Crect fill='%230a0a0a' width='1080' height='1920'/%3E%3Ctext x='50%25' y='50%25' text-anchor='middle' fill='%23ff6b00' font-size='48' font-weight='900'%3EJAITLEY%3C/text%3E%3C/svg%3E",
+  dubai: "data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' width='1080' height='1920'%3E%3Crect fill='%230a0a0a' width='1080' height='1920'/%3E%3Ctext x='50%25' y='50%25' text-anchor='middle' fill='%23ff6b00' font-size='48' font-weight='900'%3EDUBAI%3C/text%3E%3C/svg%3E",
+  oval: "data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' width='1080' height='1920'%3E%3Crect fill='%230a0a0a' width='1080' height='1920'/%3E%3Ctext x='50%25' y='50%25' text-anchor='middle' fill='%23ff6b00' font-size='48' font-weight='900'%3EOVAL%3C/text%3E%3C/svg%3E",
+  mcg: "data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' width='1080' height='1920'%3E%3Crect fill='%230a0a0a' width='1080' height='1920'/%3E%3Ctext x='50%25' y='50%25' text-anchor='middle' fill='%23ff6b00' font-size='48' font-weight='900'%3EMCG%3C/text%3E%3C/svg%3E",
+  eden: "data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' width='1080' height='1920'%3E%3Crect fill='%230a0a0a' width='1080' height='1920'/%3E%3Ctext x='50%25' y='50%25' text-anchor='middle' fill='%23ff6b00' font-size='48' font-weight='900'%3EEDEN%3C/text%3E%3C/svg%3E",
+  chinnaswamy: "data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' width='1080' height='1920'%3E%3Crect fill='%230a0a0a' width='1080' height='1920'/%3E%3Ctext x='50%25' y='50%25' text-anchor='middle' fill='%23ff6b00' font-size='48' font-weight='900'%3ECHINNASWAMY%3C/text%3E%3C/svg%3E",
+  lords: "data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' width='1080' height='1920'%3E%3Crect fill='%230a0a0a' width='1080' height='1920'/%3E%3Ctext x='50%25' y='50%25' text-anchor='middle' fill='%23ff6b00' font-size='48' font-weight='900'%3ELORDS%3C/text%3E%3C/svg%3E",
+  dharamsala: "data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' width='1080' height='1920'%3E%3Crect fill='%230a0a0a' width='1080' height='1920'/%3E%3Ctext x='50%25' y='50%25' text-anchor='middle' fill='%23ff6b00' font-size='48' font-weight='900'%3EDHARAMSALA%3C/text%3E%3C/svg%3E",
 };
-
 
 
 // ─── STADIUM DATA ───────────────────────────────────────────────────────────────
@@ -4849,14 +4845,14 @@ export default function App() {
   // ═══════════════════════════════════════════════════════════════════════════════
   return (
     <>
-      <style>{`${G}
+      <style>{G}
 /* Avatar Display Styles */
 .avatar-img {
   width: 100%;
   height: 100%;
   object-fit: cover;
   border-radius: 12px;
-}`}
+}
 
 .avatar-container {
   position: relative;
@@ -4914,7 +4910,8 @@ export default function App() {
   width: 140px;
   height: 180px;
 }
-`}</style>
+
+</style>
       <div className="app">
         {toastMsg && <div className="toast">{toastMsg}</div>}
 
