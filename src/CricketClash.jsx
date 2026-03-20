@@ -4,38 +4,19 @@ import { useState, useEffect, useRef, useCallback, useMemo } from "react";
 // In the Claude artifact: runs fully offline (demo mode)
 // In your real app: set these to your Supabase + Render URLs
 
-// ─── STADIUM IMAGES (LOCAL PATHS) ──────────────────────────────────────────────
 const STADIUM_IMAGES = {
-  wankhede: "/stadium_wankhede.png",
-  chepauk: "/stadium_cheapuk.png",
-  modi: "/stadium_modi.png",
-  jaitley: "/stadium_jaitley.png",
-  dubai: "/stadium_dubai.png",
-  oval: "/stadium_oval.png",
-  mcg: "/stadium_mcg.png",
-  eden: "/stadium_eden.png",
-  chinnaswamy: "/stadium_chinnaswamy.png",
-  lords: "/stadium_lords.png",
-  dharamsala: "/stadium_dharamsala.png",
+  dharamsala: "/images/stadiums/stadium_dharamsala.png",
+  chepauk: "/images/stadiums/stadium_cheapuk.png",
+  modi: "/images/stadiums/stadium_modi.png",
+  jaitley: "/images/stadiums/stadium_jaitley.png",
+  dubai: "/images/stadiums/stadium_dubai.png",
+  oval: "/images/stadiums/stadium_oval.png",
+  mcg: "/images/stadiums/stadium_mcg.png",
+  eden: "/images/stadiums/stadium_eden.png",
+  chinnaswamy: "/images/stadiums/stadium_chinnaswamy.png",
+  lords: "/images/stadiums/stadium_lords.png",
+  wankhede: "/images/stadiums/stadium_wankhede.png"
 };
-
-// ─── STADIUM DATA ──────────────────────────────────────────────────────────────
-const STADIUMS = [
-  { id: "dharamsala", name: "DHARAMSALA", location: "Himachal Pradesh, India 🇮🇳", pitchType: "Green Seamer", avgScore: 26, battingRating: 3, bowlingRating: 5 },
-  { id: "chepauk", name: "CHEPAUK", location: "Chennai, India 🇮🇳", pitchType: "Dusty Turner", avgScore: 27, battingRating: 3, bowlingRating: 4 },
-  { id: "modi", name: "MODI STADIUM", location: "Ahmedabad, India 🇮🇳", pitchType: "Flat Track", avgScore: 33, battingRating: 5, bowlingRating: 2 },
-  { id: "jaitley", name: "ARUN JAITLEY", location: "Delhi, India 🇮🇳", pitchType: "Flat Track", avgScore: 31, battingRating: 4, bowlingRating: 3 },
-  { id: "dubai", name: "DUBAI INTERNATIONAL", location: "Dubai, UAE 🇦🇪", pitchType: "Slow & Low", avgScore: 29, battingRating: 4, bowlingRating: 4 },
-  { id: "oval", name: "THE OVAL", location: "London, England 🏴󠁧󠁢󠁥󠁮󠁧󠁿", pitchType: "Green Seamer", avgScore: 28, battingRating: 3, bowlingRating: 4 },
-  { id: "mcg", name: "MCG", location: "Melbourne, Australia 🇦🇺", pitchType: "Fast & Bouncy", avgScore: 30, battingRating: 4, bowlingRating: 4 },
-  { id: "eden", name: "EDEN GARDENS", location: "Kolkata, India 🇮🇳", pitchType: "Dusty Turner", avgScore: 28, battingRating: 3, bowlingRating: 4 },
-  { id: "chinnaswamy", name: "CHINNASWAMY", location: "Bangalore, India 🇮🇳", pitchType: "Flat Track", avgScore: 34, battingRating: 5, bowlingRating: 2 },
-  { id: "lords", name: "LORD'S", location: "London, England 🏴󠁧󠁢󠁥󠁮󠁧󠁿", pitchType: "Green Seamer", avgScore: 25, battingRating: 2, bowlingRating: 5 },
-  { id: "wankhede", name: "WANKHEDE", location: "Mumbai, India 🇮🇳", pitchType: "Flat Track", avgScore: 32, battingRating: 5, bowlingRating: 3 }
-];
-
-const getRandomStadium = () => STADIUMS[Math.floor(Math.random() * STADIUMS.length)];
-const getStarRating = (rating) => '⭐'.repeat(rating) + '☆'.repeat(5 - rating);
 
 const API_BASE = typeof window !== "undefined" && window.__CRICKET_API__
   ? window.__CRICKET_API__
@@ -3440,6 +3421,7 @@ export default function App() {
   ]); // simulated opp response times — set once
   const soStartRef = useRef(null);
   const soTimerRef = useRef(null);
+  const soIntroTimerRef = useRef(null); // Timer for Super Over intro screen
 
   // Toast
   const [toastMsg, setToastMsg] = useState("");
@@ -3718,12 +3700,12 @@ export default function App() {
     } else {
       fetchInBackground(cond);
     }
-    screenHistoryRef.current = [...screenHistoryRef.current, "toss"];
-    window.history.pushState({ screen: "toss" }, "", "");
-    if (!selectedStadium) {
-      const stadium = getRandomStadium();
-      setSelectedStadium(stadium);
-    }
+    screenHistoryRef.current = [...screenHistoryRef.current, "conditions"];
+    window.history.pushState({ screen: "conditions" }, "", "");
+    // Select random stadium
+    const stadiums = ["dharamsala","chepauk","modi","jaitley","dubai","oval","mcg","eden","chinnaswamy","lords","wankhede"];
+    const randomStadium = stadiums[Math.floor(Math.random() * stadiums.length)];
+    setSelectedStadium(randomStadium);
     setScreen("conditions");
   }, [fetchInBackground]);
 
@@ -3743,12 +3725,12 @@ export default function App() {
     setMatchType("bot"); setMatchId(null); setLoading(false);
     setInSuperOver(false); setSoPhase("intro"); setSuperOverWinner(null);
     fetchInBackground(cond);
-    screenHistoryRef.current = [...screenHistoryRef.current, "toss"];
-    window.history.pushState({ screen: "toss" }, "", "");
-    if (!selectedStadium) {
-      const stadium = getRandomStadium();
-      setSelectedStadium(stadium);
-    }
+    screenHistoryRef.current = [...screenHistoryRef.current, "conditions"];
+    window.history.pushState({ screen: "conditions" }, "", "");
+    // Select random stadium
+    const stadiums = ["dharamsala","chepauk","modi","jaitley","dubai","oval","mcg","eden","chinnaswamy","lords","wankhede"];
+    const randomStadium = stadiums[Math.floor(Math.random() * stadiums.length)];
+    setSelectedStadium(randomStadium);
     setScreen("conditions");
   }, [fetchInBackground]);
 
@@ -3787,13 +3769,13 @@ export default function App() {
       setMatchType("bot"); setMatchId(null); setLoading(false);
       setInSuperOver(false); setSoPhase("intro"); setSuperOverWinner(null);
       qsRef.current = []; qsReadyRef.current = null;
-      screenHistoryRef.current = [...screenHistoryRef.current, "toss"];
-      window.history.pushState({ screen: "toss" }, "", "");
-      if (!selectedStadium) {
-      const stadium = getRandomStadium();
-      setSelectedStadium(stadium);
-    }
-    setScreen("conditions");
+      screenHistoryRef.current = [...screenHistoryRef.current, "conditions"];
+      window.history.pushState({ screen: "conditions" }, "", "");
+      // Select random stadium
+      const stadiums = ["dharamsala","chepauk","modi","jaitley","dubai","oval","mcg","eden","chinnaswamy","lords","wankhede"];
+      const randomStadium = stadiums[Math.floor(Math.random() * stadiums.length)];
+      setSelectedStadium(randomStadium);
+      setScreen("conditions");
     };
 
     // Always fire bot after 10s — stored in ref so it survives re-renders
@@ -3817,13 +3799,13 @@ export default function App() {
         setTossState("idle"); setTossWinner(null); setBatFirst(null);
         setMatchType("bot"); setMatchId(null); setLoading(false);
         setInSuperOver(false); setSoPhase("intro"); setSuperOverWinner(null);
-        screenHistoryRef.current = [...screenHistoryRef.current, "toss"];
-        window.history.pushState({ screen: "toss" }, "", "");
-        if (!selectedStadium) {
-      const stadium = getRandomStadium();
-      setSelectedStadium(stadium);
-    }
-    setScreen("conditions");
+        screenHistoryRef.current = [...screenHistoryRef.current, "conditions"];
+        window.history.pushState({ screen: "conditions" }, "", "");
+        // Select random stadium
+        const stadiums = ["dharamsala","chepauk","modi","jaitley","dubai","oval","mcg","eden","chinnaswamy","lords","wankhede"];
+        const randomStadium = stadiums[Math.floor(Math.random() * stadiums.length)];
+        setSelectedStadium(randomStadium);
+        setScreen("conditions");
       }
     }, 10000);
 
@@ -3974,9 +3956,9 @@ export default function App() {
     const batFirstDecision = choice === "bat" ? "player" : "opp";
     setBatFirst(batFirstDecision);
     setInnings(1); inningsRef.current = 1;
-    screenHistoryRef.current = [...screenHistoryRef.current, "conditions"];
-    window.history.pushState({ screen: "conditions" }, "", "");
-    setScreen("conditions");
+    
+    // Start the match immediately (skip conditions screen after toss)
+    startInnings(batFirstDecision, 1, null);
   }, []);
 
   // ── START INNINGS ─────────────────────────────────────────────────────────────
@@ -4228,10 +4210,12 @@ export default function App() {
       setFcMyScore(myScore);
     }
   }, [innings, batFirst, myScore, oppScore, matchId, loggedIn]);
+  // Note: startSuperOver is called but not in deps to avoid circular dependency
 
   // ── SUPER OVER ────────────────────────────────────────────────────────────────
   const startSuperOver = useCallback(() => {
     clearTimeout(soTimerRef.current);
+    clearTimeout(soIntroTimerRef.current); // Clear any existing intro timer
     // Pick 3 fresh questions from bank (avoid already-used ones)
     const used = new Set(qsRef.current.map(q => q.q.slice(0, 30)));
     const fresh = ALL_QUESTIONS.filter(q => !used.has(q.q.slice(0, 30)));
@@ -4250,9 +4234,9 @@ export default function App() {
     setSoPhase("intro");
     // Move to a clean screen so nothing renders over Super Over
     setScreen("match");
-    snd("suspense");
-    // Auto-advance past intro
-    setTimeout(() => {
+    try { snd("suspense"); } catch(e) { /* ignore sound errors */ }
+    // Auto-advance past intro - STORE IN REF
+    soIntroTimerRef.current = setTimeout(() => {
       setSoPhase("batting");
       soStartRef.current = Date.now();
     }, 2800);
@@ -4271,6 +4255,13 @@ export default function App() {
     soTimerRef.current = setTimeout(() => setSoTLeft(t => t - 1), 1000);
     return () => clearTimeout(soTimerRef.current);
   }, [inSuperOver, soPhase, soTLeft, soRev, soSel]);
+
+  // Clean up Super Over intro timer
+  useEffect(() => {
+    return () => {
+      clearTimeout(soIntroTimerRef.current);
+    };
+  }, [inSuperOver]);
 
   const answerSo = useCallback((idx) => {
     if (soRev || soSel !== null || soPhase !== "batting") return;
@@ -5545,57 +5536,84 @@ export default function App() {
 
         {/* ══════ TOSS ══════ */}
         
-  {/* CONDITIONS SCREEN */}
-  {screen === "conditions" && selectedStadium && (
-    <div className="screen" style={{
-      display: 'flex',
-      flexDirection: 'column',
-      alignItems: 'center',
-      justifyContent: 'center',
-      background: '#0a0a0a',
-      position: 'relative',
-      overflow: 'hidden'
-    }}>
-      {/* Stadium Background */}
+  {/* SIMPLE CONDITIONS SCREEN */}
+  {screen === "conditions" && selectedStadium && (() => {
+    const imagePath = STADIUM_IMAGES[selectedStadium];
+    console.log('🏟️ Conditions screen - Stadium:', selectedStadium, 'Path:', imagePath);
+    
+    return (
+    <div className="screen" style={{ background: '#0a0a0a', position: 'relative', overflow: 'hidden' }}>
+      {/* Stadium Photo */}
       <div style={{
         position: 'absolute',
         inset: 0,
-        backgroundImage: 'url(' + STADIUM_IMAGES[selectedStadium.id] + ')',
+        backgroundImage: imagePath ? `url(${imagePath})` : 'none',
+        backgroundColor: imagePath ? 'transparent' : '#1a1a1a',
         backgroundSize: 'cover',
         backgroundPosition: 'center',
-        opacity: 0.4,
-        filter: 'brightness(0.6)'
+        filter: 'brightness(0.7)'
       }} />
       
-      <div style={{ position: 'relative', zIndex: 10, textAlign: 'center', padding: 32 }}>
-        <div style={{ fontSize: 36, fontWeight: 900, color: '#ffd700', marginBottom: 16, textTransform: 'uppercase' }}>
-          {selectedStadium.name}
+      {/* Dark overlay for text contrast */}
+      <div style={{
+        position: 'absolute',
+        inset: 0,
+        background: 'linear-gradient(180deg, rgba(0,0,0,0.5) 0%, rgba(0,0,0,0.3) 50%, rgba(0,0,0,0.7) 100%)',
+        zIndex: 1
+      }} />
+      
+      {/* Content */}
+      <div style={{ 
+        position: 'relative', 
+        zIndex: 10, 
+        padding: '40px 20px',
+        display: 'flex',
+        flexDirection: 'column',
+        alignItems: 'center',
+        justifyContent: 'center',
+        height: '100%'
+      }}>
+        <div style={{ 
+          fontSize: 42, 
+          fontWeight: 900, 
+          color: '#ffd700', 
+          marginBottom: 20,
+          textTransform: 'uppercase',
+          textAlign: 'center'
+        }}>
+          {selectedStadium.toUpperCase()}
         </div>
-        <div style={{ fontSize: 14, color: 'rgba(255,255,255,0.7)', marginBottom: 24 }}>
-          📍 {selectedStadium.location}
+        
+        {/* Debug info - remove after testing */}
+        <div style={{
+          fontSize: 10,
+          color: '#666',
+          marginBottom: 10,
+          fontFamily: 'monospace'
+        }}>
+          Path: {imagePath || 'NO PATH'}
         </div>
-        <div style={{ fontSize: 16, color: '#fff', marginBottom: 32 }}>
-          🏏 {selectedStadium.pitchType} • Avg: {selectedStadium.avgScore} runs
-        </div>
+        
         <button
           onClick={() => setScreen("toss")}
           style={{
+            marginTop: 40,
             padding: '16px 48px',
             background: 'linear-gradient(135deg, #ff6b00, #ff3d00)',
             border: 'none',
             borderRadius: 50,
             color: '#fff',
-            fontSize: 16,
+            fontSize: 18,
             fontWeight: 900,
-            cursor: 'pointer',
-            textTransform: 'uppercase'
+            cursor: 'pointer'
           }}
         >
           PROCEED TO TOSS →
         </button>
       </div>
     </div>
-  )}
+    );
+  })()}
 
 
   {screen === "toss" && (() => {
@@ -5777,171 +5795,6 @@ export default function App() {
           );
         })()}
 
-        {/* ══════ CONDITIONS — BROADCAST STADIUM VIEW ══════ */}
-        {screen === "conditions" && condition && (() => {
-          const isNight = condition.isNight;
-          const bc = condition.broadcastColor;
-          const pitchTop = condition.pitchColor || "#8B7355";
-          const pitchBot = condition.pitchColor ? condition.pitchColor + "aa" : "#A8956B";
-
-          return (
-            <div className="cond-screen">
-              {/* ── Stadium background — real photo or CSS SVG fallback ── */}
-              <div className="cond-stadium-bg" style={{ background: condition.stadiumImg ? "#111" : condition.stadiumGrad }}>
-                {condition.stadiumImg && (
-                  <img src={condition.stadiumImg} alt={condition.stadium}
-                    style={{ position:"absolute", inset:0, width:"100%", height:"100%", objectFit:"cover",
-                      objectPosition:"center 40%",
-                      filter: isNight ? "brightness(.65)" : "brightness(1)" }} />
-                )}
-                {/* Oval boundary SVG overlay (only for CSS fallback) */}
-                {!condition.stadiumImg && (
-                  <svg viewBox="0 0 400 280" style={{ position:"absolute", inset:0, width:"100%", height:"100%", opacity: isNight ? 0.7 : 0.85 }} preserveAspectRatio="xMidYMid slice">
-                  {/* Sky */}
-                  <rect width="400" height="280" fill="transparent"/>
-                  <ellipse cx="200" cy="200" rx="190" ry="140" fill={isNight ? "#1a3a1a" : "#2d5a1a"} opacity="0.9"/>
-                  {/* Inner circle */}
-                  <ellipse cx="200" cy="200" rx="120" ry="85" fill={isNight ? "#1f4a1f" : "#3a6e22"} opacity="0.9"/>
-                  {/* Pitch strip */}
-                  <rect x="185" y="130" width="30" height="130" rx="3" fill={condition.pitchColor} opacity="0.95"/>
-                  {/* Crease lines */}
-                  <rect x="180" y="155" width="40" height="3" fill="#fff" opacity="0.7"/>
-                  <rect x="180" y="232" width="40" height="3" fill="#fff" opacity="0.7"/>
-                  {/* Stumps - batting end */}
-                  <rect x="193" y="148" width="3" height="12" fill="#d4a843"/>
-                  <rect x="199" y="148" width="3" height="12" fill="#d4a843"/>
-                  <rect x="205" y="148" width="3" height="12" fill="#d4a843"/>
-                  {/* Stumps - bowling end */}
-                  <rect x="193" y="233" width="3" height="12" fill="#d4a843"/>
-                  <rect x="199" y="233" width="3" height="12" fill="#d4a843"/>
-                  <rect x="205" y="233" width="3" height="12" fill="#d4a843"/>
-                  {/* Boundary rope */}
-                  <ellipse cx="200" cy="200" rx="185" ry="135" fill="none" stroke="#fff" strokeWidth="2" strokeDasharray="6,8" opacity="0.5"/>
-                  {/* Stadium stands (simplified arcs) */}
-                  <path d="M15,200 Q200,20 385,200" fill="none" stroke={isNight ? "#2a3a4a" : "#4a5a3a"} strokeWidth="18" opacity="0.8"/>
-                  {/* Floodlight towers for night */}
-                  {isNight && <>
-                    <rect x="25" y="40" width="8" height="60" fill="#334" opacity="0.9"/>
-                    <circle cx="29" cy="38" r="10" fill="#fffde0" opacity="0.9"/>
-                    <rect x="367" y="40" width="8" height="60" fill="#334" opacity="0.9"/>
-                    <circle cx="371" cy="38" r="10" fill="#fffde0" opacity="0.9"/>
-                    <rect x="25" y="180" width="8" height="60" fill="#334" opacity="0.7"/>
-                    <circle cx="29" cy="178" r="8" fill="#fffde0" opacity="0.7"/>
-                    <rect x="367" y="180" width="8" height="60" fill="#334" opacity="0.7"/>
-                    <circle cx="371" cy="178" r="8" fill="#fffde0" opacity="0.7"/>
-                  </>}
-                  {/* Scoreboard */}
-                  <rect x="160" y="22" width="80" height="32" rx="4" fill="#1a1a2a" opacity="0.85"/>
-                  <text x="200" y="36" textAnchor="middle" fill="#fbbf24" fontSize="8" fontFamily="monospace">CRICKET CLASH</text>
-                  <text x="200" y="48" textAnchor="middle" fill="#fff" fontSize="9" fontFamily="monospace">{condition.stadium.substring(0,16)}</text>
-                </svg>
-                )}
-              </div>
-
-              {/* ── Sky gradient overlay ── */}
-              <div className="cond-overlay" style={{ background: condition.overlay }} />
-
-              {/* ── Vignette ── */}
-              <div className="cond-vignette" />
-
-              {/* ── Night: stars + floodlight glows ── */}
-              {isNight && (
-                <>
-                  {[...Array(18)].map((_, i) => (
-                    <div key={i} className="star" style={{
-                      left: `${Math.random()*100}%`, top: `${Math.random()*45}%`,
-                      width: i%3===0 ? 2 : 1, height: i%3===0 ? 2 : 1,
-                      "--dur": `${1.5 + (i%4)*.5}s`, "--delay": `${(i*.15)%2}s`,
-                      "--op1": i%2===0 ? .9 : .6, "--op2": i%2===0 ? .2 : .1,
-                    }} />
-                  ))}
-                  <div className="floodlight" style={{ top:"-30px", left:"10%", background:"#fff8e0" }} />
-                  <div className="floodlight" style={{ top:"-30px", right:"10%", background:"#fff8e0" }} />
-                </>
-              )}
-
-              {/* ── Pitch strip ── */}
-              {/* pitch strip removed */}
-
-              {/* ── All content over the image ── */}
-              <div className="cond-content">
-
-                {/* ── TOP: Broadcast bar ── */}
-                <div className="broadcast-bar">
-                  <button onClick={() => goBack()} style={{ background:"rgba(255,255,255,.12)", border:"1px solid rgba(255,255,255,.2)", color:"#fff", borderRadius:8, padding:"4px 10px", fontSize:16, cursor:"pointer", fontWeight:700, lineHeight:1 }}>←</button>
-                  <div className="broadcast-live" style={{ color: bc }}>
-                    <div className="live-dot" style={{ background: bc }} />
-                    {condition.broadcastTag}
-                  </div>
-                  <div className="broadcast-logo">🏏 CRICKET CLASH</div>
-                  <div className="broadcast-temp">{condition.weatherIcon} {condition.atmosphere.split("|")[2]?.trim()}</div>
-                </div>
-
-                {/* ── MIDDLE: Lower-third venue name ── */}
-                <div style={{ flex:1 }} />
-                <div className="lower-third">
-                  <div className="lt-venue">{condition.venue}</div>
-                  <div className="lt-stadium">{condition.stadium}</div>
-                </div>
-
-                {/* ── BOTTOM: Pitch report sheet ── */}
-                <div className="pitch-report-sheet">
-                  {/* Tag */}
-                  <div className="pitch-tag" style={{ "--tagColor": bc }}>Pitch Report</div>
-
-                  {/* Condition name + desc */}
-                  <div>
-                    <div className="pitch-name">{condition.name}</div>
-                    <div className="pitch-desc">{condition.desc}</div>
-                  </div>
-
-                  {/* Weather / pitch stats strip */}
-                  <div className="pitch-stats-row">
-                    {condition.atmosphere.split("|").map((s, i) => {
-                      const labels = ["Sky", "Humidity", "Temp"];
-                      return (
-                        <div key={i} className="pitch-stat">
-                          <div className="pitch-stat-val">{s.trim()}</div>
-                          <div className="pitch-stat-lbl">{labels[i] || ""}</div>
-                        </div>
-                      );
-                    })}
-                  </div>
-
-                  {/* Pitch surface + wind */}
-                  <div style={{ display:"flex", gap:8 }}>
-                    <div className="pitch-stat" style={{ flex:1 }}>
-                      <div className="pitch-stat-val">🌬 {condition.wind}</div>
-                      <div className="pitch-stat-lbl">Wind</div>
-                    </div>
-                    <div className="pitch-stat" style={{ flex:1 }}>
-                      <div className="pitch-stat-val" style={{ color: bc }}>▪ {condition.pitchDesc}</div>
-                      <div className="pitch-stat-lbl">Surface</div>
-                    </div>
-                  </div>
-
-                  {/* Innings badge */}
-                  <div className="innings-badge-bc" style={{ borderColor: bc, background:`${bc}18`, color: bc }}>
-                    {batFirst === "player" ? "🏏 You Bat First" : "🎯 You're Chasing"}
-                  </div>
-
-                  {/* Skill note */}
-                  <div style={{ fontSize:11, color:"rgba(255,255,255,.35)", lineHeight:1.5 }}>
-                    Questions from <span style={{ color: bc, fontWeight:700 }}>{condition.cat}</span> · Your skill will grow this match
-                  </div>
-
-                  {/* CTA — always visible, part of pinned bottom panel */}
-                  <button
-                    onClick={() => { stopIplSting(); startInnings(batFirst, innings, condition); }}
-                    style={{ width:"100%", background:bc, color:"#fff", border:"none", borderRadius:12, padding:"14px 0", fontFamily:"var(--fd)", fontSize:17, fontWeight:800, cursor:"pointer", boxShadow:`0 4px 20px ${bc}88`, letterSpacing:.3, flexShrink:0 }}>
-                    {batFirst === "player" ? "🏏  Start Batting" : "▶  Watch Opponent Bat"}
-                  </button>
-                </div>
-              </div>
-            </div>
-          );
-        })()}
-
         {/* ══════ WATCHING — OPP BATS FIRST or CHASES ══════ */}
         {(screen === "watching" || screen === "watching_chase") && (
           <WatchingScreen
@@ -6057,38 +5910,39 @@ export default function App() {
             {innings === 2 && target && playerBatting && (
               <div style={{
                 margin: "8px 14px 0",
-                padding: "10px 16px",
+                padding: "12px 16px",
                 borderRadius: 12,
-                background: myScore >= (target - 1) ? "rgba(21,128,61,.08)" : "rgba(217,119,6,.08)",
-                border: `1.5px solid ${myScore >= (target - 1) ? "rgba(21,128,61,.25)" : "rgba(217,119,6,.25)"}`,
+                background: "linear-gradient(135deg, rgba(10,10,10,0.95), rgba(20,20,20,0.95))",
+                border: `2px solid ${myScore >= (target - 1) ? "#22c55e" : "#f59e0b"}`,
                 display: "flex",
                 alignItems: "center",
                 justifyContent: "space-around",
-                gap: 8
+                gap: 12,
+                boxShadow: "0 4px 12px rgba(0,0,0,0.5)"
               }}>
                 <div style={{ textAlign: "center", flex: 1 }}>
-                  <div style={{ fontFamily: "var(--fm)", fontSize: 8, color: "rgba(255,255,255,.5)", letterSpacing: 1.2, marginBottom: 3, fontWeight: 600, textTransform: "uppercase" }}>
+                  <div style={{ fontFamily: "var(--fm)", fontSize: 9, color: "#94a3b8", letterSpacing: 1.5, marginBottom: 4, fontWeight: 700, textTransform: "uppercase" }}>
                     Target
                   </div>
-                  <div style={{ fontFamily: "var(--fd)", fontSize: 22, fontWeight: 800, color: "var(--amber)", lineHeight: 1 }}>
+                  <div style={{ fontFamily: "var(--fd)", fontSize: 26, fontWeight: 900, color: "#ff6b00", lineHeight: 1 }}>
                     {target - 1}
                   </div>
                 </div>
-                <div style={{ width: 1, height: 32, background: "rgba(255,255,255,.15)" }} />
+                <div style={{ width: 2, height: 36, background: "rgba(255,255,255,.2)" }} />
                 <div style={{ textAlign: "center", flex: 1 }}>
-                  <div style={{ fontFamily: "var(--fm)", fontSize: 8, color: "rgba(255,255,255,.5)", letterSpacing: 1.2, marginBottom: 3, fontWeight: 600, textTransform: "uppercase" }}>
+                  <div style={{ fontFamily: "var(--fm)", fontSize: 9, color: "#94a3b8", letterSpacing: 1.5, marginBottom: 4, fontWeight: 700, textTransform: "uppercase" }}>
                     Need
                   </div>
-                  <div style={{ fontFamily: "var(--fd)", fontSize: 22, fontWeight: 800, color: myScore >= (target - 1) ? "var(--green)" : "var(--amber)", lineHeight: 1 }}>
+                  <div style={{ fontFamily: "var(--fd)", fontSize: 26, fontWeight: 900, color: myScore >= (target - 1) ? "#22c55e" : "#fbbf24", lineHeight: 1 }}>
                     {Math.max(0, target - myScore)}
                   </div>
                 </div>
-                <div style={{ width: 1, height: 32, background: "rgba(255,255,255,.15)" }} />
+                <div style={{ width: 2, height: 36, background: "rgba(255,255,255,.2)" }} />
                 <div style={{ textAlign: "center", flex: 1 }}>
-                  <div style={{ fontFamily: "var(--fm)", fontSize: 8, color: "rgba(255,255,255,.5)", letterSpacing: 1.2, marginBottom: 3, fontWeight: 600, textTransform: "uppercase" }}>
+                  <div style={{ fontFamily: "var(--fm)", fontSize: 9, color: "#94a3b8", letterSpacing: 1.5, marginBottom: 4, fontWeight: 700, textTransform: "uppercase" }}>
                     Balls
                   </div>
-                  <div style={{ fontFamily: "var(--fd)", fontSize: 22, fontWeight: 800, color: "var(--blue)", lineHeight: 1 }}>
+                  <div style={{ fontFamily: "var(--fd)", fontSize: 26, fontWeight: 900, color: "#60a5fa", lineHeight: 1 }}>
                     {6 - qi}
                   </div>
                 </div>
@@ -6459,6 +6313,29 @@ export default function App() {
             <div style={{ fontSize:11, color:"rgba(255,255,255,.25)", marginTop:4 }}>
               If still tied — fastest average answer time wins
             </div>
+            {/* Manual skip button as fallback */}
+            <button
+              onClick={() => {
+                clearTimeout(soIntroTimerRef.current);
+                setSoPhase("batting");
+                soStartRef.current = Date.now();
+              }}
+              style={{
+                marginTop: 20,
+                padding: "12px 32px",
+                background: "linear-gradient(135deg, #22d3ee, #0ea5e9)",
+                border: "none",
+                borderRadius: 50,
+                color: "#fff",
+                fontSize: 14,
+                fontWeight: 700,
+                cursor: "pointer",
+                textTransform: "uppercase",
+                letterSpacing: 1
+              }}
+            >
+              START →
+            </button>
           </div>
         )}
 
