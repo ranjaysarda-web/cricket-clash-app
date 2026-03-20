@@ -3209,8 +3209,8 @@ function WatchingScreen({ opp, feed, finalScore, label, target, isPvp, onProceed
 
       {visibleCount === feed.length && (() => {
         const ProceedPanel = () => {
-          const [secs, setSecs] = React.useState(5);
-          React.useEffect(() => {
+          const [secs, setSecs] = useState(5);
+          useEffect(() => {
             const t = setInterval(() => {
               setSecs(s => {
                 if (s <= 1) { clearInterval(t); if (onProceed) onProceed(); return 0; }
@@ -5536,10 +5536,26 @@ export default function App() {
 
         {/* ══════ TOSS ══════ */}
         
-  {/* SIMPLE CONDITIONS SCREEN */}
+  {/* BROADCAST-STYLE CONDITIONS SCREEN */}
   {screen === "conditions" && selectedStadium && (() => {
     const imagePath = STADIUM_IMAGES[selectedStadium];
-    console.log('🏟️ Conditions screen - Stadium:', selectedStadium, 'Path:', imagePath);
+    
+    // Venue statistics data - Quiz game scoring (6 questions × 2-6 runs each)
+    const venueStats = {
+      dharamsala: { avg1st: 18, avg2nd: 16, battingFirst: 58, pitchType: "Balanced", tossAdvantage: "Bat First" },
+      chepauk: { avg1st: 17, avg2nd: 15, battingFirst: 62, pitchType: "Challenging", tossAdvantage: "Bat First" },
+      modi: { avg1st: 22, avg2nd: 20, battingFirst: 52, pitchType: "High-Scoring", tossAdvantage: "Toss Up" },
+      jaitley: { avg1st: 21, avg2nd: 19, battingFirst: 54, pitchType: "Batting Paradise", tossAdvantage: "Chase" },
+      dubai: { avg1st: 19, avg2nd: 17, battingFirst: 56, pitchType: "Balanced", tossAdvantage: "Bat First" },
+      oval: { avg1st: 18, avg2nd: 16, battingFirst: 57, pitchType: "Tricky Wicket", tossAdvantage: "Bat First" },
+      mcg: { avg1st: 20, avg2nd: 18, battingFirst: 53, pitchType: "Fast-Paced", tossAdvantage: "Toss Up" },
+      eden: { avg1st: 17, avg2nd: 15, battingFirst: 61, pitchType: "Brain Teaser", tossAdvantage: "Bat First" },
+      chinnaswamy: { avg1st: 23, avg2nd: 21, battingFirst: 51, pitchType: "Run Fest", tossAdvantage: "Chase" },
+      lords: { avg1st: 19, avg2nd: 17, battingFirst: 55, pitchType: "Classic Clash", tossAdvantage: "Bat First" },
+      wankhede: { avg1st: 21, avg2nd: 19, battingFirst: 53, pitchType: "High-Scoring", tossAdvantage: "Toss Up" }
+    };
+    
+    const stats = venueStats[selectedStadium] || venueStats.mcg;
     
     return (
     <div className="screen" style={{ background: '#0a0a0a', position: 'relative', overflow: 'hidden' }}>
@@ -5558,7 +5574,7 @@ export default function App() {
       <div style={{
         position: 'absolute',
         inset: 0,
-        background: 'linear-gradient(180deg, rgba(0,0,0,0.5) 0%, rgba(0,0,0,0.3) 50%, rgba(0,0,0,0.7) 100%)',
+        background: 'linear-gradient(180deg, rgba(0,0,0,0.6) 0%, rgba(0,0,0,0.4) 50%, rgba(0,0,0,0.8) 100%)',
         zIndex: 1
       }} />
       
@@ -5566,49 +5582,198 @@ export default function App() {
       <div style={{ 
         position: 'relative', 
         zIndex: 10, 
-        padding: '40px 20px',
+        padding: '30px 20px',
         display: 'flex',
         flexDirection: 'column',
         alignItems: 'center',
         justifyContent: 'center',
-        height: '100%'
+        height: '100%',
+        gap: 16
       }}>
-        <div style={{ 
-          fontSize: 42, 
-          fontWeight: 900, 
-          color: '#ffd700', 
-          marginBottom: 20,
-          textTransform: 'uppercase',
-          textAlign: 'center'
-        }}>
-          {selectedStadium.toUpperCase()}
+        {/* Venue header */}
+        <div style={{ textAlign: 'center' }}>
+          <div style={{ 
+            fontFamily: 'var(--fm)', 
+            fontSize: 10, 
+            letterSpacing: 3, 
+            color: 'rgba(255,255,255,0.5)', 
+            textTransform: 'uppercase',
+            marginBottom: 8
+          }}>
+            Match Venue
+          </div>
+          <div style={{ 
+            fontSize: 36, 
+            fontWeight: 900, 
+            color: '#ffd700', 
+            textTransform: 'uppercase',
+            textAlign: 'center',
+            textShadow: '0 2px 8px rgba(0,0,0,0.5)'
+          }}>
+            {selectedStadium.toUpperCase()}
+          </div>
         </div>
         
-        {/* Debug info - remove after testing */}
+        {/* Stats panel - broadcast style */}
         <div style={{
-          fontSize: 10,
-          color: '#666',
-          marginBottom: 10,
-          fontFamily: 'monospace'
+          background: 'linear-gradient(135deg, rgba(15,23,42,0.95), rgba(30,41,59,0.95))',
+          border: '1px solid rgba(255,255,255,0.15)',
+          borderRadius: 12,
+          padding: '16px',
+          width: '100%',
+          maxWidth: 400,
+          boxShadow: '0 8px 24px rgba(0,0,0,0.4)'
         }}>
-          Path: {imagePath || 'NO PATH'}
+          {/* Pitch condition */}
+          <div style={{
+            background: 'rgba(255,215,0,0.1)',
+            border: '1px solid rgba(255,215,0,0.3)',
+            borderRadius: 8,
+            padding: '8px 12px',
+            marginBottom: 12,
+            textAlign: 'center'
+          }}>
+            <div style={{ 
+              fontFamily: 'var(--fm)', 
+              fontSize: 9, 
+              letterSpacing: 2, 
+              color: 'rgba(255,255,255,0.6)',
+              textTransform: 'uppercase',
+              marginBottom: 3
+            }}>
+              Pitch Report
+            </div>
+            <div style={{ 
+              fontSize: 14, 
+              fontWeight: 700, 
+              color: '#ffd700'
+            }}>
+              {stats.pitchType}
+            </div>
+          </div>
+          
+          {/* Average scores grid */}
+          <div style={{
+            display: 'grid',
+            gridTemplateColumns: '1fr 1fr',
+            gap: 10,
+            marginBottom: 12
+          }}>
+            <div style={{
+              background: 'rgba(34,197,94,0.1)',
+              border: '1px solid rgba(34,197,94,0.3)',
+              borderRadius: 8,
+              padding: '10px',
+              textAlign: 'center'
+            }}>
+              <div style={{ 
+                fontFamily: 'var(--fm)', 
+                fontSize: 8, 
+                letterSpacing: 1.5, 
+                color: 'rgba(255,255,255,0.5)',
+                textTransform: 'uppercase',
+                marginBottom: 4
+              }}>
+                Avg 1st Innings
+              </div>
+              <div style={{ 
+                fontSize: 22, 
+                fontWeight: 900, 
+                color: '#22c55e',
+                fontFamily: 'var(--fd)'
+              }}>
+                {stats.avg1st}
+              </div>
+            </div>
+            
+            <div style={{
+              background: 'rgba(59,130,246,0.1)',
+              border: '1px solid rgba(59,130,246,0.3)',
+              borderRadius: 8,
+              padding: '10px',
+              textAlign: 'center'
+            }}>
+              <div style={{ 
+                fontFamily: 'var(--fm)', 
+                fontSize: 8, 
+                letterSpacing: 1.5, 
+                color: 'rgba(255,255,255,0.5)',
+                textTransform: 'uppercase',
+                marginBottom: 4
+              }}>
+                Avg Chasing
+              </div>
+              <div style={{ 
+                fontSize: 22, 
+                fontWeight: 900, 
+                color: '#3b82f6',
+                fontFamily: 'var(--fd)'
+              }}>
+                {stats.avg2nd}
+              </div>
+            </div>
+          </div>
+          
+          {/* Toss advantage */}
+          <div style={{
+            display: 'flex',
+            alignItems: 'center',
+            justifyContent: 'space-between',
+            background: 'rgba(255,255,255,0.05)',
+            borderRadius: 8,
+            padding: '10px 12px'
+          }}>
+            <div>
+              <div style={{ 
+                fontFamily: 'var(--fm)', 
+                fontSize: 8, 
+                letterSpacing: 1.5, 
+                color: 'rgba(255,255,255,0.5)',
+                textTransform: 'uppercase'
+              }}>
+                Toss Advantage
+              </div>
+              <div style={{ 
+                fontSize: 13, 
+                fontWeight: 700, 
+                color: '#fff',
+                marginTop: 2
+              }}>
+                {stats.tossAdvantage}
+              </div>
+            </div>
+            <div style={{
+              fontSize: 11,
+              color: 'rgba(255,255,255,0.6)',
+              fontFamily: 'var(--fm)'
+            }}>
+              {stats.battingFirst}% bat first
+            </div>
+          </div>
         </div>
         
+        {/* Proceed button */}
         <button
           onClick={() => setScreen("toss")}
           style={{
-            marginTop: 40,
+            marginTop: 16,
             padding: '16px 48px',
             background: 'linear-gradient(135deg, #ff6b00, #ff3d00)',
             border: 'none',
             borderRadius: 50,
             color: '#fff',
-            fontSize: 18,
+            fontSize: 16,
             fontWeight: 900,
-            cursor: 'pointer'
+            cursor: 'pointer',
+            textTransform: 'uppercase',
+            letterSpacing: 1,
+            boxShadow: '0 4px 16px rgba(255,107,0,0.4)',
+            transition: 'transform 0.2s'
           }}
+          onMouseEnter={e => e.target.style.transform = 'scale(1.05)'}
+          onMouseLeave={e => e.target.style.transform = 'scale(1)'}
         >
-          PROCEED TO TOSS →
+          Proceed to Toss →
         </button>
       </div>
     </div>
